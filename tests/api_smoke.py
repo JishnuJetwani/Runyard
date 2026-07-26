@@ -70,6 +70,16 @@ with open(".local/api-smoke.log", "w") as log:
         stop(process)
         process = start(log)
         assert request("/v1/runs/" + run["id"])[1]["status"] == "QUEUED"
+        if len(sys.argv) > 2:
+            cli = pathlib.Path(sys.argv[2]).resolve()
+            client_env = dict(environment, RUNYARD_URL=base)
+            result = subprocess.check_output([str(cli), "--json", "runs", "get", run["id"]], env=client_env)
+            assert json.loads(result)["id"] == run["id"]
+            spec_file = pathlib.Path(".local/cli-smoke.json")
+            spec_file.write_text(json.dumps(spec))
+            result = subprocess.check_output([str(cli), "--json", "submit", str(spec_file)], env=client_env)
+            assert json.loads(result)["spec"]["name"] == spec["name"]
+            print("CLI smoke passed: submission and inspection through public HTTP")
         print("API smoke passed: auth, validation, idempotency, event cursor, restart durability")
     finally:
         if process.poll() is None:
