@@ -1,0 +1,21 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {"name": "dev", "generator": "Ninja", "binaryDir": "${sourceDir}/build/dev", "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug"}},
+    {"name": "vcpkg", "inherits": "dev", "binaryDir": "${sourceDir}/build/vcpkg", "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"},
+    {"name": "asan", "inherits": "dev", "binaryDir": "${sourceDir}/build/asan", "cacheVariables": {"RUNYARD_SANITIZE": "ON"}},
+    {"name": "tsan", "inherits": "dev", "binaryDir": "${sourceDir}/build/tsan", "cacheVariables": {"RUNYARD_THREAD_SANITIZE": "ON"}}
+  ],
+  "buildPresets": [
+    {"name": "dev", "configurePreset": "dev"},
+    {"name": "vcpkg", "configurePreset": "vcpkg"},
+    {"name": "asan", "configurePreset": "asan"},
+    {"name": "tsan", "configurePreset": "tsan"}
+  ],
+  "testPresets": [
+    {"name": "dev", "configurePreset": "dev", "output": {"outputOnFailure": true}},
+    {"name": "vcpkg", "configurePreset": "vcpkg", "output": {"outputOnFailure": true}},
+    {"name": "asan", "configurePreset": "asan", "output": {"outputOnFailure": true}},
+    {"name": "tsan", "configurePreset": "tsan", "output": {"outputOnFailure": true}}
+  ]
+}
