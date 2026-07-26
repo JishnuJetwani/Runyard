@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Runyard API
+  version: 0.1.0
+  description: Private experiment execution. All business endpoints require an owner token.
+servers:
+  - url: http://localhost:8080
+security:
+  - ownerToken: []
+paths:
+  /v1/runs:
+    post:
+      operationId: submitRun
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: {type: string, minLength: 1, maxLength: 200}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RunSpec'}
+      responses:
+        '200': {description: Accepted run or existing idempotent submission}
+        '400': {description: Invalid specification}
+        '409': {description: Key reused with a different specification}
+    get:
+      operationId: listRuns
+      parameters:
+        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 200, default: 50}}
+        - {in: query, name: after, schema: {type: string}}
+        - {in: query, name: status, schema: {type: string}}
+      responses:
+        '200': {description: Items and next_cursor; repeat until items is empty}
+  /v1/runs/{id}:
+    parameters:
+      - {$ref: '#/components/parameters/RunId'}
+    get:
+      operationId: getRun
+      responses:
+        '200': {description: Run with immutable spec and current status}
+        '404': {description: Unknown run}
+  /v1/runs/{id}/attempts:
+    parameters:
+      - {$ref: '#/components/parameters/RunId'}
+    get:
+      operationId: listAttempts
+      responses:
+        '200': {description: Attempt history in generation order}
+  /v1/runs/{id}/events:
+    parameters:
+      - {$ref: '#/components/parameters/RunId'}
+    get:
+      operationId: listEvents
+      parameters:
+        - {in: query, name: after, schema: {type: integer, minimum: 0}}
+        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 1000}}
+      responses:
+        '200': {description: Durable ordered state changes}
+components:
+  securitySchemes:
+    ownerToken: {type: http, scheme: bearer}
+  parameters:
+    RunId: {in: path, name: id, required: true, schema: {type: string}}
+  schemas:
+    RunSpec:
+      type: object
+      additionalProperties: false
+      required: [name, image, command]
+      properties:
+        version: {type: integer, enum: [1], default: 1}
+        name: {type: string, minLength: 1, maxLength: 200}
+        image: {type: string, description: Immutable image reference ending in '@sha256:<64 lowercase hex digits>'}
+        command: {type: array, minItems: 1, maxItems: 256, items: {type: string}}
+        parameters: {type: object, description: Flat scalar values}
+        environment: {type: object, additionalProperties: {type: string}}
+        labels: {type: object, additionalProperties: {type: string}}
+        resources:
+          type: object
+          properties:
+            cpu_millis: {type: integer, minimum: 1, default: 1000}
+            memory_mib: {type: integer, minimum: 32, default: 512}
+        retry:
+          type: object
+          properties:
+            max_attempts: {type: integer, minimum: 1, maximum: 10, default: 3}
+            retry_exit: {type: boolean, default: false}
+            retry_timeout: {type: boolean, default: false}
+        timeout_seconds: {type: integer, minimum: 1, maximum: 604800, default: 1800}
+        priority: {type: integer, minimum: 0, maximum: 9, default: 0}
+        source:
+          type: object
+          properties:
+            repository: {type: string}
+            revision: {type: string}
