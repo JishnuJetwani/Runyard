@@ -17,6 +17,12 @@ protected:
       GTEST_SKIP() << "RUNYARD_TEST_DATABASE not set";
     pool = std::make_unique<ConnectionPool>(dsn, 4);
     migrate(*pool, RUNYARD_MIGRATIONS);
+    {
+      auto c = pool->acquire();
+      pqxx::work tx(c.get());
+      tx.exec("TRUNCATE runs,workers CASCADE");
+      tx.commit();
+    }
     store = std::make_unique<PostgresStore>(*pool);
   }
   RunSpec spec() {
@@ -44,3 +50,51 @@ TEST_F(Database, ConcurrentSubmissionIsIdempotent) {
   EXPECT_THROW(store->submit(s, key, "different"), Error);
 }
 TEST_F(Database, MissingRunIsNotFound) { EXPECT_THROW(store->get_run(random_id()), Error); }
+
+TEST_F(Database, ReservationsPreventOversubscriptionAndReplayLaunch) {
+  auto s = spec();
+  store->submit(s, random_id(), "one");
+  store->submit(s, random_id(), "two");
+  store->register_worker("worker", "session", {1000, 512});
+  auto first = store->assign("worker", "session");
+  ASSERT_TRUE(first);
+  EXPECT_EQ(store->assign("worker", "session")->attempt.id, first->attempt.id);
+  store->runtime_report("worker", "session", first->attempt.id, "container", false);
+  EXPECT_FALSE(store->assign("worker", "session"));
+}
+TEST_F(Database, OnlyOneRunnerCanClaimAndExpiredLeaseCannotRevive) {
+  auto s = spec();
+  store->submit(s, random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  store->start(a.id, a.generation, "instance-a");
+  EXPECT_NO_THROW(store->start(a.id, a.generation, "instance-a"));
+  EXPECT_THROW(store->start(a.id, a.generation, "instance-b"), Error);
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE attempts SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
+            pqxx::params{a.id});
+    tx.commit();
+  }
+  EXPECT_THROW(store->heartbeat(a.id, a.generation, "instance-a"), Error);
+  EXPECT_THROW(store->begin_finalization(a.id, a.generation, "instance-a"), Error);
+}
+TEST_F(Database, CompletionIsIdempotentButCannotChangeOutcome) {
+  auto s = spec();
+  auto run = store->submit(s, random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  store->start(a.id, a.generation, "i");
+  EXPECT_THROW(store->finish(a.id, a.generation, "i", 0, "", 0), Error);
+  store->begin_finalization(a.id, a.generation, "i");
+  store->finish(a.id, a.generation, "i", 0, "", 0);
+  EXPECT_NO_THROW(store->finish(a.id, a.generation, "i", 0, "", 0));
+  EXPECT_THROW(store->finish(a.id, a.generation, "i", 1, "", 0), Error);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::succeeded);
+}
+TEST_F(Database, OldAgentSessionCannotAssign) {
+  store->register_worker("w", "old", {1000, 512});
+  store->register_worker("w", "new", {1000, 512});
+  EXPECT_THROW(store->assign("w", "old"), Error);
+}

@@ -10,8 +10,9 @@ target_include_directories(runyard_support PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(runyard_support PUBLIC runyard_domain runyard_options OpenSSL::Crypto Threads::Threads)
 add_library(runyard_json serialization/json.cpp)
 target_link_libraries(runyard_json PUBLIC runyard_domain nlohmann_json::nlohmann_json)
-add_library(runyard_postgres postgres/pool.cpp postgres/runs.cpp postgres/leadership.cpp)
+add_library(runyard_postgres postgres/pool.cpp postgres/runs.cpp postgres/leadership.cpp postgres/workers.cpp postgres/ownership.cpp)
 target_link_libraries(runyard_postgres PUBLIC runyard_domain runyard_json runyard_support libpqxx::pqxx Threads::Threads)
+find_package(c-ares CONFIG REQUIRED)
 find_package(Drogon CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
@@ -30,3 +31,20 @@ target_link_libraries(runyard_cli PUBLIC runyard_json runyard_http_client)
 add_executable(runyard ${PROJECT_SOURCE_DIR}/apps/cli.cpp)
 target_link_libraries(runyard PRIVATE runyard_cli runyard_support CLI11::CLI11)
 install(TARGETS runyard RUNTIME DESTINATION bin)
+
+find_package(Protobuf CONFIG REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
+set(PROTO_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
+file(MAKE_DIRECTORY ${PROTO_DIR})
+add_custom_command(
+  OUTPUT ${PROTO_DIR}/runyard.pb.cc ${PROTO_DIR}/runyard.pb.h ${PROTO_DIR}/runyard.grpc.pb.cc ${PROTO_DIR}/runyard.grpc.pb.h
+  COMMAND protobuf::protoc --cpp_out=${PROTO_DIR} --grpc_out=${PROTO_DIR}
+          --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
+          -I ${PROJECT_SOURCE_DIR}/proto ${PROJECT_SOURCE_DIR}/proto/runyard.proto
+  DEPENDS ${PROJECT_SOURCE_DIR}/proto/runyard.proto)
+add_library(runyard_proto ${PROTO_DIR}/runyard.pb.cc ${PROTO_DIR}/runyard.grpc.pb.cc)
+target_include_directories(runyard_proto PUBLIC ${PROTO_DIR})
+target_link_libraries(runyard_proto PUBLIC protobuf::libprotobuf gRPC::grpc++)
+add_library(runyard_rpc grpc/services.cpp)
+target_link_libraries(runyard_rpc PUBLIC runyard_proto runyard_support runyard_json spdlog::spdlog)
+target_link_libraries(runyard-server PRIVATE runyard_rpc)

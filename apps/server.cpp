@@ -1,4 +1,5 @@
 #include "runyard/application/runs.hpp"
+#include "runyard/grpc/services.hpp"
 #include "runyard/http/api.hpp"
 #include "runyard/postgres/leadership.hpp"
 #include "runyard/postgres/store.hpp"
@@ -35,12 +36,16 @@ int main(int argc, char **argv) {
     });
     runyard::Api api(runs, executor, config.owner_token, [&] { return leadership.ready(); });
     api.mount();
+    runyard::AgentRpc agent_rpc(store, config, [&] { return leadership.ready(); });
+    runyard::AttemptRpc attempt_rpc(store, config, [&] { return leadership.ready(); });
+    auto grpc_server = runyard::start_grpc(config, agent_rpc, attempt_rpc);
     auto &http = drogon::app();
     http.setThreadNum(2).setClientMaxBodySize(1024 * 1024);
     http.addListener(config.host, config.http_port, !config.certificate.empty(), config.certificate,
                      config.private_key);
     spdlog::info("coordinator HTTP port {} mode {}", config.http_port, config.mode);
     http.run();
+    grpc_server->Shutdown(std::chrono::system_clock::now() + std::chrono::seconds(5));
     return 0;
   } catch (const std::exception &e) {
     spdlog::error("{}", e.what());
