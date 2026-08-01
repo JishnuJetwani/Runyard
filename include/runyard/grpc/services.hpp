@@ -38,6 +38,7 @@ public:
   grpc::Status Heartbeat(grpc::ServerContext *, const wire::Owner *, wire::Ack *) override;
   grpc::Status BeginFinalization(grpc::ServerContext *, const wire::Owner *,
                                  wire::Empty *) override;
+  grpc::Status Report(grpc::ServerContext *, const wire::TelemetryBatch *, wire::Ack *) override;
   grpc::Status Complete(grpc::ServerContext *, const wire::Completion *, wire::Empty *) override;
 
 private:

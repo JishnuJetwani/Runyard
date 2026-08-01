@@ -9,6 +9,7 @@ public:
         token_(std::move(token)) {}
   wire::StartReply start();
   int heartbeat();
+  std::int64_t report(const std::vector<Telemetry> &records);
   void begin_finalization();
   void complete(int exit_code, const std::string &reason, std::int64_t final_sequence);
 

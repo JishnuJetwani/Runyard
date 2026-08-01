@@ -45,4 +45,23 @@ void AttemptClient::complete(int exit_code, const std::string &reason, std::int6
   wire::Empty reply;
   check_rpc(stub_->Complete(&context, request, &reply));
 }
+std::int64_t AttemptClient::report(const std::vector<Telemetry> &records) {
+  wire::TelemetryBatch batch;
+  *batch.mutable_owner() = owner_;
+  for (const auto &r : records) {
+    auto *t = batch.add_records();
+    t->set_sequence(r.sequence);
+    t->set_kind(r.kind);
+    t->set_text(r.text);
+    t->set_name(r.name);
+    t->set_step(r.step);
+    t->set_value(r.value);
+    t->set_timestamp_ms(r.timestamp_ms);
+  }
+  grpc::ClientContext context;
+  prepare(context, token_, 2);
+  wire::Ack reply;
+  check_rpc(stub_->Report(&context, batch, &reply));
+  return reply.sequence();
+}
 } // namespace runyard

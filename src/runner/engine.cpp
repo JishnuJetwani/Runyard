@@ -1,6 +1,7 @@
 #include "runyard/runner/engine.hpp"
 #include "runyard/domain/error.hpp"
 #include "runyard/runner/process.hpp"
+#include "runyard/runner/telemetry.hpp"
 #include "runyard/serialization/json.hpp"
 #include "runyard/support/crypto.hpp"
 #include <atomic>
@@ -79,9 +80,20 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
   PosixProcess process(spec.command, environment, root.string(), clock);
   std::ofstream output(root / "stdout.log", std::ios::binary),
       error(root / "stderr.log", std::ios::binary);
+  Reporter reporter(client);
+  MetricReader metrics((root / "metrics.jsonl").string(), reporter);
+  std::size_t log_bytes = 0;
+  bool log_truncated = false;
   auto consume = [&](const std::string &kind, const std::string &text) {
     auto &stream = kind == "stdout" ? output : error;
-    stream << text;
+    if (log_bytes + text.size() <= 100 * 1024 * 1024) {
+      stream << text;
+      log_bytes += text.size();
+      reporter.log(kind, text);
+    } else if (!log_truncated) {
+      reporter.log("notice", "Log archive limit reached (100 MiB)\n");
+      log_truncated = true;
+    }
   };
   std::string reason;
   std::optional<int> status;
@@ -98,6 +110,7 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
         process.stop(std::chrono::seconds(start.termination_seconds()));
     }
     process.drain(consume);
+    metrics.poll();
     status = process.poll();
     if (!status)
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -108,7 +121,9 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
   if (lease.revoked() || lease.near_expiry(0))
     return 1;
   client.begin_finalization();
-  client.complete(*status, reason, 0);
+  metrics.poll();
+  auto sequence = reporter.flush(Steady::now() + std::chrono::seconds(30));
+  client.complete(*status, reason, sequence);
   return *status;
 }
 } // namespace runyard

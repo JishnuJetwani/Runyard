@@ -153,6 +153,18 @@ grpc::Status AttemptRpc::Complete(grpc::ServerContext *c, const wire::Completion
                        r->exit_code(), r->reason(), r->final_sequence());
   });
 }
+grpc::Status AttemptRpc::Report(grpc::ServerContext *c, const wire::TelemetryBatch *r,
+                                wire::Ack *reply) {
+  return guard([&] {
+    authorize(c, r->owner());
+    std::vector<Telemetry> records;
+    for (const auto &t : r->records())
+      records.push_back(
+          {t.sequence(), t.kind(), t.text(), t.name(), t.step(), t.value(), t.timestamp_ms()});
+    reply->set_sequence(repository_.report(r->owner().attempt_id(), r->owner().generation(),
+                                           r->owner().instance_id(), records));
+  });
+}
 std::unique_ptr<grpc::Server> start_grpc(const ServerConfig &config, AgentRpc &agent,
                                          AttemptRpc &attempt) {
   grpc::ServerBuilder builder;

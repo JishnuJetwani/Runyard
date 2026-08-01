@@ -94,6 +94,27 @@ void Api::dispatch(const drogon::HttpRequestPtr &request, HttpCallback callback,
 }
 void Api::mount() {
   auto &app = drogon::app();
+  for (const auto &kind : {std::string("logs"), std::string("metrics")}) {
+    app.registerHandler(
+        "/v1/runs/{1}/" + kind,
+        [this, kind](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+          dispatch(r, std::move(cb), [this, r, id, kind] {
+            auto run = runs_.get(id);
+            auto attempt = r->getParameter("attempt");
+            if (attempt.empty())
+              attempt = run.active_attempt;
+            auto rows =
+                runs_.telemetry(id, attempt, number(r, "after", 0), number(r, "limit", 100),
+                                kind == "logs" ? "logs" : "metric", r->getParameter("name"));
+            return Json{
+                {"attempt_id", attempt},
+                {"items", encode_list(rows)},
+                {"next_cursor", rows.empty() ? number(r, "after", 0) : rows.back().sequence}};
+          });
+        },
+        {drogon::Get});
+  }
+
   app.registerHandler("/health/live",
                       [](const drogon::HttpRequestPtr &, HttpCallback &&cb) {
                         cb(json_response({{"status", "live"}}));

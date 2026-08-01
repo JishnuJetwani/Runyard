@@ -25,6 +25,11 @@ public:
   void finish(const std::string &, int, const std::string &, int, const std::string &,
               std::int64_t) override;
 
+  std::int64_t report(const std::string &, int, const std::string &,
+                      const std::vector<Telemetry> &) override;
+  std::vector<Telemetry> telemetry(const std::string &, const std::string &, std::int64_t, int,
+                                   const std::string &, const std::string &) override;
+
 private:
   ConnectionPool &pool_;
   Timing timing_;

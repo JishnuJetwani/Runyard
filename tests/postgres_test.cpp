@@ -98,3 +98,21 @@ TEST_F(Database, OldAgentSessionCannotAssign) {
   store->register_worker("w", "new", {1000, 512});
   EXPECT_THROW(store->assign("w", "old"), Error);
 }
+
+TEST_F(Database, TelemetryIsContiguousAndIdempotent) {
+  auto run = store->submit(spec(), random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  store->start(a.id, a.generation, "i");
+  Telemetry first{1, "stdout", "hello", "", 0, 0, 1}, second{2, "metric", "", "score", 0, 0.5, 2};
+  EXPECT_EQ(store->report(a.id, a.generation, "i", {first, second}), 2);
+  EXPECT_EQ(store->report(a.id, a.generation, "i", {first, second}), 2);
+  auto gap = first;
+  gap.sequence = 4;
+  EXPECT_THROW(store->report(a.id, a.generation, "i", {gap}), Error);
+  EXPECT_EQ(store->telemetry(run.id, "", 0, 100, "logs", "").size(), 1);
+  EXPECT_EQ(store->telemetry(run.id, "", 0, 100, "metric", "score").size(), 1);
+  store->begin_finalization(a.id, a.generation, "i");
+  EXPECT_THROW(store->finish(a.id, a.generation, "i", 0, "", 1), Error);
+  EXPECT_NO_THROW(store->finish(a.id, a.generation, "i", 0, "", 2));
+}

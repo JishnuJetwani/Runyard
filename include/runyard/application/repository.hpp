@@ -5,6 +5,12 @@ namespace runyard {
 class Repository {
 public:
   virtual ~Repository() = default;
+  virtual std::int64_t report(const std::string &attempt, int generation,
+                              const std::string &instance,
+                              const std::vector<Telemetry> &records) = 0;
+  virtual std::vector<Telemetry> telemetry(const std::string &run, const std::string &attempt,
+                                           std::int64_t after, int limit, const std::string &kind,
+                                           const std::string &name) = 0;
   virtual Run submit(const RunSpec &spec, const std::string &key,
                      const std::string &fingerprint) = 0;
   virtual Run get_run(const std::string &id) = 0;
