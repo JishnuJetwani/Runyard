@@ -38,3 +38,8 @@ CMD ["serve"]
 FROM runtime AS cli
 COPY --from=build /opt/runyard/bin/runyard /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/runyard"]
+
+FROM runtime AS agent
+USER 0:0
+COPY --from=build /opt/runyard/bin/runyard-agent /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/runyard-agent"]
