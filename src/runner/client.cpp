@@ -1,5 +1,8 @@
 #include "runyard/runner/client.hpp"
 #include "runyard/domain/error.hpp"
+#include "runyard/support/crypto.hpp"
+#include <array>
+#include <fstream>
 
 namespace runyard {
 void check_rpc(const grpc::Status &status) {
@@ -63,5 +66,31 @@ std::int64_t AttemptClient::report(const std::vector<Telemetry> &records) {
   wire::Ack reply;
   check_rpc(stub_->Report(&context, batch, &reply));
   return reply.sequence();
+}
+void AttemptClient::upload(const std::string &file, const std::string &relative) {
+  auto hash = sha256_file(file);
+  grpc::ClientContext context;
+  prepare(context, token_, 300);
+  wire::ArtifactReply reply;
+  auto writer = stub_->Upload(&context, &reply);
+  wire::ArtifactChunk chunk;
+  *chunk.mutable_owner() = owner_;
+  chunk.set_path(relative);
+  chunk.set_sha256(hash);
+  bool writable = writer->Write(chunk);
+  std::ifstream input(file, std::ios::binary);
+  std::array<char, 65536> bytes{};
+  while (writable && input) {
+    input.read(bytes.data(), bytes.size());
+    if (input.gcount()) {
+      chunk.Clear();
+      chunk.set_data(bytes.data(), static_cast<std::size_t>(input.gcount()));
+      writable = writer->Write(chunk);
+    }
+  }
+  writer->WritesDone();
+  check_rpc(writer->Finish());
+  if (!input.eof() || reply.sha256() != hash)
+    throw Error(ErrorCode::unavailable, "artifact transfer incomplete");
 }
 } // namespace runyard

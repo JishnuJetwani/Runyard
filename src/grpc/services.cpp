@@ -2,6 +2,7 @@
 #include "runyard/domain/error.hpp"
 #include "runyard/serialization/json.hpp"
 #include "runyard/support/crypto.hpp"
+#include <fstream>
 #include <spdlog/spdlog.h>
 
 namespace runyard {
@@ -163,6 +164,44 @@ grpc::Status AttemptRpc::Report(grpc::ServerContext *c, const wire::TelemetryBat
           {t.sequence(), t.kind(), t.text(), t.name(), t.step(), t.value(), t.timestamp_ms()});
     reply->set_sequence(repository_.report(r->owner().attempt_id(), r->owner().generation(),
                                            r->owner().instance_id(), records));
+  });
+}
+grpc::Status AttemptRpc::Upload(grpc::ServerContext *context,
+                                grpc::ServerReader<wire::ArtifactChunk> *reader,
+                                wire::ArtifactReply *reply) {
+  return guard([&] {
+    wire::ArtifactChunk chunk;
+    if (!reader->Read(&chunk))
+      throw Error(ErrorCode::invalid, "artifact metadata required");
+    auto owner = chunk.owner();
+    authorize(context, owner);
+    validate_relative_path(chunk.path());
+    repository_.verify_owner(owner.attempt_id(), owner.generation(), owner.instance_id());
+    auto relative = chunk.path(), checksum = chunk.sha256();
+    struct Temporary {
+      std::filesystem::path path;
+      ~Temporary() {
+        std::error_code ignored;
+        std::filesystem::remove(path, ignored);
+      }
+    } temporary{artifacts_.temporary_path()};
+    std::ofstream output(temporary.path, std::ios::binary);
+    output.exceptions(std::ios::failbit | std::ios::badbit);
+    std::uint64_t size = 0;
+    do {
+      size += chunk.data().size();
+      if (size > 256 * 1024 * 1024)
+        throw Error(ErrorCode::exhausted, "artifact exceeds 256 MiB");
+      output.write(chunk.data().data(), static_cast<std::streamsize>(chunk.data().size()));
+    } while (reader->Read(&chunk));
+    output.close();
+    if (context->IsCancelled())
+      throw Error(ErrorCode::unavailable, "upload interrupted");
+    auto artifact = artifacts_.publish(owner.attempt_id(), owner.generation(), owner.instance_id(),
+                                       relative, checksum, temporary.path);
+    reply->set_id(artifact.id);
+    reply->set_sha256(artifact.sha256);
+    reply->set_size(artifact.size);
   });
 }
 std::unique_ptr<grpc::Server> start_grpc(const ServerConfig &config, AgentRpc &agent,

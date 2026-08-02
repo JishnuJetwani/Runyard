@@ -30,6 +30,11 @@ public:
   std::vector<Telemetry> telemetry(const std::string &, const std::string &, std::int64_t, int,
                                    const std::string &, const std::string &) override;
 
+  void verify_owner(const std::string &, int, const std::string &) override;
+  Artifact publish_artifact(const Artifact &, int, const std::string &) override;
+  std::vector<Artifact> artifacts(const std::string &, const std::string &) override;
+  Artifact get_artifact(const std::string &) override;
+
 private:
   ConnectionPool &pool_;
   Timing timing_;

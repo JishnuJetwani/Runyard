@@ -18,7 +18,7 @@ RUN cmake -S . -B /tmp/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
 FROM ubuntu:24.04@sha256:b3cc40b72b93588182b5410f723c7aaf142363311c2aa993d8a453ddcbb3ae15 AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libstdc++6 \
     && rm -rf /var/lib/apt/lists/* && useradd --uid 10001 --create-home runyard \
-    && mkdir /work && chown runyard:runyard /work
+    && mkdir -p /work/artifacts && chown -R runyard:runyard /work
 WORKDIR /work
 USER 10001:10001
 

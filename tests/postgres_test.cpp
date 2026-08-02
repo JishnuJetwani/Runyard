@@ -116,3 +116,21 @@ TEST_F(Database, TelemetryIsContiguousAndIdempotent) {
   EXPECT_THROW(store->finish(a.id, a.generation, "i", 0, "", 1), Error);
   EXPECT_NO_THROW(store->finish(a.id, a.generation, "i", 0, "", 2));
 }
+
+TEST_F(Database, ArtifactsArePublishedOnlyByTheLiveFinalizingAttempt) {
+  auto run = store->submit(spec(), random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  store->start(a.id, a.generation, "i");
+  Artifact artifact{random_id(), a.id, "result.json", "key", std::string(64, 'a'), 10};
+  EXPECT_THROW(store->publish_artifact(artifact, a.generation, "i"), Error);
+  store->begin_finalization(a.id, a.generation, "i");
+  EXPECT_EQ(store->publish_artifact(artifact, a.generation, "i").id, artifact.id);
+  EXPECT_EQ(store->publish_artifact(artifact, a.generation, "i").id, artifact.id);
+  EXPECT_EQ(store->artifacts(run.id, "").size(), 1);
+  auto changed = artifact;
+  changed.sha256 = std::string(64, 'b');
+  EXPECT_THROW(store->publish_artifact(changed, a.generation, "i"), Error);
+  store->finish(a.id, a.generation, "i", 0, "", 0);
+  EXPECT_THROW(store->publish_artifact(artifact, a.generation, "i"), Error);
+}

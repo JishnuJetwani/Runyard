@@ -123,6 +123,18 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
   client.begin_finalization();
   metrics.poll();
   auto sequence = reporter.flush(Steady::now() + std::chrono::seconds(30));
+  for (const auto &entry : std::filesystem::recursive_directory_iterator(root / "artifacts")) {
+    if (entry.is_symlink())
+      throw Error(ErrorCode::invalid, "artifact symlinks are not supported");
+    if (!entry.is_regular_file())
+      continue;
+    auto relative = std::filesystem::relative(entry.path(), root / "artifacts").generic_string();
+    if (relative == "_runyard" || relative.starts_with("_runyard/"))
+      throw Error(ErrorCode::invalid, "_runyard artifact namespace is reserved");
+    client.upload(entry.path().string(), relative);
+  }
+  client.upload((root / "stdout.log").string(), "_runyard/stdout.log");
+  client.upload((root / "stderr.log").string(), "_runyard/stderr.log");
   client.complete(*status, reason, sequence);
   return *status;
 }

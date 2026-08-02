@@ -34,10 +34,13 @@ int main(int argc, char **argv) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     });
-    runyard::Api api(runs, executor, config.owner_token, [&] { return leadership.ready(); });
+    runyard::FilesystemStore blobs(config.artifacts + "/objects");
+    runyard::ArtifactService artifacts(store, blobs, config.artifacts);
+    runyard::Api api(runs, artifacts, executor, config.owner_token,
+                     [&] { return leadership.ready(); });
     api.mount();
     runyard::AgentRpc agent_rpc(store, config, [&] { return leadership.ready(); });
-    runyard::AttemptRpc attempt_rpc(store, config, [&] { return leadership.ready(); });
+    runyard::AttemptRpc attempt_rpc(store, artifacts, config, [&] { return leadership.ready(); });
     auto grpc_server = runyard::start_grpc(config, agent_rpc, attempt_rpc);
     auto &http = drogon::app();
     http.setThreadNum(2).setClientMaxBodySize(1024 * 1024);

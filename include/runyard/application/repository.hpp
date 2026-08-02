@@ -5,6 +5,10 @@ namespace runyard {
 class Repository {
 public:
   virtual ~Repository() = default;
+  virtual void verify_owner(const std::string &, int, const std::string &) = 0;
+  virtual Artifact publish_artifact(const Artifact &, int, const std::string &) = 0;
+  virtual std::vector<Artifact> artifacts(const std::string &run, const std::string &attempt) = 0;
+  virtual Artifact get_artifact(const std::string &id) = 0;
   virtual std::int64_t report(const std::string &attempt, int generation,
                               const std::string &instance,
                               const std::vector<Telemetry> &records) = 0;

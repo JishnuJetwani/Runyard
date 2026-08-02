@@ -48,6 +48,11 @@ drogon::HttpResponsePtr json_response(const Json &body, int status, const std::s
 }
 void Api::dispatch(const drogon::HttpRequestPtr &request, HttpCallback callback,
                    std::function<Json()> work) {
+  dispatch_response(request, std::move(callback),
+                    [work = std::move(work)] { return json_response(work()); });
+}
+void Api::dispatch_response(const drogon::HttpRequestPtr &request, HttpCallback callback,
+                            std::function<drogon::HttpResponsePtr()> work) {
   auto id = random_id();
   if (!constant_equal(request->getHeader("authorization"), "Bearer " + token_)) {
     callback(json_response({{"error",
@@ -66,7 +71,9 @@ void Api::dispatch(const drogon::HttpRequestPtr &request, HttpCallback callback,
   }
   if (!executor_.submit([callback, work = std::move(work), id] {
         try {
-          callback(json_response(work(), 200, id));
+          auto response = work();
+          response->addHeader("X-Request-ID", id);
+          callback(response);
         } catch (const Error &e) {
           auto [status, code] = error_status(e.code());
           callback(json_response(
@@ -94,6 +101,24 @@ void Api::dispatch(const drogon::HttpRequestPtr &request, HttpCallback callback,
 }
 void Api::mount() {
   auto &app = drogon::app();
+  app.registerHandler(
+      "/v1/runs/{1}/artifacts",
+      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+        dispatch(r, std::move(cb), [this, r, id] {
+          return Json{{"items", encode_list(artifacts_.list(id, r->getParameter("attempt")))}};
+        });
+      },
+      {drogon::Get});
+  app.registerHandler("/v1/artifacts/{1}/download",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch_response(r, std::move(cb), [this, id] {
+                          return drogon::HttpResponse::newFileResponse(
+                              artifacts_.download(id).string(), "artifact.bin",
+                              drogon::CT_APPLICATION_OCTET_STREAM);
+                        });
+                      },
+                      {drogon::Get});
+
   for (const auto &kind : {std::string("logs"), std::string("metrics")}) {
     app.registerHandler(
         "/v1/runs/{1}/" + kind,
