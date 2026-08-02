@@ -30,7 +30,13 @@ int main(int argc, char **argv) {
     leadership.refresh();
     std::jthread monitor([&](std::stop_token stop) {
       while (!stop.stop_requested()) {
-        leadership.refresh();
+        if (leadership.refresh()) {
+          try {
+            store.recover();
+          } catch (const std::exception &e) {
+            spdlog::warn("recovery: {}", e.what());
+          }
+        }
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     });

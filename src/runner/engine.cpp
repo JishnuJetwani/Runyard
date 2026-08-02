@@ -135,7 +135,7 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
   }
   client.upload((root / "stdout.log").string(), "_runyard/stdout.log");
   client.upload((root / "stderr.log").string(), "_runyard/stderr.log");
-  client.complete(*status, reason, sequence);
+  client.complete(!reason.empty() && *status == 0 ? 143 : *status, reason, sequence);
   return *status;
 }
 } // namespace runyard

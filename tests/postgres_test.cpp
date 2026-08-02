@@ -134,3 +134,44 @@ TEST_F(Database, ArtifactsArePublishedOnlyByTheLiveFinalizingAttempt) {
   store->finish(a.id, a.generation, "i", 0, "", 0);
   EXPECT_THROW(store->publish_artifact(artifact, a.generation, "i"), Error);
 }
+
+TEST_F(Database, ExpiredAttemptRetriesWithNewIdentityAndRejectsOldWrites) {
+  auto run = store->submit(spec(), random_id(), "one");
+  store->register_worker("w1", "s", {1000, 512});
+  store->register_worker("w2", "s", {1000, 512});
+  auto first = store->assign("w1", "s")->attempt;
+  store->start(first.id, first.generation, "old");
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE attempts SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
+            pqxx::params{first.id});
+    tx.commit();
+  }
+  store->recover();
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::retry_wait);
+  EXPECT_THROW(store->heartbeat(first.id, first.generation, "old"), Error);
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE runs SET available_at=clock_timestamp() WHERE id=$1", pqxx::params{run.id});
+    tx.commit();
+  }
+  store->recover();
+  auto next = store->assign("w2", "s");
+  ASSERT_TRUE(next);
+  EXPECT_NE(next->attempt.id, first.id);
+  EXPECT_EQ(next->attempt.generation, 2);
+  EXPECT_THROW(store->start(first.id, first.generation, "old"), Error);
+}
+TEST_F(Database, ApplicationFailureRetriesOnlyWhenRequested) {
+  auto s = spec();
+  s.retry.retry_exit = true;
+  auto run = store->submit(s, random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  store->start(a.id, a.generation, "i");
+  store->finish(a.id, a.generation, "i", 7, "EXIT_ERROR", 0);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::retry_wait);
+  EXPECT_THROW(store->heartbeat(a.id, a.generation, "i"), Error);
+}

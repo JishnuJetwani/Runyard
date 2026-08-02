@@ -11,18 +11,21 @@ LockedAttempt lock_attempt(pqxx::work &tx, const std::string &id) {
   auto r = tx.exec("SELECT * FROM runs WHERE id=$1 FOR UPDATE",
                    pqxx::params{lookup[0][0].as<std::string>()});
   auto a = tx.exec("SELECT *,COALESCE(lease_until>clock_timestamp(),false) AS "
-                   "lease_valid,launch_deadline>clock_timestamp() AS launch_valid FROM attempts "
+                   "lease_valid,launch_deadline>clock_timestamp() AS launch_valid,CASE WHEN "
+                   "status='FINALIZING' THEN finalization_deadline>clock_timestamp() ELSE "
+                   "execution_deadline>clock_timestamp() END AS deadline_valid FROM attempts "
                    "WHERE id=$1 FOR UPDATE",
                    pqxx::params{id});
-  return {run(r[0]), attempt(a[0]), a[0]["lease_valid"].as<bool>(),
-          a[0]["launch_valid"].as<bool>()};
+  return {run(r[0]), attempt(a[0]), a[0]["lease_valid"].as<bool>(), a[0]["launch_valid"].as<bool>(),
+          a[0]["deadline_valid"].is_null() || a[0]["deadline_valid"].as<bool>()};
 }
 LockedAttempt owned(pqxx::work &tx, const std::string &id, int generation,
                     const std::string &instance) {
   auto a = lock_attempt(tx, id);
   if (a.run.active_attempt != id || a.run.generation != generation ||
       a.attempt.instance_id != instance || instance.empty() || !a.lease_valid ||
-      terminal(a.run.status))
+      !a.deadline_valid ||
+      (a.run.status != RunStatus::running && a.run.status != RunStatus::finalizing))
     throw Error(ErrorCode::stale, "attempt ownership expired or was replaced");
   return a;
 }
@@ -36,6 +39,9 @@ Assignment PostgresStore::start(const std::string &id, int generation,
   auto a = pg::lock_attempt(tx, id);
   if (a.run.active_attempt != id || a.run.generation != generation || terminal(a.run.status))
     throw Error(ErrorCode::stale, "attempt is no longer current");
+  if (a.run.status != RunStatus::starting && a.run.status != RunStatus::running &&
+      a.run.status != RunStatus::finalizing)
+    throw Error(ErrorCode::stale, "attempt is no longer executing");
   if (!a.attempt.instance_id.empty()) {
     if (a.attempt.instance_id != instance || !a.lease_valid)
       throw Error(ErrorCode::stale, "attempt already claimed or expired");
@@ -95,12 +101,19 @@ void PostgresStore::finish(const std::string &id, int generation, const std::str
     throw Error(ErrorCode::conflict, "telemetry must be acknowledged before completion");
   if (exit_code == 0 && a.run.status != RunStatus::finalizing)
     throw Error(ErrorCode::conflict, "successful completion requires finalization");
-  auto status = exit_code == 0 ? "SUCCEEDED" : "FAILED";
-  tx.exec("UPDATE attempts SET status=$2,exit_code=$3,reason=$4,finished_at=clock_timestamp() "
-          "WHERE id=$1",
-          pqxx::params{id, status, exit_code, reason});
-  tx.exec("UPDATE runs SET status=$2 WHERE id=$1", pqxx::params{a.run.id, status});
-  pg::event(tx, a.run.id, "completed", status);
+  if (exit_code == 0) {
+    tx.exec("UPDATE attempts SET "
+            "status='SUCCEEDED',exit_code=0,reason=$2,finished_at=clock_timestamp() WHERE id=$1",
+            pqxx::params{id, reason});
+    tx.exec("UPDATE runs SET status='SUCCEEDED' WHERE id=$1", pqxx::params{a.run.id});
+    pg::event(tx, a.run.id, "completed", "SUCCEEDED");
+  } else {
+    auto failure = reason == "TIMEOUT" ? Failure::timeout
+                   : (reason == "STOP_REQUESTED" || reason == "LEASE_LOST")
+                       ? Failure::infrastructure
+                       : Failure::exit_error;
+    pg::fail(tx, a, failure, reason.empty() ? "EXIT_ERROR" : reason, exit_code, timing_);
+  }
   tx.commit();
 }
 } // namespace runyard
