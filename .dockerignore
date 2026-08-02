@@ -1,0 +1,11 @@
+.git
+build
+.local
+.deps
+.secrets
+.env
+vcpkg_installed
+**/.terraform
+**/*.tfstate*
+**/*.tfplan
+**/*.auto.tfvars

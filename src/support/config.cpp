@@ -36,6 +36,9 @@ ServerConfig ServerConfig::load() {
   c.owner_token = env("RUNYARD_OWNER_TOKEN");
   c.worker_token = env("RUNYARD_WORKER_TOKEN");
   c.signing_key = env("RUNYARD_SIGNING_KEY");
+  if (c.worker_token.size() < 16 || c.signing_key.size() < 32)
+    throw Error(ErrorCode::invalid,
+                "worker token (16+ characters) and signing key (32+ characters) required");
   c.development = env("RUNYARD_PROFILE") == "development";
   c.host = env("RUNYARD_BIND", "127.0.0.1");
   c.http_port = env_int("RUNYARD_HTTP_PORT", 8080);

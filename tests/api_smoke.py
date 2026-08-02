@@ -11,7 +11,8 @@ import uuid
 
 binary = pathlib.Path(sys.argv[1]).resolve()
 environment = dict(os.environ, RUNYARD_OWNER_TOKEN="runyard-api-test-owner", RUNYARD_PROFILE="development",
-                   RUNYARD_HTTP_PORT="18080", RUNYARD_GRPC_PORT="19090")
+                   RUNYARD_HTTP_PORT="18080", RUNYARD_GRPC_PORT="19090",
+                   RUNYARD_WORKER_TOKEN="runyard-api-test-worker", RUNYARD_SIGNING_KEY="runyard-test-signing-key-at-least-32-characters")
 environment["RUNYARD_DATABASE_URL"] = os.environ["RUNYARD_TEST_DATABASE"]
 base = "http://127.0.0.1:18080"
 

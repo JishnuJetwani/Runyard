@@ -17,6 +17,13 @@ public:
     return repository_.events(id, after, limit);
   }
 
+  std::vector<Telemetry> telemetry(const std::string &run, const std::string &attempt,
+                                   std::int64_t after, int limit, const std::string &kind,
+                                   const std::string &name) {
+    repository_.get_run(run);
+    return repository_.telemetry(run, attempt, after, limit, kind, name);
+  }
+
 private:
   Repository &repository_;
 };
