@@ -128,3 +128,42 @@ std::vector<Attempt> PostgresStore::cleanup(const std::string &worker, const std
   return result;
 }
 } // namespace runyard
+
+namespace runyard {
+void PostgresStore::drain_worker(const std::string &id, bool drained) {
+  auto c = pool_.acquire();
+  pqxx::work tx(c.get());
+  auto rows =
+      tx.exec("UPDATE workers SET drained=$2 WHERE id=$1 RETURNING id", pqxx::params{id, drained});
+  if (rows.empty())
+    throw Error(ErrorCode::not_found, "worker not found");
+  tx.commit();
+}
+std::vector<std::string> PostgresStore::reconcile(const std::string &worker,
+                                                  const std::string &session,
+                                                  const std::vector<std::string> &observed) {
+  if (observed.size() > 1000)
+    throw Error(ErrorCode::invalid, "inventory exceeds 1000 containers");
+  auto c = pool_.acquire();
+  pqxx::work tx(c.get());
+  pg::require_worker(tx, worker, session);
+  std::vector<std::string> stop;
+  for (const auto &id : observed) {
+    auto rows = tx.exec("SELECT a.worker_id,a.status,r.active_attempt FROM attempts a JOIN runs r "
+                        "ON r.id=a.run_id WHERE a.id=$1",
+                        pqxx::params{id});
+    if (rows.empty()) {
+      stop.push_back(id);
+      continue;
+    }
+    if (pg::text(rows[0]["worker_id"]) != worker)
+      throw Error(ErrorCode::unauthorized, "inventory contains another worker's attempt");
+    auto status = pg::text(rows[0]["status"]);
+    if (pg::text(rows[0]["active_attempt"]) != id ||
+        (status != "STARTING" && status != "RUNNING" && status != "FINALIZING"))
+      stop.push_back(id);
+  }
+  tx.commit();
+  return stop;
+}
+} // namespace runyard

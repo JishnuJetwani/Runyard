@@ -101,6 +101,21 @@ void Api::dispatch_response(const drogon::HttpRequestPtr &request, HttpCallback 
 }
 void Api::mount() {
   auto &app = drogon::app();
+  app.registerHandler("/v1/workers",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb) {
+                        dispatch(r, std::move(cb),
+                                 [this] { return Json{{"items", encode_list(runs_.workers())}}; });
+                      },
+                      {drogon::Get});
+  app.registerHandler("/v1/workers/{1}/drain",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch(r, std::move(cb), [this, r, id] {
+                          auto body = Json::parse(r->body());
+                          runs_.drain_worker(id, body.value("drained", true));
+                          return Json{{"id", id}, {"drained", body.value("drained", true)}};
+                        });
+                      },
+                      {drogon::Post});
   app.registerHandler("/v1/runs/{1}/cancel",
                       [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
                         dispatch(r, std::move(cb), [this, id] { return encode(runs_.cancel(id)); });

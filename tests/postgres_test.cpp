@@ -217,3 +217,19 @@ TEST_F(Database, ExecutionTimeoutCannotBeExtendedByHeartbeat) {
   EXPECT_EQ(store->get_run(run.id).status, RunStatus::failed);
   EXPECT_EQ(store->attempts(run.id)[0].reason, "TIMEOUT");
 }
+
+TEST_F(Database, AgentRestartPreservesLiveOwnershipAndDrainStopsNewWork) {
+  auto run = store->submit(spec(), random_id(), "one");
+  store->register_worker("w", "old", {2000, 1024});
+  auto a = store->assign("w", "old")->attempt;
+  store->runtime_report("w", "old", a.id, "container", false);
+  store->start(a.id, a.generation, "runner");
+  store->register_worker("w", "new", {2000, 1024});
+  store->drain_worker("w", true);
+  store->submit(spec(), random_id(), "two");
+  EXPECT_FALSE(store->assign("w", "new"));
+  EXPECT_NO_THROW(store->heartbeat(a.id, a.generation, "runner"));
+  EXPECT_TRUE(store->reconcile("w", "new", {a.id}).empty());
+  store->cancel(run.id);
+  EXPECT_EQ(store->reconcile("w", "new", {a.id, "unknown"}).size(), 2);
+}

@@ -82,3 +82,19 @@ void DockerBackend::remove(const std::string &id) {
   expect(http_.request("DELETE", endpoint(path + "?force=true&v=true")), {204, 404});
 }
 } // namespace runyard
+
+namespace runyard {
+std::vector<std::string> DockerBackend::inventory() {
+  auto filter = Json{{"label", {"runyard.worker=" + config_.worker}}}.dump();
+  auto response = http_.request(
+      "GET", endpoint("/containers/json?all=true&filters=" + HttpClient::escape(filter)));
+  expect(response, {200});
+  std::vector<std::string> ids;
+  for (const auto &container : Json::parse(response.body)) {
+    auto id = container["Labels"].value("runyard.attempt", "");
+    if (!id.empty())
+      ids.push_back(id);
+  }
+  return ids;
+}
+} // namespace runyard

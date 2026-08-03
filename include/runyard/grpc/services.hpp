@@ -16,6 +16,8 @@ class AgentRpc final : public wire::AgentService::Service {
 public:
   AgentRpc(Repository &repository, const ServerConfig &config, std::function<bool()> ready)
       : repository_(repository), config_(config), ready_(std::move(ready)) {}
+  grpc::Status Reconcile(grpc::ServerContext *, const wire::Inventory *,
+                         wire::Decisions *) override;
   grpc::Status Register(grpc::ServerContext *, const wire::RegisterRequest *,
                         wire::Empty *) override;
   grpc::Status Heartbeat(grpc::ServerContext *, const wire::WorkerIdentity *,

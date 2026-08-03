@@ -36,6 +36,9 @@ public:
   Artifact get_artifact(const std::string &) override;
 
   void recover() override;
+  void drain_worker(const std::string &, bool) override;
+  std::vector<std::string> reconcile(const std::string &, const std::string &,
+                                     const std::vector<std::string> &) override;
   Run cancel(const std::string &) override;
 
 private:
