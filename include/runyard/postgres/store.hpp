@@ -36,6 +36,7 @@ public:
   Artifact get_artifact(const std::string &) override;
 
   void recover() override;
+  Run cancel(const std::string &) override;
 
 private:
   ConnectionPool &pool_;

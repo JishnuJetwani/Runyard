@@ -11,6 +11,7 @@ class Executor {
 public:
   explicit Executor(std::size_t threads = 8, std::size_t capacity = 256);
   ~Executor();
+  void shutdown();
   bool submit(std::function<void()> task);
 
 private:

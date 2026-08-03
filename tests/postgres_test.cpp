@@ -175,3 +175,45 @@ TEST_F(Database, ApplicationFailureRetriesOnlyWhenRequested) {
   EXPECT_EQ(store->get_run(run.id).status, RunStatus::retry_wait);
   EXPECT_THROW(store->heartbeat(a.id, a.generation, "i"), Error);
 }
+
+TEST_F(Database, CancellationFencesResultsAndRetainsPendingCleanup) {
+  auto run = store->submit(spec(), random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  store->start(a.id, a.generation, "i");
+  EXPECT_EQ(store->cancel(run.id).status, RunStatus::cancelled);
+  EXPECT_EQ(store->cancel(run.id).status, RunStatus::cancelled);
+  EXPECT_THROW(store->heartbeat(a.id, a.generation, "i"), Error);
+  EXPECT_THROW(store->finish(a.id, a.generation, "i", 0, "", 0), Error);
+  ASSERT_EQ(store->cleanup("w", "s").size(), 1);
+  EXPECT_EQ(store->attempts(run.id)[0].cleanup_status, "PENDING");
+  store->runtime_report("w", "s", a.id, "", true);
+  EXPECT_EQ(store->attempts(run.id)[0].cleanup_status, "DONE");
+}
+TEST_F(Database, CancellationCannotOverwriteCommittedSuccess) {
+  auto run = store->submit(spec(), random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  store->start(a.id, a.generation, "i");
+  store->begin_finalization(a.id, a.generation, "i");
+  store->finish(a.id, a.generation, "i", 0, "", 0);
+  EXPECT_EQ(store->cancel(run.id).status, RunStatus::succeeded);
+}
+TEST_F(Database, ExecutionTimeoutCannotBeExtendedByHeartbeat) {
+  auto run = store->submit(spec(), random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  store->start(a.id, a.generation, "i");
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec(
+        "UPDATE attempts SET execution_deadline=clock_timestamp()-interval '1 second' WHERE id=$1",
+        pqxx::params{a.id});
+    tx.commit();
+  }
+  EXPECT_THROW(store->heartbeat(a.id, a.generation, "i"), Error);
+  store->recover();
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::failed);
+  EXPECT_EQ(store->attempts(run.id)[0].reason, "TIMEOUT");
+}

@@ -6,6 +6,7 @@ class Repository {
 public:
   virtual ~Repository() = default;
   virtual void recover() = 0;
+  virtual Run cancel(const std::string &id) = 0;
   virtual void verify_owner(const std::string &, int, const std::string &) = 0;
   virtual Artifact publish_artifact(const Artifact &, int, const std::string &) = 0;
   virtual std::vector<Artifact> artifacts(const std::string &run, const std::string &attempt) = 0;

@@ -21,7 +21,8 @@ Executor::Executor(std::size_t threads, std::size_t capacity) : capacity_(capaci
       }
     });
 }
-Executor::~Executor() {
+Executor::~Executor() { shutdown(); }
+void Executor::shutdown() {
   {
     std::lock_guard lock(mutex_);
     stopping_ = true;

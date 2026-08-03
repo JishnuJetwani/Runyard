@@ -101,6 +101,11 @@ void Api::dispatch_response(const drogon::HttpRequestPtr &request, HttpCallback 
 }
 void Api::mount() {
   auto &app = drogon::app();
+  app.registerHandler("/v1/runs/{1}/cancel",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch(r, std::move(cb), [this, id] { return encode(runs_.cancel(id)); });
+                      },
+                      {drogon::Post});
   app.registerHandler(
       "/v1/runs/{1}/artifacts",
       [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
