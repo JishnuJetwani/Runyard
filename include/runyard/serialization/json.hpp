@@ -5,6 +5,9 @@
 namespace runyard {
 using Json = nlohmann::json;
 Json encode(const RunSpec &value);
+Json encode(const SweepSpec &value);
+Json encode(const Sweep &value);
+SweepSpec decode_sweep(const Json &value);
 Json encode(const Run &value);
 Json encode(const Attempt &value);
 Json encode(const Worker &value);

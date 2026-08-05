@@ -137,6 +137,24 @@ std::vector<RunSpec> expand_sweep(const RunSpec &base,
     require(values.size() <= 1000 / count, "sweep exceeds 1000 runs");
     count *= values.size();
   }
+  std::size_t bytes = 4096 + base.name.size() + base.image.size();
+  for (const auto &arg : base.command)
+    bytes += arg.size();
+  for (const auto &[key, value] : base.environment)
+    bytes += key.size() + value.size();
+  for (const auto &[key, value] : base.parameters) {
+    bytes += key.size() + 32;
+    if (auto text = std::get_if<std::string>(&value))
+      bytes += text->size();
+  }
+  for (const auto &[key, values] : grid) {
+    std::size_t largest = 0;
+    for (const auto &value : values)
+      if (auto text = std::get_if<std::string>(&value))
+        largest = std::max(largest, text->size());
+    bytes += key.size() + largest + 32;
+  }
+  require(bytes <= 16 * 1024 * 1024 / count, "expanded sweep exceeds 16 MiB");
   std::vector<RunSpec> result{base};
   for (const auto &[key, values] : grid) {
     std::vector<RunSpec> expanded;

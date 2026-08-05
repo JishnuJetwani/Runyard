@@ -36,6 +36,10 @@ public:
   Artifact get_artifact(const std::string &) override;
 
   void recover() override;
+  Sweep submit_sweep(const SweepSpec &, const std::vector<RunSpec> &, const std::string &,
+                     const std::string &) override;
+  Sweep get_sweep(const std::string &) override;
+  Run rerun(const std::string &, const std::string &) override;
   void drain_worker(const std::string &, bool) override;
   std::vector<std::string> reconcile(const std::string &, const std::string &,
                                      const std::vector<std::string> &) override;

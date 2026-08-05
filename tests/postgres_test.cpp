@@ -233,3 +233,27 @@ TEST_F(Database, AgentRestartPreservesLiveOwnershipAndDrainStopsNewWork) {
   store->cancel(run.id);
   EXPECT_EQ(store->reconcile("w", "new", {a.id, "unknown"}).size(), 2);
 }
+
+TEST_F(Database, SweepIsAtomicIdempotentAndRetainsResolvedParameters) {
+  SweepSpec sweep{spec(), {{"seed", {std::int64_t{1}, std::int64_t{2}, std::int64_t{3}}}}};
+  auto expanded = expand_sweep(sweep.base, sweep.grid);
+  auto key = random_id();
+  auto result = store->submit_sweep(sweep, expanded, key, "hash");
+  ASSERT_EQ(result.run_ids.size(), 3);
+  EXPECT_EQ(store->submit_sweep(sweep, expanded, key, "hash").id, result.id);
+  EXPECT_THROW(store->submit_sweep(sweep, expanded, key, "different"), Error);
+  for (auto &id : result.run_ids)
+    EXPECT_EQ(store->get_run(id).sweep_id, result.id);
+}
+TEST_F(Database, RerunPreservesTheOriginalHistory) {
+  auto original = store->submit(spec(), random_id(), "one");
+  EXPECT_THROW(store->rerun(original.id, random_id()), Error);
+  store->cancel(original.id);
+  auto key = random_id();
+  auto next = store->rerun(original.id, key);
+  EXPECT_NE(next.id, original.id);
+  EXPECT_EQ(next.parent_run_id, original.id);
+  EXPECT_EQ(next.status, RunStatus::queued);
+  EXPECT_EQ(store->rerun(original.id, key).id, next.id);
+  EXPECT_EQ(store->get_run(original.id).status, RunStatus::cancelled);
+}
