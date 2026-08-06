@@ -35,6 +35,16 @@ public:
   std::vector<Artifact> artifacts(const std::string &, const std::string &) override;
   Artifact get_artifact(const std::string &) override;
 
+  void recover() override;
+  Sweep submit_sweep(const SweepSpec &, const std::vector<RunSpec> &, const std::string &,
+                     const std::string &) override;
+  Sweep get_sweep(const std::string &) override;
+  Run rerun(const std::string &, const std::string &) override;
+  void drain_worker(const std::string &, bool) override;
+  std::vector<std::string> reconcile(const std::string &, const std::string &,
+                                     const std::vector<std::string> &) override;
+  Run cancel(const std::string &) override;
+
 private:
   ConnectionPool &pool_;
   Timing timing_;
@@ -52,10 +62,13 @@ struct LockedAttempt {
   Attempt attempt;
   bool lease_valid{};
   bool launch_valid{};
+  bool deadline_valid{};
 };
 LockedAttempt lock_attempt(pqxx::work &tx, const std::string &id);
 LockedAttempt owned(pqxx::work &tx, const std::string &id, int generation,
                     const std::string &instance);
+void fail(pqxx::work &, const LockedAttempt &, Failure, const std::string &, std::optional<int>,
+          const Timing &);
 void require_worker(pqxx::work &tx, const std::string &id, const std::string &session);
 } // namespace pg
 } // namespace runyard

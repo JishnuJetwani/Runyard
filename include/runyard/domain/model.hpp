@@ -56,6 +56,18 @@ struct RunSpec {
   std::string source_revision;
 };
 
+using ParameterGrid = std::map<std::string, std::vector<Scalar>>;
+struct SweepSpec {
+  RunSpec base;
+  ParameterGrid grid;
+};
+struct Sweep {
+  std::string id;
+  SweepSpec spec;
+  std::vector<std::string> run_ids;
+  std::string created_at;
+};
+
 struct Run {
   std::string id;
   RunSpec spec;

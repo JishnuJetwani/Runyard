@@ -101,6 +101,48 @@ void Api::dispatch_response(const drogon::HttpRequestPtr &request, HttpCallback 
 }
 void Api::mount() {
   auto &app = drogon::app();
+  app.registerHandler("/v1/sweeps",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb) {
+                        dispatch(r, std::move(cb), [this, r] {
+                          auto spec = decode_sweep(Json::parse(r->body()));
+                          return encode(runs_.sweep(spec, r->getHeader("idempotency-key"),
+                                                    sha256(encode(spec).dump())));
+                        });
+                      },
+                      {drogon::Post});
+  app.registerHandler("/v1/sweeps/{1}",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch(r, std::move(cb),
+                                 [this, id] { return encode(runs_.get_sweep(id)); });
+                      },
+                      {drogon::Get});
+  app.registerHandler("/v1/runs/{1}/rerun",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch(r, std::move(cb), [this, r, id] {
+                          return encode(runs_.rerun(id, r->getHeader("idempotency-key")));
+                        });
+                      },
+                      {drogon::Post});
+  app.registerHandler("/v1/workers",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb) {
+                        dispatch(r, std::move(cb),
+                                 [this] { return Json{{"items", encode_list(runs_.workers())}}; });
+                      },
+                      {drogon::Get});
+  app.registerHandler("/v1/workers/{1}/drain",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch(r, std::move(cb), [this, r, id] {
+                          auto body = Json::parse(r->body());
+                          runs_.drain_worker(id, body.value("drained", true));
+                          return Json{{"id", id}, {"drained", body.value("drained", true)}};
+                        });
+                      },
+                      {drogon::Post});
+  app.registerHandler("/v1/runs/{1}/cancel",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch(r, std::move(cb), [this, id] { return encode(runs_.cancel(id)); });
+                      },
+                      {drogon::Post});
   app.registerHandler(
       "/v1/runs/{1}/artifacts",
       [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
@@ -109,6 +151,12 @@ void Api::mount() {
         });
       },
       {drogon::Get});
+  app.registerHandler("/v1/artifacts/{1}",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch(r, std::move(cb),
+                                 [this, id] { return encode(artifacts_.get(id)); });
+                      },
+                      {drogon::Get});
   app.registerHandler("/v1/artifacts/{1}/download",
                       [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
                         dispatch_response(r, std::move(cb), [this, id] {

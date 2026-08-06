@@ -9,6 +9,7 @@ struct Launch {
 class ExecutionBackend {
 public:
   virtual ~ExecutionBackend() = default;
+  virtual std::vector<std::string> inventory() = 0;
   virtual std::string ensure(const Launch &launch) = 0;
   virtual void remove(const std::string &attempt_id) = 0;
 };

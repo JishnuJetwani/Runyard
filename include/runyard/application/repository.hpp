@@ -5,6 +5,15 @@ namespace runyard {
 class Repository {
 public:
   virtual ~Repository() = default;
+  virtual void recover() = 0;
+  virtual Sweep submit_sweep(const SweepSpec &, const std::vector<RunSpec> &,
+                             const std::string &key, const std::string &fingerprint) = 0;
+  virtual Sweep get_sweep(const std::string &id) = 0;
+  virtual Run rerun(const std::string &id, const std::string &key) = 0;
+  virtual void drain_worker(const std::string &id, bool drained) = 0;
+  virtual std::vector<std::string> reconcile(const std::string &worker, const std::string &session,
+                                             const std::vector<std::string> &observed) = 0;
+  virtual Run cancel(const std::string &id) = 0;
   virtual void verify_owner(const std::string &, int, const std::string &) = 0;
   virtual Artifact publish_artifact(const Artifact &, int, const std::string &) = 0;
   virtual std::vector<Artifact> artifacts(const std::string &run, const std::string &attempt) = 0;

@@ -61,6 +61,16 @@ void run_agent(const AgentConfig &config, ExecutionBackend &backend,
   };
   while (!stop_requested() && !stale) {
     try {
+      wire::Inventory inventory;
+      *inventory.mutable_worker() = identity;
+      for (const auto &id : backend.inventory())
+        inventory.add_attempts(id);
+      grpc::ClientContext inventory_context;
+      prepare(inventory_context, config.token);
+      wire::Decisions decisions;
+      check_rpc(stub->Reconcile(&inventory_context, inventory, &decisions));
+      for (const auto &id : decisions.stop_attempts())
+        backend.remove(id);
       grpc::ClientContext context;
       prepare(context, config.token);
       wire::WorkReply reply;

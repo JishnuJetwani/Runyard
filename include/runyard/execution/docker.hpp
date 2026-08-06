@@ -17,6 +17,7 @@ public:
   explicit DockerBackend(DockerConfig config)
       : config_(std::move(config)), http_({.unix_socket = config_.socket, .timeout_seconds = 300}) {
   }
+  std::vector<std::string> inventory() override;
   std::string ensure(const Launch &) override;
   void remove(const std::string &attempt_id) override;
 

@@ -136,10 +136,13 @@ void MetricReader::poll() {
   if (records_ >= 100000)
     return;
   input_.clear();
+  // Reposition also clears the file buffer EOF state when the producer appends.
+  input_.seekg(offset_);
   std::array<char, 4096> buffer{};
   for (int batch = 0; batch < 16; ++batch) {
     input_.read(buffer.data(), buffer.size());
     auto bytes = input_.gcount();
+    offset_ += bytes;
     for (std::streamsize i = 0; i < bytes; ++i) {
       char ch = buffer[static_cast<std::size_t>(i)];
       if (ch == '\n') {

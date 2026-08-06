@@ -148,3 +148,35 @@ Json encode(const Event &e) {
           {"created_at", e.created_at}};
 }
 } // namespace runyard
+
+namespace runyard {
+Json encode(const SweepSpec &spec) {
+  Json grid = Json::object();
+  for (const auto &[key, values] : spec.grid) {
+    grid[key] = Json::array();
+    for (const auto &value : values)
+      std::visit([&](const auto &v) { grid[key].push_back(v); }, value);
+  }
+  return {{"base", encode(spec.base)}, {"grid", grid}};
+}
+Json encode(const Sweep &s) {
+  return {
+      {"id", s.id}, {"spec", encode(s.spec)}, {"run_ids", s.run_ids}, {"created_at", s.created_at}};
+}
+SweepSpec decode_sweep(const Json &j) {
+  SweepSpec spec;
+  spec.base = decode_spec(j.at("base"));
+  auto grid = j.at("grid");
+  if (!grid.is_object())
+    throw Error(ErrorCode::invalid, "grid must be an object");
+  for (auto it = grid.begin(); it != grid.end(); ++it) {
+    if (!it.value().is_array())
+      throw Error(ErrorCode::invalid, "grid dimensions must be arrays");
+    for (const auto &value : it.value())
+      spec.grid[it.key()].push_back(decode_scalar(value));
+    if (it.value().empty())
+      throw Error(ErrorCode::invalid, "grid dimensions cannot be empty");
+  }
+  return spec;
+}
+} // namespace runyard

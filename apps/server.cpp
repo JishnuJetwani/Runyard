@@ -30,7 +30,13 @@ int main(int argc, char **argv) {
     leadership.refresh();
     std::jthread monitor([&](std::stop_token stop) {
       while (!stop.stop_requested()) {
-        leadership.refresh();
+        if (leadership.refresh()) {
+          try {
+            store.recover();
+          } catch (const std::exception &e) {
+            spdlog::warn("recovery: {}", e.what());
+          }
+        }
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     });
@@ -49,6 +55,10 @@ int main(int argc, char **argv) {
     spdlog::info("coordinator HTTP port {} mode {}", config.http_port, config.mode);
     http.run();
     grpc_server->Shutdown(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    grpc_server->Wait();
+    monitor.request_stop();
+    monitor.join();
+    executor.shutdown();
     return 0;
   } catch (const std::exception &e) {
     spdlog::error("{}", e.what());

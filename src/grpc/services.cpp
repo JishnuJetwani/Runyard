@@ -75,6 +75,15 @@ void AgentRpc::authorize(grpc::ServerContext *context) {
   if (config_.mode != "docker")
     throw Error(ErrorCode::invalid, "Docker agents are disabled in Kubernetes mode");
 }
+grpc::Status AgentRpc::Reconcile(grpc::ServerContext *c, const wire::Inventory *r,
+                                 wire::Decisions *reply) {
+  return guard([&] {
+    authorize(c);
+    std::vector<std::string> ids(r->attempts().begin(), r->attempts().end());
+    for (const auto &id : repository_.reconcile(r->worker().id(), r->worker().session(), ids))
+      reply->add_stop_attempts(id);
+  });
+}
 grpc::Status AgentRpc::Register(grpc::ServerContext *c, const wire::RegisterRequest *r,
                                 wire::Empty *) {
   return guard([&] {
