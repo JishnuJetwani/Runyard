@@ -151,6 +151,12 @@ void Api::mount() {
         });
       },
       {drogon::Get});
+  app.registerHandler("/v1/artifacts/{1}",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
+                        dispatch(r, std::move(cb),
+                                 [this, id] { return encode(artifacts_.get(id)); });
+                      },
+                      {drogon::Get});
   app.registerHandler("/v1/artifacts/{1}/download",
                       [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb, std::string id) {
                         dispatch_response(r, std::move(cb), [this, id] {

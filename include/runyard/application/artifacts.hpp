@@ -14,6 +14,7 @@ public:
                    const std::string &relative, const std::string &expected_hash,
                    const std::filesystem::path &temporary);
   std::vector<Artifact> list(const std::string &run, const std::string &attempt);
+  Artifact get(const std::string &id) { return repository_.get_artifact(id); }
   std::filesystem::path download(const std::string &id);
 
 private:

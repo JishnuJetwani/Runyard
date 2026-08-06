@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <map>
 #include <string>
 
@@ -20,6 +21,7 @@ public:
   HttpResult request(const std::string &method, const std::string &url,
                      const std::string &body = "",
                      const std::map<std::string, std::string> &headers = {}) const;
+  void download(const std::string &url, const std::string &file, std::uint64_t expected_size) const;
   static std::string escape(const std::string &value);
 
 private:

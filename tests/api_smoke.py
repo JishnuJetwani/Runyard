@@ -80,7 +80,19 @@ with open(".local/api-smoke.log", "w") as log:
             spec_file.write_text(json.dumps(spec))
             result = subprocess.check_output([str(cli), "--json", "submit", str(spec_file)], env=client_env)
             assert json.loads(result)["spec"]["name"] == spec["name"]
-            print("CLI smoke passed: submission and inspection through public HTTP")
+            def command(*args):
+                return json.loads(subprocess.check_output([str(cli), "--json", *args], env=client_env))
+            assert command("cancel", run["id"])["status"] == "CANCELLED"
+            rerun = command("rerun", run["id"])
+            assert rerun["parent_run_id"] == run["id"]
+            sweep_file = pathlib.Path(".local/sweep-smoke.json")
+            sweep_file.write_text(json.dumps({"base": spec, "grid": {"seed": [1, 2, 3]}}))
+            sweep = command("sweep", str(sweep_file))
+            assert len(sweep["run_ids"]) == 3
+            assert command("sweeps", "get", sweep["id"])["id"] == sweep["id"]
+            assert "items" in command("workers", "list")
+            assert command("artifacts", "list", run["id"])["items"] == []
+            print("CLI smoke passed: submission, inspection, cancellation, rerun, sweep, workers, artifacts")
         print("API smoke passed: auth, validation, idempotency, event cursor, restart durability")
     finally:
         if process.poll() is None:

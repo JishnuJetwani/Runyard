@@ -73,3 +73,50 @@ std::string HttpClient::escape(const std::string &value) {
   return result;
 }
 } // namespace runyard
+
+namespace runyard {
+namespace {
+struct Download {
+  FILE *file;
+  std::uint64_t remaining;
+};
+std::size_t write_file(char *data, std::size_t size, std::size_t count, void *opaque) {
+  auto &download = *static_cast<Download *>(opaque);
+  auto bytes = size * count;
+  if (bytes > download.remaining)
+    return 0;
+  auto written = std::fwrite(data, 1, bytes, download.file);
+  download.remaining -= written;
+  return written;
+}
+} // namespace
+void HttpClient::download(const std::string &url, const std::string &file,
+                          std::uint64_t expected_size) const {
+  initialize();
+  std::unique_ptr<FILE, decltype(&std::fclose)> output(std::fopen(file.c_str(), "wbx"),
+                                                       std::fclose);
+  if (!output)
+    throw Error(ErrorCode::invalid, "cannot create download file");
+  std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> handle(curl_easy_init(), curl_easy_cleanup);
+  if (!handle)
+    throw Error(ErrorCode::unavailable, "HTTP allocation failed");
+  auto *curl = handle.get();
+  Download download{output.get(), expected_size};
+  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+  curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+  curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300L);
+  curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_file);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &download);
+  if (!options_.ca_file.empty())
+    curl_easy_setopt(curl, CURLOPT_CAINFO, options_.ca_file.c_str());
+  auto authorization = "Authorization: Bearer " + options_.bearer;
+  std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)> headers(
+      curl_slist_append(nullptr, authorization.c_str()), curl_slist_free_all);
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers.get());
+  auto code = curl_easy_perform(curl);
+  if (code != CURLE_OK || download.remaining || std::fflush(output.get()) != 0)
+    throw Error(ErrorCode::unavailable, "artifact download incomplete");
+}
+} // namespace runyard
