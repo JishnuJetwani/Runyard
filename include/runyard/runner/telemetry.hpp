@@ -35,6 +35,7 @@ public:
 
 private:
   std::ifstream input_;
+  std::streamoff offset_{};
   Reporter &reporter_;
   std::string partial_;
   bool oversized_{};
