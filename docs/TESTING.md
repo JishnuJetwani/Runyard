@@ -35,6 +35,12 @@ The protocol harness starts the coordinator and runner locally and exercises
 telemetry delivery, stale ownership, and artifact transfer. Adapter fault tests
 use controlled Docker and Kubernetes HTTP responses to check reconciliation.
 
+## S3
+
+`RUNYARD_BUILD_DIR=build/vcpkg scripts/test-s3.sh` starts the pinned Moto emulator
+and runs the S3 adapter tests. These check object operations and failures;
+deployment permissions and connectivity require checks against the target service.
+
 ## Container execution
 
 The execution harness runs fixture experiments, interrupts attempts, restarts the

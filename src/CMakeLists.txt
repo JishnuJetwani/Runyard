@@ -70,3 +70,8 @@ target_link_libraries(runyard_storage PUBLIC runyard_support)
 target_link_libraries(runyard_application PUBLIC runyard_support)
 target_link_libraries(runyard_rpc PUBLIC runyard_application)
 target_link_libraries(runyard-server PRIVATE runyard_storage)
+
+find_package(AWSSDK CONFIG REQUIRED COMPONENTS s3 sts)
+add_library(runyard_s3 storage/s3.cpp)
+target_link_libraries(runyard_s3 PUBLIC runyard_storage ${AWSSDK_LINK_LIBRARIES})
+target_link_libraries(runyard-server PRIVATE runyard_s3)

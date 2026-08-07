@@ -37,6 +37,10 @@ std::filesystem::path ArtifactService::download(const std::string &id) {
   if (!std::filesystem::exists(path)) {
     std::filesystem::create_directories(path.parent_path());
     blobs_.get(artifact.storage_key, path);
+    if (sha256_file(path.string()) != artifact.sha256) {
+      std::filesystem::remove(path);
+      throw Error(ErrorCode::unavailable, "stored artifact checksum mismatch");
+    }
   }
   return path;
 }

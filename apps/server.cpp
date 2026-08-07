@@ -3,6 +3,7 @@
 #include "runyard/http/api.hpp"
 #include "runyard/postgres/leadership.hpp"
 #include "runyard/postgres/store.hpp"
+#include "runyard/storage/s3.hpp"
 #include "runyard/support/config.hpp"
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
@@ -40,8 +41,17 @@ int main(int argc, char **argv) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     });
-    runyard::FilesystemStore blobs(config.artifacts + "/objects");
-    runyard::ArtifactService artifacts(store, blobs, config.artifacts);
+    std::unique_ptr<runyard::BlobStore> blobs;
+    auto storage = runyard::env("RUNYARD_STORAGE", "filesystem");
+    if (storage == "s3")
+      blobs = std::make_unique<runyard::S3Store>(runyard::S3Config{
+          runyard::env("RUNYARD_S3_BUCKET"), runyard::env("AWS_REGION", "us-east-1"),
+          runyard::env("RUNYARD_S3_ENDPOINT"), config.development});
+    else if (storage == "filesystem")
+      blobs = std::make_unique<runyard::FilesystemStore>(config.artifacts + "/objects");
+    else
+      throw std::runtime_error("storage must be filesystem or s3");
+    runyard::ArtifactService artifacts(store, *blobs, config.artifacts);
     runyard::Api api(runs, artifacts, executor, config.owner_token,
                      [&] { return leadership.ready(); });
     api.mount();
