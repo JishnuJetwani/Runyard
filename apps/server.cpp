@@ -1,4 +1,6 @@
+#include "runyard/application/kubernetes.hpp"
 #include "runyard/application/runs.hpp"
+#include "runyard/execution/kubernetes.hpp"
 #include "runyard/grpc/services.hpp"
 #include "runyard/http/api.hpp"
 #include "runyard/postgres/leadership.hpp"
@@ -29,13 +31,40 @@ int main(int argc, char **argv) {
     runyard::Executor executor;
     runyard::Leadership leadership(config.database);
     leadership.refresh();
+    std::unique_ptr<runyard::KubernetesBackend> kubernetes_backend;
+    std::unique_ptr<runyard::KubernetesController> kubernetes_controller;
+    if (config.mode == "kubernetes") {
+      runyard::KubernetesConfig k;
+      k.api = runyard::env("RUNYARD_KUBERNETES_API", k.api);
+      k.name_space = runyard::env("RUNYARD_KUBERNETES_NAMESPACE", k.name_space);
+      k.coordinator = runyard::env("RUNYARD_RUNNER_COORDINATOR", k.coordinator);
+      k.development = config.development;
+      k.runner_ca_configmap = runyard::env("RUNYARD_RUNNER_CA_CONFIGMAP");
+      kubernetes_backend = std::make_unique<runyard::KubernetesBackend>(k);
+      kubernetes_controller = std::make_unique<runyard::KubernetesController>(
+          store, *kubernetes_backend, config.signing_key,
+          runyard::env_int("RUNYARD_MAX_ACTIVE_JOBS", 16));
+    }
     std::jthread monitor([&](std::stop_token stop) {
       while (!stop.stop_requested()) {
         if (leadership.refresh()) {
           try {
             store.recover();
+
           } catch (const std::exception &e) {
             spdlog::warn("recovery: {}", e.what());
+          }
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      }
+    });
+    std::jthread dispatch([&](std::stop_token stop) {
+      while (!stop.stop_requested()) {
+        if (leadership.ready() && kubernetes_controller) {
+          try {
+            kubernetes_controller->tick();
+          } catch (const std::exception &e) {
+            spdlog::warn("Kubernetes reconciliation: {}", e.what());
           }
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -66,6 +95,8 @@ int main(int argc, char **argv) {
     http.run();
     grpc_server->Shutdown(std::chrono::system_clock::now() + std::chrono::seconds(5));
     grpc_server->Wait();
+    dispatch.request_stop();
+    dispatch.join();
     monitor.request_stop();
     monitor.join();
     executor.shutdown();

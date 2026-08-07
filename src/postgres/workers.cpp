@@ -10,8 +10,8 @@ void pg::require_worker(pqxx::work &tx, const std::string &id, const std::string
 }
 void PostgresStore::register_worker(const std::string &id, const std::string &session,
                                     Resources capacity) {
-  if (id.empty() || id.size() > 100 || session.empty() || capacity.cpu_millis <= 0 ||
-      capacity.memory_mib <= 0)
+  if (id.empty() || id.starts_with("@") || id.size() > 100 || session.empty() ||
+      capacity.cpu_millis <= 0 || capacity.memory_mib <= 0)
     throw Error(ErrorCode::invalid, "invalid worker registration");
   auto c = pool_.acquire();
   pqxx::work tx(c.get());

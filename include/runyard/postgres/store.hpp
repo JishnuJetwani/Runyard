@@ -36,6 +36,9 @@ public:
   Artifact get_artifact(const std::string &) override;
 
   void recover() override;
+  std::optional<Assignment> admit_kubernetes(int max_active) override;
+  std::vector<Assignment> kubernetes_attempts() override;
+  void kubernetes_runtime(const std::string &, const std::string &, bool) override;
   Sweep submit_sweep(const SweepSpec &, const std::vector<RunSpec> &, const std::string &,
                      const std::string &) override;
   Sweep get_sweep(const std::string &) override;

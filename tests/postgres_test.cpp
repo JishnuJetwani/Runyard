@@ -257,3 +257,20 @@ TEST_F(Database, RerunPreservesTheOriginalHistory) {
   EXPECT_EQ(store->rerun(original.id, key).id, next.id);
   EXPECT_EQ(store->get_run(original.id).status, RunStatus::cancelled);
 }
+
+TEST_F(Database, KubernetesAdmissionIsBoundedAndReplaysDurableIntent) {
+  auto first = store->submit(spec(), random_id(), "a");
+  auto second = store->submit(spec(), random_id(), "b");
+  auto assignment = store->admit_kubernetes(1);
+  ASSERT_TRUE(assignment);
+  EXPECT_FALSE(store->admit_kubernetes(1));
+  auto pending = store->kubernetes_attempts();
+  ASSERT_EQ(pending.size(), 1);
+  EXPECT_EQ(pending.front().attempt.id, assignment->attempt.id);
+  EXPECT_TRUE(pending.front().attempt.runtime_id.empty());
+  store->kubernetes_runtime(assignment->attempt.id, "job-uid", false);
+  store->cancel(assignment->attempt.run_id);
+  EXPECT_FALSE(store->admit_kubernetes(1));
+  store->kubernetes_runtime(assignment->attempt.id, "", true);
+  EXPECT_TRUE(store->admit_kubernetes(1));
+}

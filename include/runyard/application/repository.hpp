@@ -6,6 +6,10 @@ class Repository {
 public:
   virtual ~Repository() = default;
   virtual void recover() = 0;
+  virtual std::optional<Assignment> admit_kubernetes(int max_active) = 0;
+  virtual std::vector<Assignment> kubernetes_attempts() = 0;
+  virtual void kubernetes_runtime(const std::string &attempt, const std::string &runtime,
+                                  bool removed) = 0;
   virtual Sweep submit_sweep(const SweepSpec &, const std::vector<RunSpec> &,
                              const std::string &key, const std::string &fingerprint) = 0;
   virtual Sweep get_sweep(const std::string &id) = 0;
