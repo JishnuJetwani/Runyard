@@ -257,3 +257,43 @@ TEST_F(Database, RerunPreservesTheOriginalHistory) {
   EXPECT_EQ(store->rerun(original.id, key).id, next.id);
   EXPECT_EQ(store->get_run(original.id).status, RunStatus::cancelled);
 }
+
+TEST_F(Database, KubernetesAdmissionIsBoundedAndReplaysDurableIntent) {
+  auto first = store->submit(spec(), random_id(), "a");
+  auto second = store->submit(spec(), random_id(), "b");
+  auto assignment = store->admit_kubernetes(1);
+  ASSERT_TRUE(assignment);
+  EXPECT_FALSE(store->admit_kubernetes(1));
+  auto pending = store->kubernetes_attempts();
+  ASSERT_EQ(pending.size(), 1);
+  EXPECT_EQ(pending.front().attempt.id, assignment->attempt.id);
+  EXPECT_TRUE(pending.front().attempt.runtime_id.empty());
+  store->kubernetes_runtime(assignment->attempt.id, "job-uid", false);
+  store->cancel(assignment->attempt.run_id);
+  EXPECT_FALSE(store->admit_kubernetes(1));
+  store->kubernetes_runtime(assignment->attempt.id, "", true);
+  EXPECT_TRUE(store->admit_kubernetes(1));
+}
+
+TEST_F(Database, KubernetesUsesTheSameFencingAndRecoveryContract) {
+  auto run = store->submit(spec(), random_id(), "kube-contract");
+  auto assigned = store->admit_kubernetes(1);
+  ASSERT_TRUE(assigned);
+  auto a = assigned->attempt;
+  store->start(a.id, a.generation, "pod-one");
+  EXPECT_THROW(store->start(a.id, a.generation, "duplicate-pod"), Error);
+  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted"}}), 1);
+  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted"}}), 1);
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE attempts SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
+            pqxx::params{a.id});
+    tx.commit();
+  }
+  store->recover();
+  EXPECT_THROW(store->heartbeat(a.id, a.generation, "pod-one"), Error);
+  EXPECT_THROW(store->finish(a.id, a.generation, "pod-one", 0, "", 1), Error);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::retry_wait);
+  EXPECT_EQ(store->attempts(run.id).front().reason, "LEASE_EXPIRED");
+}

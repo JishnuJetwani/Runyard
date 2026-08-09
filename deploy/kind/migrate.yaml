@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  namespace: runyard
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: migrate
+          image: runyard-server:dev
+          imagePullPolicy: IfNotPresent
+          args: [migrate, --directory, /opt/runyard/migrations]
+          envFrom: [{secretRef: {name: runyard-secrets}}]

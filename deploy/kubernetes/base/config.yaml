@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: runyard-config
+data:
+  RUNYARD_PROFILE: production
+  RUNYARD_BIND: 0.0.0.0
+  RUNYARD_EXECUTION_MODE: kubernetes
+  RUNYARD_KUBERNETES_NAMESPACE: runyard
+  RUNYARD_RUNNER_COORDINATOR: server.runyard.svc:9090
+  RUNYARD_MAX_ACTIVE_JOBS: '8'
+  RUNYARD_ARTIFACT_ROOT: /work/artifacts
+  RUNYARD_TLS_CERT: /etc/runyard/tls/tls.crt
+  RUNYARD_TLS_KEY: /etc/runyard/tls/tls.key
+  RUNYARD_RUNNER_CA_CONFIGMAP: runyard-ca

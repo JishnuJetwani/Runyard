@@ -1,8 +1,11 @@
+#include "runyard/application/kubernetes.hpp"
 #include "runyard/application/runs.hpp"
+#include "runyard/execution/kubernetes.hpp"
 #include "runyard/grpc/services.hpp"
 #include "runyard/http/api.hpp"
 #include "runyard/postgres/leadership.hpp"
 #include "runyard/postgres/store.hpp"
+#include "runyard/storage/s3.hpp"
 #include "runyard/support/config.hpp"
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
@@ -28,11 +31,26 @@ int main(int argc, char **argv) {
     runyard::Executor executor;
     runyard::Leadership leadership(config.database);
     leadership.refresh();
+    std::unique_ptr<runyard::KubernetesBackend> kubernetes_backend;
+    std::unique_ptr<runyard::KubernetesController> kubernetes_controller;
+    if (config.mode == "kubernetes") {
+      runyard::KubernetesConfig k;
+      k.api = runyard::env("RUNYARD_KUBERNETES_API", k.api);
+      k.name_space = runyard::env("RUNYARD_KUBERNETES_NAMESPACE", k.name_space);
+      k.coordinator = runyard::env("RUNYARD_RUNNER_COORDINATOR", k.coordinator);
+      k.development = config.development;
+      k.runner_ca_configmap = runyard::env("RUNYARD_RUNNER_CA_CONFIGMAP");
+      kubernetes_backend = std::make_unique<runyard::KubernetesBackend>(k);
+      kubernetes_controller = std::make_unique<runyard::KubernetesController>(
+          store, *kubernetes_backend, config.signing_key,
+          runyard::env_int("RUNYARD_MAX_ACTIVE_JOBS", 16));
+    }
     std::jthread monitor([&](std::stop_token stop) {
       while (!stop.stop_requested()) {
         if (leadership.refresh()) {
           try {
             store.recover();
+
           } catch (const std::exception &e) {
             spdlog::warn("recovery: {}", e.what());
           }
@@ -40,8 +58,29 @@ int main(int argc, char **argv) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     });
-    runyard::FilesystemStore blobs(config.artifacts + "/objects");
-    runyard::ArtifactService artifacts(store, blobs, config.artifacts);
+    std::jthread dispatch([&](std::stop_token stop) {
+      while (!stop.stop_requested()) {
+        if (leadership.ready() && kubernetes_controller) {
+          try {
+            kubernetes_controller->tick();
+          } catch (const std::exception &e) {
+            spdlog::warn("Kubernetes reconciliation: {}", e.what());
+          }
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      }
+    });
+    std::unique_ptr<runyard::BlobStore> blobs;
+    auto storage = runyard::env("RUNYARD_STORAGE", "filesystem");
+    if (storage == "s3")
+      blobs = std::make_unique<runyard::S3Store>(runyard::S3Config{
+          runyard::env("RUNYARD_S3_BUCKET"), runyard::env("AWS_REGION", "us-east-1"),
+          runyard::env("RUNYARD_S3_ENDPOINT"), config.development});
+    else if (storage == "filesystem")
+      blobs = std::make_unique<runyard::FilesystemStore>(config.artifacts + "/objects");
+    else
+      throw std::runtime_error("storage must be filesystem or s3");
+    runyard::ArtifactService artifacts(store, *blobs, config.artifacts);
     runyard::Api api(runs, artifacts, executor, config.owner_token,
                      [&] { return leadership.ready(); });
     api.mount();
@@ -56,6 +95,8 @@ int main(int argc, char **argv) {
     http.run();
     grpc_server->Shutdown(std::chrono::system_clock::now() + std::chrono::seconds(5));
     grpc_server->Wait();
+    dispatch.request_stop();
+    dispatch.join();
     monitor.request_stop();
     monitor.join();
     executor.shutdown();

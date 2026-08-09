@@ -29,11 +29,18 @@ database for these harnesses as well; run each against empty application tables.
 ```sh
 python3 tests/api_smoke.py build/vcpkg/src/runyard-server build/vcpkg/src/runyard
 python3 tests/protocol_smoke.py build/vcpkg/src
+python3 tests/adapter_faults.py build/vcpkg/tests/backend_probe
 ```
 
 The protocol harness starts the coordinator and runner locally and exercises
 telemetry delivery, stale ownership, and artifact transfer. Adapter fault tests
 use controlled Docker and Kubernetes HTTP responses to check reconciliation.
+
+## S3
+
+`RUNYARD_BUILD_DIR=build/vcpkg scripts/test-s3.sh` starts the pinned Moto emulator
+and runs the S3 adapter tests. These check object operations and failures;
+deployment permissions and connectivity require checks against the target service.
 
 ## Container execution
 
