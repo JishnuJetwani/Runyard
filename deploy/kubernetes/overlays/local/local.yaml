@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: runyard-config
+data:
+  RUNYARD_PROFILE: development
+  RUNYARD_TLS_CERT: ''
+  RUNYARD_TLS_KEY: ''
+  RUNYARD_RUNNER_CA_CONFIGMAP: ''
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+spec:
+  replicas: 0
+  template:
+    spec:
+      containers:
+        - name: server
+          readinessProbe:
+            httpGet: {scheme: HTTP}
+          livenessProbe:
+            httpGet: {scheme: HTTP}
+      volumes:
+        - name: artifacts
+          emptyDir: null
+          persistentVolumeClaim: {claimName: artifacts}
