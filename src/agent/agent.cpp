@@ -88,7 +88,11 @@ void run_agent(const AgentConfig &config, ExecutionBackend &backend,
         Launch launch{{attempt, decode_spec(Json::parse(a.specification_json()))}, a.capability()};
         auto runtime = backend.ensure(launch);
         report(attempt.id, runtime, false);
-        spdlog::info("launched attempt {}", attempt.id);
+        spdlog::info("{}", Json{{"event", "attempt_launched"},
+                                {"attempt_id", attempt.id},
+                                {"run_id", attempt.run_id},
+                                {"worker_id", config.id}}
+                               .dump());
       }
     } catch (const Error &e) {
       if (e.code() == ErrorCode::stale)

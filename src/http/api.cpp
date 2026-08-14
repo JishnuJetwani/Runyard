@@ -69,10 +69,15 @@ void Api::dispatch_response(const drogon::HttpRequestPtr &request, HttpCallback 
         503, id));
     return;
   }
-  if (!executor_.submit([callback, work = std::move(work), id] {
+  if (!executor_.submit([callback, work = std::move(work), id, path = request->path()] {
         try {
           auto response = work();
           response->addHeader("X-Request-ID", id);
+          spdlog::info("{}", Json{{"event", "http_request"},
+                                  {"request_id", id},
+                                  {"path", path},
+                                  {"status", static_cast<int>(response->statusCode())}}
+                                 .dump());
           callback(response);
         } catch (const Error &e) {
           auto [status, code] = error_status(e.code());
@@ -86,7 +91,9 @@ void Api::dispatch_response(const drogon::HttpRequestPtr &request, HttpCallback 
                                     {"request_id", id}}}},
                                  400, id));
         } catch (const std::exception &e) {
-          spdlog::error("request {} failed: {}", id, e.what());
+          spdlog::error(
+              "{}",
+              Json{{"event", "http_error"}, {"request_id", id}, {"message", e.what()}}.dump());
           callback(json_response({{"error",
                                    {{"code", "unavailable"},
                                     {"message", "operation temporarily unavailable"},

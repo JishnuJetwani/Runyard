@@ -93,6 +93,10 @@ with open(".local/api-smoke.log", "w") as log:
             assert "items" in command("workers", "list")
             assert command("artifacts", "list", run["id"])["items"] == []
             print("CLI smoke passed: submission, inspection, cancellation, rerun, sweep, workers, artifacts")
+        with urllib.request.urlopen(base + "/metrics", timeout=5) as response:
+            exposition = response.read().decode()
+            assert "runyard_runs_queued" in exposition
+            assert "runyard_database_pool_capacity" in exposition
         print("API smoke passed: auth, validation, idempotency, event cursor, restart durability")
     finally:
         if process.poll() is None:

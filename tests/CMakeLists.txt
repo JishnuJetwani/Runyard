@@ -22,3 +22,6 @@ target_link_libraries(kubernetes_test PRIVATE runyard_kubernetes GTest::gtest_ma
 gtest_discover_tests(kubernetes_test)
 add_executable(backend_probe backend_probe.cpp)
 target_link_libraries(backend_probe PRIVATE runyard_docker runyard_kubernetes)
+add_executable(metrics_test metrics_test.cpp)
+target_link_libraries(metrics_test PRIVATE runyard_observability GTest::gtest_main)
+gtest_discover_tests(metrics_test)

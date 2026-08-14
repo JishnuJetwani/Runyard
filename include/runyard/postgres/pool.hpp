@@ -1,5 +1,7 @@
 #pragma once
+#include <atomic>
 #include <condition_variable>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <pqxx/pqxx>
@@ -23,9 +25,13 @@ public:
   };
   explicit ConnectionPool(std::string dsn, std::size_t size = 8);
   Lease acquire();
+  std::map<std::string, double> statistics();
   const std::string &dsn() const { return dsn_; }
 
 private:
+  std::size_t capacity_;
+  std::atomic<int> waiting_{0};
+  std::atomic<int> timeouts_{0};
   std::string dsn_;
   std::mutex mutex_;
   std::condition_variable available_;
