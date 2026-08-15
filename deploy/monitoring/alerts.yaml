@@ -1,0 +1,33 @@
+groups:
+  - name: runyard
+    rules:
+      - alert: RunyardUnavailable
+        expr: up{job="runyard"} == 0 or runyard_ready == 0
+        for: 30s
+        labels: {severity: critical}
+        annotations: {summary: 'Coordinator is unavailable or lacks database leadership'}
+      - alert: RunyardQueueStalled
+        expr: runyard_queue_oldest_seconds > 120
+        for: 1m
+        labels: {severity: warning}
+        annotations: {summary: 'Experiments have waited over two minutes for admission'}
+      - alert: RunyardCapacityLost
+        expr: runyard_runs_queued > 0 and runyard_workers_available == 0 and runyard_kubernetes_mode == 0
+        for: 30s
+        labels: {severity: warning}
+        annotations: {summary: 'Queued Docker work has no available workers'}
+      - alert: RunyardRepeatedFailures
+        expr: delta(runyard_failures[5m]) >= 5
+        for: 30s
+        labels: {severity: warning}
+        annotations: {summary: 'At least five attempts failed in the last five minutes'}
+      - alert: RunyardDatabaseSaturated
+        expr: runyard_database_pool_waiting > 0
+        for: 1m
+        labels: {severity: warning}
+        annotations: {summary: 'Requests are waiting for database connections'}
+      - alert: RunyardCleanupDelayed
+        expr: runyard_cleanup_pending > 0
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: 'Terminal attempts still have unconfirmed runtime cleanup'}

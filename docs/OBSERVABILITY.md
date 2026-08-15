@@ -20,3 +20,17 @@ attempt identifiers. Third-party gRPC/Drogon diagnostics retain their own format
 
 Metrics are collected outside HTTP event loops. Kubernetes API calls run separately
 from recovery, so a slow cluster API does not delay lease expiry or readiness updates.
+
+Start local monitoring with:
+
+```
+scripts/dev-setup.sh
+docker compose -f compose.yaml -f deploy/monitoring.compose.yaml up -d
+```
+
+Grafana is at `http://localhost:3001` (user `runyard`, password from
+`RUNYARD_GRAFANA_PASSWORD` in `.env`); Prometheus is at `http://localhost:9091`.
+The dashboard is installed automatically. Alerts cover lost readiness,
+stalled queues, unavailable Docker capacity, repeated failures, pool saturation,
+and delayed cleanup. Alerts appear in Prometheus; external notifications are not
+configured. `promtool test rules` checks queue and cleanup alert timing.
