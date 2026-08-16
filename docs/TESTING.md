@@ -36,6 +36,13 @@ The protocol harness starts the coordinator and runner locally and exercises
 telemetry delivery, stale ownership, and artifact transfer. Adapter fault tests
 use controlled Docker and Kubernetes HTTP responses to check reconciliation.
 
+Repeat the runner protocol over TLS after generating local certificates:
+
+```sh
+scripts/tls-certificates.sh
+python3 tests/protocol_smoke.py build/vcpkg/src --tls
+```
+
 ## S3
 
 `RUNYARD_BUILD_DIR=build/vcpkg scripts/test-s3.sh` starts the pinned Moto emulator

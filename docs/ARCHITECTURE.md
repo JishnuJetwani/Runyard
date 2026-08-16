@@ -78,5 +78,5 @@ storage credentials.
 
 AWS definitions cover VPC, EKS/CPU nodes, ECR, private single-AZ RDS, S3, and IAM.
 Application services stay private. Infrastructure provisioning and application
-installation are separate.
+installation are separate. See [AWS deployment](AWS.md) for the operator procedure.
 
