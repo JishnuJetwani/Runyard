@@ -1,5 +1,6 @@
 #include "runyard/agent/agent.hpp"
 #include "runyard/execution/docker.hpp"
+#include "runyard/observability/metrics.hpp"
 #include "runyard/support/config.hpp"
 #include <csignal>
 #include <iostream>
@@ -9,6 +10,7 @@ volatile std::sig_atomic_t interrupted = 0;
 void interrupt(int) { interrupted = 1; }
 } // namespace
 int main() {
+  runyard::structured_logging();
   std::signal(SIGTERM, interrupt);
   std::signal(SIGINT, interrupt);
   try {

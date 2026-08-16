@@ -28,6 +28,8 @@ add_subdirectory(src)
 if(RUNYARD_BUILD_TESTS)
   enable_testing()
   find_package(GTest CONFIG REQUIRED)
+  # Serial discovery avoids shared discovery-file races in parallel CMake builds.
+  set(CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST)
   include(GoogleTest)
   add_subdirectory(tests)
 endif()

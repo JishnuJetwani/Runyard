@@ -1,25 +1,90 @@
 name: backend
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 permissions:
   contents: read
 jobs:
   build:
     runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    services:
+      postgres:
+        image: postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1b55cf0c01d1a7eb701be2227a03e0641
+        env: {POSTGRES_PASSWORD: runyard-test-only, POSTGRES_DB: runyard}
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 2s --health-retries 30
+    env:
+      RUNYARD_TEST_DATABASE: host=localhost user=postgres password=runyard-test-only dbname=runyard connect_timeout=3
+      VCPKG_MAX_CONCURRENCY: '3'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y ninja-build pkg-config libssl-dev autoconf automake libtool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config libssl-dev autoconf automake libtool clang-tidy-18
+          python3 -m pip install clang-format==22.1.8 -r tests/requirements.txt
       - name: Pin vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git "$RUNNER_TEMP/vcpkg"
           git -C "$RUNNER_TEMP/vcpkg" checkout fa8cecf91d7f31a1715a7a6524f208897ffb33ce
           "$RUNNER_TEMP/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
           echo "VCPKG_ROOT=$RUNNER_TEMP/vcpkg" >> "$GITHUB_ENV"
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/vcpkg/archives
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
-      - run: cmake --preset vcpkg && cmake --build --preset vcpkg -j 2
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json') }}
+      - name: Check formatting
+        run: git ls-files '*.cpp' '*.hpp' | xargs clang-format --dry-run --Werror
+      - run: cmake --preset vcpkg && cmake --build --preset vcpkg -j 3
       - run: ctest --preset vcpkg
+      - name: Selected static analysis
+        run: clang-tidy-18 -p build/vcpkg src/domain/model.cpp src/runner/process.cpp --warnings-as-errors=bugprone-use-after-move,bugprone-dangling-handle
+      - run: python3 tests/api_smoke.py build/vcpkg/src/runyard-server build/vcpkg/src/runyard
+      - name: Network and runtime protocol
+        run: |
+          PGPASSWORD=runyard-test-only psql -h localhost -U postgres -d runyard -c 'TRUNCATE runs,workers,sweeps CASCADE'
+          python3 tests/protocol_smoke.py build/vcpkg/src
+          scripts/tls-certificates.sh
+          PGPASSWORD=runyard-test-only psql -h localhost -U postgres -d runyard -c 'TRUNCATE runs,workers,sweeps CASCADE'
+          python3 tests/protocol_smoke.py build/vcpkg/src --tls
+          python3 tests/adapter_faults.py build/vcpkg/tests/backend_probe
+          scripts/test-s3.sh
+        env:
+          RUNYARD_BUILD_DIR: build/vcpkg
+      - name: Address and undefined behavior sanitizers
+        run: |
+          cmake --preset asan -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_INSTALLED_DIR="$PWD/build/vcpkg/vcpkg_installed"
+          cmake --build --preset asan --target domain_test process_test executor_test -j 3
+          ctest --preset asan -R 'Domain|Process|Executor'
+      - name: Thread sanitizer on the bounded executor
+        run: |
+          cmake --preset tsan -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_INSTALLED_DIR="$PWD/build/vcpkg/vcpkg_installed"
+          cmake --build --preset tsan --target executor_test -j 3
+          ctest --preset tsan -R Executor
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: test-logs
+          path: |
+            build/*/Testing/Temporary/LastTest.log
+            .local/*smoke.log
+  configuration:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with: {terraform_version: 1.13.3}
+      - run: terraform -chdir=infra/aws init -backend=false -lockfile=readonly
+      - run: terraform -chdir=infra/aws fmt -check && terraform -chdir=infra/aws validate
+      - name: Validate API and manifests
+        run: |
+          python3 -m pip install -r tests/requirements.txt
+          scripts/install-kubectl.sh "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+          export PATH="$RUNNER_TEMP/bin:$PATH"
+          python3 -c 'import yaml; from openapi_spec_validator import validate; validate(yaml.safe_load(open("api/openapi.yaml")))'
+          kubectl kustomize deploy/kubernetes/overlays/local > /tmp/local.yaml
+          kubectl kustomize deploy/kubernetes/overlays/aws > /tmp/aws.yaml
+          python3 tests/deployment_render.py
+          scripts/dev-setup.sh
+          docker compose -f compose.yaml -f deploy/monitoring.compose.yaml config --quiet
+          docker run --rm --entrypoint promtool -v "$PWD/deploy/monitoring:/config:ro" -w /config prom/prometheus:v3.5.0@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996 test rules alert-tests.yaml

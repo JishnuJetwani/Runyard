@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: runyard-config
+data:
+  RUNYARD_STORAGE: s3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+spec:
+  replicas: 0
+  template:
+    spec:
+      containers:
+        - name: server
+          volumeMounts:
+            - {name: rds-ca, mountPath: /etc/runyard/rds, readOnly: true}
+      volumes:
+        - name: rds-ca
+          configMap: {name: runyard-rds-ca}

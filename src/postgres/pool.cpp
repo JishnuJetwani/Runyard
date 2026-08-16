@@ -7,7 +7,8 @@
 #include <iterator>
 
 namespace runyard {
-ConnectionPool::ConnectionPool(std::string dsn, std::size_t size) : dsn_(std::move(dsn)) {
+ConnectionPool::ConnectionPool(std::string dsn, std::size_t size)
+    : capacity_(size), dsn_(std::move(dsn)) {
   if (size == 0)
     throw Error(ErrorCode::invalid, "database pool must not be empty");
   for (std::size_t i = 0; i < size; ++i)
@@ -24,8 +25,14 @@ ConnectionPool::Lease::~Lease() {
 }
 ConnectionPool::Lease ConnectionPool::acquire() {
   std::unique_lock lock(mutex_);
-  if (!available_.wait_for(lock, std::chrono::seconds(5), [&] { return !connections_.empty(); }))
+  ++waiting_;
+  bool available =
+      available_.wait_for(lock, std::chrono::seconds(5), [&] { return !connections_.empty(); });
+  --waiting_;
+  if (!available) {
+    ++timeouts_;
     throw Error(ErrorCode::unavailable, "database pool is busy");
+  }
   auto connection = std::move(connections_.back());
   connections_.pop_back();
   lock.unlock();
@@ -41,6 +48,13 @@ ConnectionPool::Lease ConnectionPool::acquire() {
     throw;
   }
   return Lease(*this, std::move(connection));
+}
+std::map<std::string, double> ConnectionPool::statistics() {
+  std::lock_guard lock(mutex_);
+  return {{"database_pool_capacity", static_cast<double>(capacity_)},
+          {"database_pool_in_use", static_cast<double>(capacity_ - connections_.size())},
+          {"database_pool_waiting", waiting_.load()},
+          {"database_pool_timeouts", timeouts_.load()}};
 }
 void migrate(ConnectionPool &pool, const std::string &directory) {
   auto connection = pool.acquire();

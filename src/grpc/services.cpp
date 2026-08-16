@@ -7,7 +7,7 @@
 
 namespace runyard {
 namespace {
-template <class F> grpc::Status guard(F &&work) {
+template <class F> grpc::Status protect(F &&work) {
   try {
     work();
     return grpc::Status::OK;
@@ -38,6 +38,14 @@ template <class F> grpc::Status guard(F &&work) {
     spdlog::error("RPC failed: {}", e.what());
     return {grpc::StatusCode::UNAVAILABLE, "operation temporarily unavailable"};
   }
+}
+template <class F> grpc::Status guard(Metrics *metrics, const std::string &method, F &&work) {
+  auto before = std::chrono::steady_clock::now();
+  auto status = protect(std::forward<F>(work));
+  if (metrics)
+    metrics->rpc(method, status.error_code(),
+                 std::chrono::duration<double>(std::chrono::steady_clock::now() - before).count());
+  return status;
 }
 void authenticate(grpc::ServerContext *context, const std::string &token, bool ready) {
   auto found = context->client_metadata().find("authorization");
@@ -77,7 +85,7 @@ void AgentRpc::authorize(grpc::ServerContext *context) {
 }
 grpc::Status AgentRpc::Reconcile(grpc::ServerContext *c, const wire::Inventory *r,
                                  wire::Decisions *reply) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c);
     std::vector<std::string> ids(r->attempts().begin(), r->attempts().end());
     for (const auto &id : repository_.reconcile(r->worker().id(), r->worker().session(), ids))
@@ -86,7 +94,7 @@ grpc::Status AgentRpc::Reconcile(grpc::ServerContext *c, const wire::Inventory *
 }
 grpc::Status AgentRpc::Register(grpc::ServerContext *c, const wire::RegisterRequest *r,
                                 wire::Empty *) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c);
     repository_.register_worker(r->worker().id(), r->worker().session(),
                                 {r->cpu_millis(), r->memory_mib()});
@@ -94,14 +102,14 @@ grpc::Status AgentRpc::Register(grpc::ServerContext *c, const wire::RegisterRequ
 }
 grpc::Status AgentRpc::Heartbeat(grpc::ServerContext *c, const wire::WorkerIdentity *r,
                                  wire::Empty *) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c);
     repository_.worker_heartbeat(r->id(), r->session());
   });
 }
 grpc::Status AgentRpc::Poll(grpc::ServerContext *c, const wire::WorkerIdentity *r,
                             wire::WorkReply *reply) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c);
     for (const auto &a : repository_.cleanup(r->id(), r->session()))
       reply->add_cleanup_attempts(a.id);
@@ -119,7 +127,7 @@ grpc::Status AgentRpc::Poll(grpc::ServerContext *c, const wire::WorkerIdentity *
 }
 grpc::Status AgentRpc::ReportRuntime(grpc::ServerContext *c, const wire::RuntimeReport *r,
                                      wire::Empty *) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c);
     repository_.runtime_report(r->worker().id(), r->worker().session(), r->attempt_id(),
                                r->runtime_id(), r->stopped());
@@ -131,9 +139,13 @@ void AttemptRpc::authorize(grpc::ServerContext *c, const wire::Owner &owner) {
 }
 grpc::Status AttemptRpc::Start(grpc::ServerContext *c, const wire::Owner *r,
                                wire::StartReply *reply) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c, *r);
     auto a = repository_.start(r->attempt_id(), r->generation(), r->instance_id());
+    spdlog::info("{}", Json{{"event", "attempt_claimed"},
+                            {"run_id", a.attempt.run_id},
+                            {"attempt_id", a.attempt.id}}
+                           .dump());
     reply->set_specification_json(encode(a.spec).dump());
     reply->set_lease_seconds(config_.timing.lease_seconds);
     reply->set_heartbeat_seconds(config_.timing.heartbeat_seconds);
@@ -142,7 +154,7 @@ grpc::Status AttemptRpc::Start(grpc::ServerContext *c, const wire::Owner *r,
   });
 }
 grpc::Status AttemptRpc::Heartbeat(grpc::ServerContext *c, const wire::Owner *r, wire::Ack *reply) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c, *r);
     repository_.heartbeat(r->attempt_id(), r->generation(), r->instance_id());
     reply->set_lease_seconds(config_.timing.lease_seconds);
@@ -150,22 +162,26 @@ grpc::Status AttemptRpc::Heartbeat(grpc::ServerContext *c, const wire::Owner *r,
 }
 grpc::Status AttemptRpc::BeginFinalization(grpc::ServerContext *c, const wire::Owner *r,
                                            wire::Empty *) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c, *r);
     repository_.begin_finalization(r->attempt_id(), r->generation(), r->instance_id());
   });
 }
 grpc::Status AttemptRpc::Complete(grpc::ServerContext *c, const wire::Completion *r,
                                   wire::Empty *) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c, r->owner());
     repository_.finish(r->owner().attempt_id(), r->owner().generation(), r->owner().instance_id(),
                        r->exit_code(), r->reason(), r->final_sequence());
+    spdlog::info("{}", Json{{"event", "attempt_completed"},
+                            {"attempt_id", r->owner().attempt_id()},
+                            {"exit_code", r->exit_code()}}
+                           .dump());
   });
 }
 grpc::Status AttemptRpc::Report(grpc::ServerContext *c, const wire::TelemetryBatch *r,
                                 wire::Ack *reply) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     authorize(c, r->owner());
     std::vector<Telemetry> records;
     for (const auto &t : r->records())
@@ -178,7 +194,7 @@ grpc::Status AttemptRpc::Report(grpc::ServerContext *c, const wire::TelemetryBat
 grpc::Status AttemptRpc::Upload(grpc::ServerContext *context,
                                 grpc::ServerReader<wire::ArtifactChunk> *reader,
                                 wire::ArtifactReply *reply) {
-  return guard([&] {
+  return guard(metrics_, __func__, [&] {
     wire::ArtifactChunk chunk;
     if (!reader->Read(&chunk))
       throw Error(ErrorCode::invalid, "artifact metadata required");

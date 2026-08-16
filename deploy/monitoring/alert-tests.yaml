@@ -1,0 +1,18 @@
+rule_files: [alerts.yaml]
+evaluation_interval: 5s
+tests:
+  - interval: 5s
+    input_series:
+      - {series: 'runyard_queue_oldest_seconds', values: '180+0x30'}
+      - {series: 'runyard_cleanup_pending', values: '1+0x30'}
+    alert_rule_test:
+      - eval_time: 150s
+        alertname: RunyardQueueStalled
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: 'Experiments have waited over two minutes for admission'}
+      - eval_time: 150s
+        alertname: RunyardCleanupDelayed
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: 'Terminal attempts still have unconfirmed runtime cleanup'}

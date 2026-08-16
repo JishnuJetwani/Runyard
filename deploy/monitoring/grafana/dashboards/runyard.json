@@ -1,0 +1,292 @@
+{
+  "uid": "runyard-overview",
+  "title": "Runyard execution",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Run states",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_runs_queued",
+          "refId": "A",
+          "legendFormat": "queued"
+        },
+        {
+          "expr": "runyard_runs_starting",
+          "refId": "B",
+          "legendFormat": "starting"
+        },
+        {
+          "expr": "runyard_runs_running",
+          "refId": "C",
+          "legendFormat": "running"
+        },
+        {
+          "expr": "runyard_runs_finalizing",
+          "refId": "D",
+          "legendFormat": "finalizing"
+        },
+        {
+          "expr": "runyard_runs_retry_wait",
+          "refId": "E",
+          "legendFormat": "retry_wait"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Queue and dispatch delay (last hour)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_queue_delay_p95_seconds",
+          "refId": "A",
+          "legendFormat": "queue_delay"
+        },
+        {
+          "expr": "runyard_dispatch_delay_p95_seconds",
+          "refId": "B",
+          "legendFormat": "dispatch_delay"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Durable attempt history",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_attempts",
+          "refId": "A",
+          "legendFormat": "attempts"
+        },
+        {
+          "expr": "runyard_failures",
+          "refId": "B",
+          "legendFormat": "failures"
+        },
+        {
+          "expr": "runyard_retries",
+          "refId": "C",
+          "legendFormat": "retries"
+        },
+        {
+          "expr": "runyard_cleanup_pending",
+          "refId": "D",
+          "legendFormat": "cleanup_pending"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Worker CPU capacity",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_worker_cpu_millis / 1000",
+          "refId": "A",
+          "legendFormat": "worker"
+        },
+        {
+          "expr": "runyard_reserved_cpu_millis / 1000",
+          "refId": "B",
+          "legendFormat": "reserved"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Database pool",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_database_pool_capacity",
+          "refId": "A",
+          "legendFormat": "capacity"
+        },
+        {
+          "expr": "runyard_database_pool_in_use",
+          "refId": "B",
+          "legendFormat": "in_use"
+        },
+        {
+          "expr": "runyard_database_pool_waiting",
+          "refId": "C",
+          "legendFormat": "waiting"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "RPC p95 latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, method) (rate(runyard_rpc_duration_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "RPC p95"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Coordinator memory",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_process_max_rss_bytes",
+          "refId": "A",
+          "legendFormat": "Peak RSS"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Coordinator CPU",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(runyard_process_cpu_seconds[1m])",
+          "refId": "A",
+          "legendFormat": "CPU seconds / second"
+        }
+      ]
+    }
+  ]
+}

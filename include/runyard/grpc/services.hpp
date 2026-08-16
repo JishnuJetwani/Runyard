@@ -2,6 +2,7 @@
 #include "runyard.grpc.pb.h"
 #include "runyard/application/artifacts.hpp"
 #include "runyard/application/repository.hpp"
+#include "runyard/observability/metrics.hpp"
 #include "runyard/support/config.hpp"
 #include <grpcpp/grpcpp.h>
 
@@ -14,8 +15,9 @@ void prepare(grpc::ClientContext &context, const std::string &token, int timeout
 
 class AgentRpc final : public wire::AgentService::Service {
 public:
-  AgentRpc(Repository &repository, const ServerConfig &config, std::function<bool()> ready)
-      : repository_(repository), config_(config), ready_(std::move(ready)) {}
+  AgentRpc(Repository &repository, const ServerConfig &config, std::function<bool()> ready,
+           Metrics *metrics = nullptr)
+      : repository_(repository), config_(config), ready_(std::move(ready)), metrics_(metrics) {}
   grpc::Status Reconcile(grpc::ServerContext *, const wire::Inventory *,
                          wire::Decisions *) override;
   grpc::Status Register(grpc::ServerContext *, const wire::RegisterRequest *,
@@ -32,12 +34,14 @@ private:
   Repository &repository_;
   ServerConfig config_;
   std::function<bool()> ready_;
+  Metrics *metrics_;
 };
 class AttemptRpc final : public wire::AttemptService::Service {
 public:
   AttemptRpc(Repository &repository, ArtifactService &artifacts, const ServerConfig &config,
-             std::function<bool()> ready)
-      : artifacts_(artifacts), repository_(repository), config_(config), ready_(std::move(ready)) {}
+             std::function<bool()> ready, Metrics *metrics = nullptr)
+      : artifacts_(artifacts), repository_(repository), config_(config), ready_(std::move(ready)),
+        metrics_(metrics) {}
   grpc::Status Start(grpc::ServerContext *, const wire::Owner *, wire::StartReply *) override;
   grpc::Status Heartbeat(grpc::ServerContext *, const wire::Owner *, wire::Ack *) override;
   grpc::Status BeginFinalization(grpc::ServerContext *, const wire::Owner *,
@@ -53,6 +57,7 @@ private:
   Repository &repository_;
   ServerConfig config_;
   std::function<bool()> ready_;
+  Metrics *metrics_;
 };
 std::unique_ptr<grpc::Server> start_grpc(const ServerConfig &, AgentRpc &, AttemptRpc &);
 } // namespace runyard

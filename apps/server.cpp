@@ -9,8 +9,10 @@
 #include "runyard/support/config.hpp"
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
+#include <sys/resource.h>
 
 int main(int argc, char **argv) {
+  runyard::structured_logging();
   CLI::App app{"Runyard coordinator"};
   app.require_subcommand();
   auto *migration = app.add_subcommand("migrate", "Apply numbered database migrations");
@@ -25,6 +27,8 @@ int main(int argc, char **argv) {
       return 0;
     }
     auto config = runyard::ServerConfig::load();
+    runyard::Metrics metrics;
+    metrics.update({{"kubernetes_mode", config.mode == "kubernetes" ? 1.0 : 0.0}});
     runyard::ConnectionPool pool(config.database);
     runyard::PostgresStore store(pool, config.timing);
     runyard::RunService runs(store);
@@ -47,9 +51,24 @@ int main(int argc, char **argv) {
     }
     std::jthread monitor([&](std::stop_token stop) {
       while (!stop.stop_requested()) {
-        if (leadership.refresh()) {
+        metrics.update({{"ready", leadership.refresh() ? 1.0 : 0.0}});
+        if (leadership.ready()) {
           try {
             store.recover();
+            auto snapshot = store.statistics();
+            auto pool_stats = pool.statistics();
+            snapshot.insert(pool_stats.begin(), pool_stats.end());
+            snapshot["ready"] = leadership.ready() ? 1 : 0;
+            struct rusage usage{};
+            getrusage(RUSAGE_SELF, &usage);
+            snapshot["process_cpu_seconds"] = usage.ru_utime.tv_sec + usage.ru_utime.tv_usec / 1e6 +
+                                              usage.ru_stime.tv_sec + usage.ru_stime.tv_usec / 1e6;
+#ifdef __APPLE__
+            snapshot["process_max_rss_bytes"] = usage.ru_maxrss;
+#else
+            snapshot["process_max_rss_bytes"] = usage.ru_maxrss * 1024.0;
+#endif
+            metrics.update(snapshot);
 
           } catch (const std::exception &e) {
             spdlog::warn("recovery: {}", e.what());
@@ -84,8 +103,18 @@ int main(int argc, char **argv) {
     runyard::Api api(runs, artifacts, executor, config.owner_token,
                      [&] { return leadership.ready(); });
     api.mount();
-    runyard::AgentRpc agent_rpc(store, config, [&] { return leadership.ready(); });
-    runyard::AttemptRpc attempt_rpc(store, artifacts, config, [&] { return leadership.ready(); });
+    drogon::app().registerHandler(
+        "/metrics",
+        [&metrics](const drogon::HttpRequestPtr &, runyard::HttpCallback &&callback) {
+          auto response = drogon::HttpResponse::newHttpResponse();
+          response->setContentTypeString("text/plain; version=0.0.4");
+          response->setBody(metrics.render());
+          callback(response);
+        },
+        {drogon::Get});
+    runyard::AgentRpc agent_rpc(store, config, [&] { return leadership.ready(); }, &metrics);
+    runyard::AttemptRpc attempt_rpc(
+        store, artifacts, config, [&] { return leadership.ready(); }, &metrics);
     auto grpc_server = runyard::start_grpc(config, agent_rpc, attempt_rpc);
     auto &http = drogon::app();
     http.setThreadNum(2).setClientMaxBodySize(1024 * 1024);
