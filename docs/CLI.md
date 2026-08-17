@@ -1,6 +1,7 @@
 # Command-line workflow
 
 Set `RUNYARD_URL`, `RUNYARD_OWNER_TOKEN`, and (for a private CA) `RUNYARD_TLS_CA`.
+Plain HTTP is accepted only with `RUNYARD_PROFILE=development`.
 Run `runyard --help` for commands and command-specific `--help` for options.
 
 ```

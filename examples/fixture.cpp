@@ -14,6 +14,8 @@ int main() {
     int steps = parameters.value("steps", 5), delay = parameters.value("delay_ms", 20),
         seed = parameters.value("seed", 1);
     std::ofstream metrics(env("RUNYARD_METRICS_PATH"), std::ios::app);
+    if (mode == "malformed_metrics")
+      metrics << "not JSON\n" << "{\"name\":\"invalid\",\"step\":1.5,\"value\":0}\n" << std::flush;
     if (mode == "hang")
       while (true)
         std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -3,14 +3,30 @@
 #include "runyard/support/crypto.hpp"
 #include <array>
 #include <fstream>
+#include <thread>
 
 namespace runyard {
+namespace {
+template <class F> auto retry_transfer(F &&operation) {
+  for (int attempt = 0;; ++attempt) {
+    try {
+      return operation();
+    } catch (const Error &error) {
+      if (error.code() != ErrorCode::unavailable || attempt == 2)
+        throw;
+      std::this_thread::sleep_for(std::chrono::milliseconds(200 * (attempt + 1)));
+    }
+  }
+}
+} // namespace
 void check_rpc(const grpc::Status &status) {
   if (status.ok())
     return;
   auto code = ErrorCode::unavailable;
   if (status.error_code() == grpc::StatusCode::FAILED_PRECONDITION)
     code = ErrorCode::stale;
+  if (status.error_code() == grpc::StatusCode::NOT_FOUND)
+    code = ErrorCode::not_found;
   if (status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
     code = ErrorCode::invalid;
   if (status.error_code() == grpc::StatusCode::UNAUTHENTICATED)
@@ -18,12 +34,15 @@ void check_rpc(const grpc::Status &status) {
   throw Error(code, status.error_message());
 }
 wire::StartReply AttemptClient::start() {
-  grpc::ClientContext context;
-  prepare(context, token_);
-  wire::StartReply reply;
-  check_rpc(stub_->Start(&context, owner_, &reply));
-  return reply;
+  return retry_transfer([&] {
+    grpc::ClientContext context;
+    prepare(context, token_);
+    wire::StartReply reply;
+    check_rpc(stub_->Start(&context, owner_, &reply));
+    return reply;
+  });
 }
+
 int AttemptClient::heartbeat() {
   grpc::ClientContext context;
   prepare(context, token_, 2);
@@ -32,22 +51,28 @@ int AttemptClient::heartbeat() {
   return reply.lease_seconds();
 }
 void AttemptClient::begin_finalization() {
-  grpc::ClientContext context;
-  prepare(context, token_);
-  wire::Empty reply;
-  check_rpc(stub_->BeginFinalization(&context, owner_, &reply));
+  return retry_transfer([&] {
+    grpc::ClientContext context;
+    prepare(context, token_);
+    wire::Empty reply;
+    check_rpc(stub_->BeginFinalization(&context, owner_, &reply));
+  });
 }
+
 void AttemptClient::complete(int exit_code, const std::string &reason, std::int64_t sequence) {
-  grpc::ClientContext context;
-  prepare(context, token_);
-  wire::Completion request;
-  *request.mutable_owner() = owner_;
-  request.set_exit_code(exit_code);
-  request.set_reason(reason);
-  request.set_final_sequence(sequence);
-  wire::Empty reply;
-  check_rpc(stub_->Complete(&context, request, &reply));
+  return retry_transfer([&] {
+    grpc::ClientContext context;
+    prepare(context, token_);
+    wire::Completion request;
+    *request.mutable_owner() = owner_;
+    request.set_exit_code(exit_code);
+    request.set_reason(reason);
+    request.set_final_sequence(sequence);
+    wire::Empty reply;
+    check_rpc(stub_->Complete(&context, request, &reply));
+  });
 }
+
 std::int64_t AttemptClient::report(const std::vector<Telemetry> &records) {
   wire::TelemetryBatch batch;
   *batch.mutable_owner() = owner_;
@@ -68,6 +93,10 @@ std::int64_t AttemptClient::report(const std::vector<Telemetry> &records) {
   return reply.sequence();
 }
 void AttemptClient::upload(const std::string &file, const std::string &relative) {
+  // Retransmit the same content/identity; this never creates another execution attempt.
+  retry_transfer([&] { upload_once(file, relative); });
+}
+void AttemptClient::upload_once(const std::string &file, const std::string &relative) {
   auto hash = sha256_file(file);
   grpc::ClientContext context;
   prepare(context, token_, 300);

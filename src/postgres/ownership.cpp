@@ -43,7 +43,7 @@ Assignment PostgresStore::start(const std::string &id, int generation,
       a.run.status != RunStatus::finalizing)
     throw Error(ErrorCode::stale, "attempt is no longer executing");
   if (!a.attempt.instance_id.empty()) {
-    if (a.attempt.instance_id != instance || !a.lease_valid)
+    if (a.attempt.instance_id != instance || !a.lease_valid || !a.deadline_valid)
       throw Error(ErrorCode::stale, "attempt already claimed or expired");
     tx.commit();
     return {a.attempt, a.run.spec};

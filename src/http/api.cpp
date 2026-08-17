@@ -18,6 +18,12 @@ int number(const drogon::HttpRequestPtr &r, const std::string &key, int fallback
   }
   throw Error(ErrorCode::invalid, "invalid numeric query parameter: " + key);
 }
+int page_size(const drogon::HttpRequestPtr &request, int fallback, int maximum) {
+  int value = number(request, "limit", fallback);
+  if (value < 1 || value > maximum)
+    throw Error(ErrorCode::invalid, "page size is outside the allowed range");
+  return value;
+}
 std::pair<int, std::string> error_status(ErrorCode code) {
   switch (code) {
   case ErrorCode::invalid:
@@ -132,8 +138,12 @@ void Api::mount() {
                       {drogon::Post});
   app.registerHandler("/v1/workers",
                       [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb) {
-                        dispatch(r, std::move(cb),
-                                 [this] { return Json{{"items", encode_list(runs_.workers())}}; });
+                        dispatch(r, std::move(cb), [this, r] {
+                          auto workers =
+                              runs_.workers(page_size(r, 100, 200), r->getParameter("after"));
+                          return Json{{"items", encode_list(workers)},
+                                      {"next_cursor", workers.empty() ? "" : workers.back().id}};
+                        });
                       },
                       {drogon::Get});
   app.registerHandler("/v1/workers/{1}/drain",
@@ -184,7 +194,7 @@ void Api::mount() {
             if (attempt.empty())
               attempt = run.active_attempt;
             auto rows =
-                runs_.telemetry(id, attempt, number(r, "after", 0), number(r, "limit", 100),
+                runs_.telemetry(id, attempt, number(r, "after", 0), page_size(r, 100, 1000),
                                 kind == "logs" ? "logs" : "metric", r->getParameter("name"));
             return Json{
                 {"attempt_id", attempt},
@@ -218,7 +228,7 @@ void Api::mount() {
   app.registerHandler("/v1/runs",
                       [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb) {
                         dispatch(r, std::move(cb), [this, r] {
-                          auto values = runs_.list(number(r, "limit", 50), r->getParameter("after"),
+                          auto values = runs_.list(page_size(r, 50, 200), r->getParameter("after"),
                                                    r->getParameter("status"));
                           return Json{{"items", encode_list(values)},
                                       {"next_cursor", values.empty() ? "" : values.back().id}};
@@ -242,7 +252,7 @@ void Api::mount() {
                         dispatch(r, std::move(cb), [this, id, r] {
                           return Json{
                               {"items", encode_list(runs_.events(id, number(r, "after", 0),
-                                                                 number(r, "limit", 100)))}};
+                                                                 page_size(r, 100, 1000)))}};
                         });
                       },
                       {drogon::Get});

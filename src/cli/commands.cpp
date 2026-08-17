@@ -67,6 +67,8 @@ int command_line(int argc, char **argv) {
   auto *workers = sub(&app, "workers", "Inspect worker capacity");
   workers->require_subcommand(1);
   auto *worker_list = sub(workers, "list", "List workers");
+  worker_list->add_option("--limit", limit)->check(CLI::Range(1, 200));
+  worker_list->add_option("--after", after);
   auto *drain = sub(workers, "drain", "Stop assigning new work to a worker");
   drain->add_option("id", id)->required();
   drain->add_flag("--resume", resume);
@@ -75,6 +77,8 @@ int command_line(int argc, char **argv) {
     auto token = env("RUNYARD_OWNER_TOKEN");
     if (token.empty())
       throw std::runtime_error("set RUNYARD_OWNER_TOKEN");
+    if (url.starts_with("http://") && env("RUNYARD_PROFILE") != "development")
+      throw std::runtime_error("plaintext HTTP requires RUNYARD_PROFILE=development");
     Client client(url, token, ca);
     auto path = "/v1/runs/" + HttpClient::escape(id);
     auto request_key = [&] {
@@ -116,7 +120,8 @@ int command_line(int argc, char **argv) {
       download_artifact(client, id, output);
       return 0;
     } else if (*worker_list)
-      result = client.get("/v1/workers");
+      result = client.get("/v1/workers?limit=" + std::to_string(limit) +
+                          "&after=" + HttpClient::escape(after));
     else if (*drain)
       result = client.post("/v1/workers/" + HttpClient::escape(id) + "/drain",
                            {{"drained", !resume}}, "");

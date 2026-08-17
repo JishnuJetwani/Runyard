@@ -4,7 +4,7 @@
 
 namespace runyard {
 namespace {
-std::string endpoint(const std::string &path) { return "http://localhost/v1.41" + path; }
+std::string endpoint(const std::string &path) { return "http://localhost/v1.44" + path; }
 void expect(const HttpResult &response, std::initializer_list<long> allowed) {
   for (auto status : allowed)
     if (response.status == status)

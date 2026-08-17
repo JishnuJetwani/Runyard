@@ -16,8 +16,9 @@ std::int64_t PostgresStore::report(const std::string &id, int generation,
   for (const auto &r : records) {
     if (r.sequence <= sequence)
       continue;
+    // Return the persisted prefix so a sender can retransmit the missing suffix.
     if (r.sequence != sequence + 1)
-      throw Error(ErrorCode::conflict, "telemetry sequence gap");
+      break;
     tx.exec("INSERT INTO telemetry(attempt_id,sequence,kind,text,name,step,value,timestamp_ms) "
             "VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
             pqxx::params{id, r.sequence, r.kind, r.text, r.name, r.step, r.value, r.timestamp_ms});

@@ -6,7 +6,9 @@ class RunService {
 public:
   explicit RunService(Repository &repository) : repository_(repository) {}
   Run submit(const RunSpec &spec, const std::string &key, const std::string &fingerprint);
-  std::vector<Worker> workers() { return repository_.workers(); }
+  std::vector<Worker> workers(int limit = 100, const std::string &after = "") {
+    return repository_.workers(limit, after);
+  }
   void drain_worker(const std::string &id, bool drained) { repository_.drain_worker(id, drained); }
   Sweep sweep(const SweepSpec &spec, const std::string &key, const std::string &fingerprint);
   Sweep get_sweep(const std::string &id) { return repository_.get_sweep(id); }

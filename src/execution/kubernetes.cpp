@@ -101,7 +101,15 @@ std::string KubernetesBackend::ensure(const Launch &launch) {
   if (response.status != 200 && response.status != 201)
     throw Error(ErrorCode::unavailable, "cannot reconcile Kubernetes Job");
   auto job = Json::parse(response.body);
-  if (job.at("metadata").at("labels").value("runyard.attempt", "") != launch.assignment.attempt.id)
+  if (job.at("metadata").at("labels").value("runyard.attempt", "") !=
+          launch.assignment.attempt.id ||
+      job.at("spec")
+              .at("template")
+              .at("spec")
+              .at("containers")
+              .at(0)
+              .at("image")
+              .get<std::string>() != launch.assignment.spec.image)
     throw Error(ErrorCode::conflict, "Kubernetes Job name belongs to another resource");
   return job.at("metadata").at("uid");
 }

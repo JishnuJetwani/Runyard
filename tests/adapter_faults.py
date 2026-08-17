@@ -24,7 +24,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if s.backend == "docker":
             if "/images/" in self.path:
                 return self.reply(200, {})
-            if self.path.startswith("/v1.41/containers/json?"):
+            if self.path.startswith("/v1.44/containers/json?"):
                 return self.reply(200, [{"Labels": {"runyard.attempt": "test-attempt"}}] if s.exists else [])
             return self.reply(200, {"Id": "runtime-uid", "Config": s.spec, "State": {"Status": "running" if s.starts else "created"}}) if s.exists else self.reply(404)
         if "pods?" in self.path:

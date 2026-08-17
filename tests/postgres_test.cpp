@@ -2,6 +2,7 @@
 #include "runyard/postgres/store.hpp"
 #include "runyard/serialization/json.hpp"
 #include "runyard/support/crypto.hpp"
+#include <barrier>
 #include <cstdlib>
 #include <future>
 #include <gtest/gtest.h>
@@ -109,12 +110,15 @@ TEST_F(Database, TelemetryIsContiguousAndIdempotent) {
   EXPECT_EQ(store->report(a.id, a.generation, "i", {first, second}), 2);
   auto gap = first;
   gap.sequence = 4;
-  EXPECT_THROW(store->report(a.id, a.generation, "i", {gap}), Error);
+  EXPECT_EQ(store->report(a.id, a.generation, "i", {gap}), 2);
   EXPECT_EQ(store->telemetry(run.id, "", 0, 100, "logs", "").size(), 1);
   EXPECT_EQ(store->telemetry(run.id, "", 0, 100, "metric", "score").size(), 1);
+  auto missing = first;
+  missing.sequence = 3;
+  EXPECT_EQ(store->report(a.id, a.generation, "i", {missing, gap}), 4);
   store->begin_finalization(a.id, a.generation, "i");
   EXPECT_THROW(store->finish(a.id, a.generation, "i", 0, "", 1), Error);
-  EXPECT_NO_THROW(store->finish(a.id, a.generation, "i", 0, "", 2));
+  EXPECT_NO_THROW(store->finish(a.id, a.generation, "i", 0, "", 4));
 }
 
 TEST_F(Database, ArtifactsArePublishedOnlyByTheLiveFinalizingAttempt) {
@@ -282,8 +286,10 @@ TEST_F(Database, KubernetesUsesTheSameFencingAndRecoveryContract) {
   auto a = assigned->attempt;
   store->start(a.id, a.generation, "pod-one");
   EXPECT_THROW(store->start(a.id, a.generation, "duplicate-pod"), Error);
-  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted"}}), 1);
-  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted"}}), 1);
+  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted", "", 0, 0, 0}}),
+            1);
+  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted", "", 0, 0, 0}}),
+            1);
   {
     auto c = pool->acquire();
     pqxx::work tx(c.get());
@@ -296,4 +302,70 @@ TEST_F(Database, KubernetesUsesTheSameFencingAndRecoveryContract) {
   EXPECT_THROW(store->finish(a.id, a.generation, "pod-one", 0, "", 1), Error);
   EXPECT_EQ(store->get_run(run.id).status, RunStatus::retry_wait);
   EXPECT_EQ(store->attempts(run.id).front().reason, "LEASE_EXPIRED");
+}
+
+TEST_F(Database, CompetingWorkersCannotReserveTheSameRun) {
+  store->submit(spec(), random_id(), "race");
+  store->register_worker("one", "s", {1000, 512});
+  store->register_worker("two", "s", {1000, 512});
+  std::barrier gate(2);
+  auto claim = [&](const std::string &worker) {
+    gate.arrive_and_wait();
+    return store->assign(worker, "s");
+  };
+  auto first = std::async(std::launch::async, claim, "one");
+  auto second = std::async(std::launch::async, claim, "two");
+  auto a = first.get(), b = second.get();
+  EXPECT_NE(a.has_value(), b.has_value());
+}
+TEST_F(Database, ConcurrentRunnerClaimsHaveOneOwner) {
+  store->submit(spec(), random_id(), "race");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  std::barrier gate(2);
+  auto claim = [&](const std::string &instance) {
+    gate.arrive_and_wait();
+    try {
+      store->start(a.id, a.generation, instance);
+      return true;
+    } catch (const Error &e) {
+      EXPECT_EQ(e.code(), ErrorCode::stale);
+      return false;
+    }
+  };
+  auto first = std::async(std::launch::async, claim, "one");
+  auto second = std::async(std::launch::async, claim, "two");
+  EXPECT_NE(first.get(), second.get());
+}
+TEST_F(Database, CompletionAndCancellationCommitOneTerminalDecision) {
+  for (int iteration = 0; iteration < 5; ++iteration) {
+    auto run = store->submit(spec(), random_id(), "race");
+    auto a = store->admit_kubernetes(100)->attempt;
+    store->start(a.id, a.generation, "runner");
+    store->begin_finalization(a.id, a.generation, "runner");
+    std::barrier gate(2);
+    auto complete = std::async(std::launch::async, [&] {
+      gate.arrive_and_wait();
+      try {
+        store->finish(a.id, a.generation, "runner", 0, "", 0);
+      } catch (const Error &e) {
+        EXPECT_EQ(e.code(), ErrorCode::stale);
+      }
+    });
+    auto cancel = std::async(std::launch::async, [&] {
+      gate.arrive_and_wait();
+      return store->cancel(run.id);
+    });
+    complete.get();
+    auto cancelled = cancel.get();
+    auto result = store->get_run(run.id);
+    EXPECT_EQ(result.status, cancelled.status);
+    EXPECT_TRUE(result.status == RunStatus::succeeded || result.status == RunStatus::cancelled);
+    auto events = store->events(run.id, 0, 100);
+    int terminal_events = 0;
+    for (const auto &event : events)
+      if (event.kind == "completed" || event.kind == "cancelled")
+        ++terminal_events;
+    EXPECT_EQ(terminal_events, 1);
+  }
 }
