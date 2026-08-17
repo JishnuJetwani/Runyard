@@ -19,3 +19,8 @@ not AWS IAM, TLS routing, or actual S3 service access.
 
 Staging files, downloaded objects, and orphaned objects require operator-managed
 retention in v1. Do not delete objects referenced by the artifacts table.
+
+The runner checks the canonical working root, output-directory identity, and every
+file/archive before upload. Symlinks are rejected even when the workload replaces
+the output directory itself. The TLS runner integration test includes that case
+and verifies that no external file is published.

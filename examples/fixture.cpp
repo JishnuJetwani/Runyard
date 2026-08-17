@@ -19,6 +19,15 @@ int main() {
     if (mode == "hang")
       while (true)
         std::this_thread::sleep_for(std::chrono::seconds(1));
+    if (mode == "symlink_output") {
+      auto output = std::filesystem::path(env("RUNYARD_OUTPUT_DIR"));
+      auto outside = output.parent_path() / "outside";
+      std::filesystem::create_directory(outside);
+      std::ofstream(outside / "must-not-upload.txt") << "outside the artifact directory";
+      std::filesystem::remove(output);
+      std::filesystem::create_directory_symlink(outside, output);
+      return 0;
+    }
     for (int step = 0; step < steps; ++step) {
       std::cout << "step " << step << " seed " << seed << std::endl;
       metrics << Json{{"name", "score"}, {"step", step}, {"value", (seed + step) * 0.125}}.dump()

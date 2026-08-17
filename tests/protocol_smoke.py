@@ -103,8 +103,20 @@ with tempfile.TemporaryDirectory(prefix="runyard-protocol-") as tmp:
         uploaded = runner.Upload(chunks(), metadata=capability, timeout=5)
         assert runner.Upload(chunks(), metadata=capability, timeout=5).id == uploaded.id
         runner.Complete(p.Completion(owner=owner, exit_code=0, final_sequence=0), metadata=capability, timeout=5)
+        agent.Heartbeat(worker, metadata=auth, timeout=5)
+        agent.ReportRuntime(p.RuntimeReport(worker=worker, attempt_id=assigned.attempt_id, stopped=True), metadata=auth, timeout=5)
+        unsafe = api("/v1/runs", {"name": "unsafe-output", "image": "fixture@sha256:" + "a"*64,
+                     "command": [str(bin_dir / "runyard-fixture")], "priority": 9,
+                     "parameters": {"mode": "symlink_output"}})
+        assigned = agent.Poll(worker, metadata=auth, timeout=5).assignment
+        assert assigned.run_id == unsafe["id"]
         channel.close()
-        print(("TLS " if tls else "") + "Native protocol passed: replay, duplicate runner fencing, process, telemetry, interrupted/duplicate uploads, CLI checksum download")
+        unsafe_env = dict(runner_env, RUNYARD_ATTEMPT_ID=assigned.attempt_id, RUNYARD_RUN_ID=unsafe["id"],
+                          RUNYARD_GENERATION=str(assigned.generation), RUNYARD_CAPABILITY=assigned.capability)
+        assert subprocess.run([str(bin_dir / "runyard-runner")], env=unsafe_env, stdout=log, stderr=log, timeout=30).returncode != 0
+        assert not api("/v1/runs/" + unsafe["id"] + "/artifacts")["items"]
+        api("/v1/runs/" + unsafe["id"] + "/cancel", {})
+        print(("TLS " if tls else "") + "Native protocol passed: replay, duplicate runner fencing, process, telemetry, interrupted/duplicate uploads, unsafe output rejection, CLI checksum download")
     finally:
         for process in processes:
             if process.poll() is None:
