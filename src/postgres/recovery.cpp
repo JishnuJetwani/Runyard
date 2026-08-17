@@ -10,8 +10,9 @@ void pg::fail(pqxx::work &tx, const LockedAttempt &a, Failure failure, const std
           pqxx::params{a.attempt.id, reason, exit_code});
   tx.exec(
       "UPDATE runs SET status=$2,available_at=clock_timestamp()+$3*interval '1 second' WHERE id=$1",
-      pqxx::params{a.run.id, retry ? "RETRY_WAIT" : "FAILED",
-                   retry_delay(a.attempt.generation, timing.retry_base_seconds)});
+      pqxx::params{
+          a.run.id, retry ? "RETRY_WAIT" : "FAILED",
+          retry_delay(a.attempt.generation, timing.retry_base_seconds, timing.retry_max_seconds)});
   event(tx, a.run.id, retry ? "retry_scheduled" : "failed", reason);
 }
 void PostgresStore::recover() {

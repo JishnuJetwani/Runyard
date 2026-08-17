@@ -8,8 +8,18 @@
 #include "runyard/storage/s3.hpp"
 #include "runyard/support/config.hpp"
 #include <CLI/CLI.hpp>
+#include <condition_variable>
 #include <spdlog/spdlog.h>
 #include <sys/resource.h>
+
+namespace {
+void pause(std::stop_token stop, std::chrono::milliseconds duration) {
+  std::mutex mutex;
+  std::condition_variable_any wake;
+  std::unique_lock lock(mutex);
+  wake.wait_for(lock, stop, duration, [] { return false; });
+}
+} // namespace
 
 int main(int argc, char **argv) {
   runyard::structured_logging();
@@ -74,7 +84,7 @@ int main(int argc, char **argv) {
             spdlog::warn("recovery: {}", e.what());
           }
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        pause(stop, std::chrono::milliseconds(config.timing.recovery_scan_millis));
       }
     });
     std::jthread dispatch([&](std::stop_token stop) {
@@ -86,7 +96,7 @@ int main(int argc, char **argv) {
             spdlog::warn("Kubernetes reconciliation: {}", e.what());
           }
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        pause(stop, std::chrono::milliseconds(config.timing.recovery_scan_millis));
       }
     });
     std::unique_ptr<runyard::BlobStore> blobs;

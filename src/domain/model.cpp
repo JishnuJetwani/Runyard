@@ -132,8 +132,10 @@ bool should_retry(const RetryPolicy &policy, int completed_attempts, Failure rea
          (reason == Failure::exit_error && policy.retry_exit) ||
          (reason == Failure::timeout && policy.retry_timeout);
 }
-int retry_delay(int generation, int base_seconds) {
-  return std::min(60, std::clamp(base_seconds, 1, 60) * (1 << std::clamp(generation - 1, 0, 6)));
+int retry_delay(int generation, int base_seconds, int max_seconds) {
+  auto factor = std::int64_t{1} << (std::clamp(generation, 1, 31) - 1);
+  return static_cast<int>(
+      std::min<std::int64_t>(std::max(1, max_seconds), std::max(1, base_seconds) * factor));
 }
 
 std::vector<RunSpec> expand_sweep(const RunSpec &base,

@@ -1,5 +1,6 @@
 #include "runyard/domain/error.hpp"
 #include "runyard/domain/model.hpp"
+#include <climits>
 #include <gtest/gtest.h>
 #include <limits>
 
@@ -64,6 +65,9 @@ TEST(Domain, BackoffCapsWithoutOverflow) {
   EXPECT_EQ(retry_delay(1), 5);
   EXPECT_EQ(retry_delay(2), 10);
   EXPECT_EQ(retry_delay(100000), 60);
+  EXPECT_EQ(retry_delay(4, 3, 20), 20);
+  EXPECT_EQ(retry_delay(3, 3, 100), 12);
+  EXPECT_EQ(retry_delay(100000, INT_MAX, INT_MAX), INT_MAX);
 }
 TEST(Domain, SweepExpandsDeterministically) {
   auto result = expand_sweep(
