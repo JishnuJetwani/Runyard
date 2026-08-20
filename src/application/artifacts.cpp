@@ -34,13 +34,20 @@ std::vector<Artifact> ArtifactService::list(const std::string &run, const std::s
 std::filesystem::path ArtifactService::download(const std::string &id) {
   auto artifact = repository_.get_artifact(id);
   auto path = root_ / "downloads" / artifact.id;
-  if (!std::filesystem::exists(path)) {
-    std::filesystem::create_directories(path.parent_path());
-    blobs_.get(artifact.storage_key, path);
-    if (sha256_file(path.string()) != artifact.sha256) {
-      std::filesystem::remove(path);
+  if (std::filesystem::exists(path) && sha256_file(path.string()) == artifact.sha256)
+    return path;
+  std::filesystem::create_directories(path.parent_path());
+  auto temporary = path.string() + ".tmp-" + random_id();
+  try {
+    blobs_.get(artifact.storage_key, temporary);
+    if (sha256_file(temporary) != artifact.sha256)
       throw Error(ErrorCode::unavailable, "stored artifact checksum mismatch");
-    }
+    // Concurrent readers can discover only a fully verified cache entry.
+    std::filesystem::rename(temporary, path);
+  } catch (...) {
+    std::error_code ignored;
+    std::filesystem::remove(temporary, ignored);
+    throw;
   }
   return path;
 }

@@ -1,5 +1,6 @@
 #include "runyard/support/http_client.hpp"
 #include "runyard/domain/error.hpp"
+#include <cstdio>
 #include <curl/curl.h>
 #include <memory>
 
@@ -93,8 +94,8 @@ std::size_t write_file(char *data, std::size_t size, std::size_t count, void *op
 void HttpClient::download(const std::string &url, const std::string &file,
                           std::uint64_t expected_size) const {
   initialize();
-  std::unique_ptr<FILE, decltype(&std::fclose)> output(std::fopen(file.c_str(), "wbx"),
-                                                       std::fclose);
+  auto close_file = [](FILE *stream) { std::fclose(stream); };
+  std::unique_ptr<FILE, decltype(close_file)> output(std::fopen(file.c_str(), "wbx"), close_file);
   if (!output)
     throw Error(ErrorCode::invalid, "cannot create download file");
   std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> handle(curl_easy_init(), curl_easy_cleanup);

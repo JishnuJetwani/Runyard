@@ -1,9 +1,11 @@
+#include "runyard/application/artifacts.hpp"
 #include "runyard/domain/error.hpp"
 #include "runyard/postgres/store.hpp"
 #include "runyard/serialization/json.hpp"
 #include "runyard/support/crypto.hpp"
 #include <barrier>
 #include <cstdlib>
+#include <fstream>
 #include <future>
 #include <gtest/gtest.h>
 
@@ -137,6 +139,48 @@ TEST_F(Database, ArtifactsArePublishedOnlyByTheLiveFinalizingAttempt) {
   EXPECT_THROW(store->publish_artifact(changed, a.generation, "i"), Error);
   store->finish(a.id, a.generation, "i", 0, "", 0);
   EXPECT_THROW(store->publish_artifact(artifact, a.generation, "i"), Error);
+}
+
+TEST_F(Database, DownloadsNeverPublishUnverifiedCacheEntries) {
+  class ControlledStore final : public BlobStore {
+  public:
+    std::promise<void> written, proceed;
+    std::shared_future<void> gate{proceed.get_future()};
+    std::string content{"corrupt"};
+    bool block{true};
+    void put(const std::string &, const std::filesystem::path &) override {}
+    void get(const std::string &, const std::filesystem::path &destination) override {
+      std::ofstream(destination) << content;
+      if (block) {
+        written.set_value();
+        gate.wait();
+      }
+    }
+  } blobs;
+  store->submit(spec(), random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto attempt = store->assign("w", "s")->attempt;
+  store->start(attempt.id, attempt.generation, "i");
+  store->begin_finalization(attempt.id, attempt.generation, "i");
+  Artifact artifact{random_id(), attempt.id, "output", "object", sha256("expected"), 8};
+  store->publish_artifact(artifact, attempt.generation, "i");
+  auto root = std::filesystem::temp_directory_path() / random_id();
+  ArtifactService service(*store, blobs, root);
+  auto written = blobs.written.get_future();
+  auto downloading = std::async(std::launch::async, [&] { return service.download(artifact.id); });
+  EXPECT_EQ(written.wait_for(std::chrono::seconds(5)), std::future_status::ready);
+  auto cache = root / "downloads" / artifact.id;
+  EXPECT_FALSE(std::filesystem::exists(cache));
+  blobs.proceed.set_value();
+  EXPECT_THROW(downloading.get(), Error);
+  EXPECT_FALSE(std::filesystem::exists(cache));
+  EXPECT_TRUE(std::filesystem::is_empty(root / "downloads"));
+
+  blobs.block = false;
+  blobs.content = "expected";
+  std::ofstream(cache) << "damaged cache";
+  EXPECT_EQ(sha256_file(service.download(artifact.id).string()), artifact.sha256);
+  std::filesystem::remove_all(root);
 }
 
 TEST_F(Database, ExpiredAttemptRetriesWithNewIdentityAndRejectsOldWrites) {
