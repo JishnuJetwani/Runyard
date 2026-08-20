@@ -26,6 +26,8 @@ void KubernetesController::tick() {
         repository_.kubernetes_runtime(a.attempt.id, "", true);
       } else if (a.attempt.runtime_id.empty())
         launch(a);
+      else if (backend_.has_stopped(a.attempt.id))
+        repository_.kubernetes_stopped(a.attempt.id);
     } catch (const std::exception &e) {
       spdlog::warn("Kubernetes attempt {}: {}", a.attempt.id, e.what());
     }

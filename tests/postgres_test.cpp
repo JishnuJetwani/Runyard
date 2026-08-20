@@ -348,6 +348,66 @@ TEST_F(Database, KubernetesUsesTheSameFencingAndRecoveryContract) {
   EXPECT_EQ(store->attempts(run.id).front().reason, "LEASE_EXPIRED");
 }
 
+TEST_F(Database, StoppedKubernetesJobRetriesBeforeLaunchDeadline) {
+  auto run = store->submit(spec(), random_id(), "stopped-job");
+  auto assignment = store->admit_kubernetes(1);
+  ASSERT_TRUE(assignment);
+  auto a = assignment->attempt;
+  store->kubernetes_runtime(a.id, "job-uid", false);
+  store->kubernetes_stopped(a.id);
+  auto events = store->events(run.id, 0, 100).size();
+  store->kubernetes_stopped(a.id);
+  EXPECT_EQ(store->events(run.id, 0, 100).size(), events);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::retry_wait);
+  EXPECT_EQ(store->attempts(run.id).front().reason, "RUNTIME_STOPPED");
+  EXPECT_THROW(store->start(a.id, a.generation, "late-pod"), Error);
+  EXPECT_FALSE(store->admit_kubernetes(1));
+  store->kubernetes_runtime(a.id, "", true);
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE runs SET available_at=clock_timestamp() WHERE id=$1", pqxx::params{run.id});
+    tx.commit();
+  }
+  store->recover();
+  auto replacement = store->admit_kubernetes(1);
+  ASSERT_TRUE(replacement);
+  store->kubernetes_stopped(a.id);
+  EXPECT_EQ(store->get_run(run.id).active_attempt, replacement->attempt.id);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::starting);
+}
+
+TEST_F(Database, JobObservationCannotOverwriteAcceptedSuccess) {
+  auto run = store->submit(spec(), random_id(), "completed-job");
+  auto assignment = store->admit_kubernetes(1);
+  ASSERT_TRUE(assignment);
+  auto a = assignment->attempt;
+  store->start(a.id, a.generation, "pod");
+  store->begin_finalization(a.id, a.generation, "pod");
+  store->finish(a.id, a.generation, "pod", 0, "", 0);
+  store->kubernetes_stopped(a.id);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::succeeded);
+}
+
+TEST_F(Database, StoppedJobPastExecutionDeadlineHonorsTimeoutRetryPolicy) {
+  auto run = store->submit(spec(), random_id(), "timed-out-job");
+  auto assignment = store->admit_kubernetes(1);
+  ASSERT_TRUE(assignment);
+  auto a = assignment->attempt;
+  store->start(a.id, a.generation, "pod");
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE attempts SET execution_deadline=clock_timestamp()-interval '1 second' "
+            "WHERE id=$1",
+            pqxx::params{a.id});
+    tx.commit();
+  }
+  store->kubernetes_stopped(a.id);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::failed);
+  EXPECT_EQ(store->attempts(run.id).front().reason, "TIMEOUT");
+}
+
 TEST_F(Database, CompetingWorkersCannotReserveTheSameRun) {
   store->submit(spec(), random_id(), "race");
   store->register_worker("one", "s", {1000, 512});

@@ -46,6 +46,23 @@ std::vector<Assignment> PostgresStore::kubernetes_attempts() {
     result.push_back({pg::attempt(row), decode_spec(Json::parse(pg::text(row["spec"])))});
   return result;
 }
+void PostgresStore::kubernetes_stopped(const std::string &id) {
+  auto c = pool_.acquire();
+  pqxx::work tx(c.get());
+  auto a = pg::lock_attempt(tx, id);
+  if (a.attempt.worker_id != "@kubernetes")
+    throw Error(ErrorCode::invalid, "attempt does not belong to Kubernetes");
+  // Observation races with runner completion; the first committed decision wins.
+  if (a.run.active_attempt == id &&
+      (a.attempt.status == "STARTING" || a.attempt.status == "RUNNING" ||
+       a.attempt.status == "FINALIZING")) {
+    if (a.run.status == RunStatus::running && !a.deadline_valid)
+      pg::fail(tx, a, Failure::timeout, "TIMEOUT", std::nullopt, timing_);
+    else
+      pg::fail(tx, a, Failure::infrastructure, "RUNTIME_STOPPED", std::nullopt, timing_);
+  }
+  tx.commit();
+}
 void PostgresStore::kubernetes_runtime(const std::string &id, const std::string &runtime,
                                        bool removed) {
   auto c = pool_.acquire();
