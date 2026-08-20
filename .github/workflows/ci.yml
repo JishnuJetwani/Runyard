@@ -11,7 +11,7 @@ jobs:
         image: postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1b55cf0c01d1a7eb701be2227a03e0641
         env: {POSTGRES_PASSWORD: runyard-test-only, POSTGRES_DB: runyard}
         ports: ['5432:5432']
-        options: --health-cmd pg_isready --health-interval 2s --health-retries 30
+        options: --health-cmd "pg_isready -h 127.0.0.1" --health-interval 2s --health-retries 30
     env:
       RUNYARD_TEST_DATABASE: host=localhost user=postgres password=runyard-test-only dbname=runyard connect_timeout=3
       VCPKG_MAX_CONCURRENCY: '3'
