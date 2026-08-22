@@ -31,7 +31,33 @@ bool transition_allowed(RunStatus from, RunStatus to);
 struct Resources {
   int cpu_millis{1000};
   int memory_mib{512};
+  int gpu_count{0};
   bool fits(const Resources &available) const;
+};
+
+struct GpuDevice {
+  std::string uuid;
+  std::string name;
+  std::uint64_t memory_mib{};
+  bool eligible{true};
+  std::string reason;
+};
+
+struct GpuRegistration {
+  std::string engine_id;
+  bool capable{};
+};
+
+struct GpuSnapshot {
+  std::int64_t sequence{};
+  bool ready{};
+  std::vector<GpuDevice> devices;
+};
+
+struct GpuAllocation {
+  GpuDevice device;
+  std::string allocated_at;
+  std::string released_at;
 };
 
 struct RetryPolicy {

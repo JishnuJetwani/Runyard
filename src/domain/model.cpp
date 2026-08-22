@@ -48,7 +48,8 @@ bool transition_allowed(RunStatus from, RunStatus to) {
   }
 }
 bool Resources::fits(const Resources &available) const {
-  return cpu_millis <= available.cpu_millis && memory_mib <= available.memory_mib;
+  return cpu_millis <= available.cpu_millis && memory_mib <= available.memory_mib &&
+         gpu_count <= available.gpu_count;
 }
 
 void validate(const RunSpec &spec) {
@@ -67,6 +68,8 @@ void validate(const RunSpec &spec) {
           "cpu_millis out of range");
   require(spec.resources.memory_mib >= 32 && spec.resources.memory_mib <= 1048576,
           "memory_mib out of range");
+  require(spec.resources.gpu_count >= 0 && spec.resources.gpu_count <= 64,
+          "gpu_count must be between 0 and 64");
   require(spec.timeout_seconds > 0 && spec.timeout_seconds <= 604800,
           "timeout_seconds must be between 1 and 604800");
   require(spec.priority >= 0 && spec.priority <= 9, "priority must be between 0 and 9");
