@@ -57,8 +57,14 @@ Docker uses logical workers on one engine. Kubernetes uses the `kind-runyard`
 context. Docker, kind, and kubectl must be installed for their respective backends.
 
 ```sh
-python3 tests/execution_contract.py --backend docker --image "$RUNYARD_FIXTURE_IMAGE"
+scripts/acceptance.sh docker
+scripts/acceptance.sh kubernetes
 ```
+
+The acceptance script builds images unless `--skip-build` is supplied. Existing
+application data requires `--reuse`; it is not erased. Results are written to
+`.local/` and `benchmarks/results/`. See the [benchmark guide](../benchmarks/README.md)
+for timing definitions and reproduction commands.
 
 ## Sanitizers and CI
 
