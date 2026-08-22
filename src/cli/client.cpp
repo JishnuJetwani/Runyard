@@ -48,6 +48,9 @@ void print_result(const Json &value, bool json) {
       print_result(item, false);
     if (value["items"].empty())
       std::cout << "No items.\n";
+    if (value.contains("next_cursor") && value["next_cursor"].is_string() &&
+        !value["next_cursor"].get<std::string>().empty())
+      std::cout << "Next cursor: " << value["next_cursor"].get<std::string>() << '\n';
     return;
   }
   if (value.contains("id") && value.contains("status")) {

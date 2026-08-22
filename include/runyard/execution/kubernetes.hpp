@@ -14,11 +14,13 @@ struct KubernetesConfig {
   bool development{};
 };
 Json kubernetes_job(const KubernetesConfig &, const Launch &);
+bool kubernetes_job_finished(const Json &job);
 class KubernetesBackend final : public ExecutionBackend {
 public:
   explicit KubernetesBackend(KubernetesConfig config) : config_(std::move(config)) {}
   std::vector<std::string> inventory() override;
   std::string ensure(const Launch &) override;
+  bool has_stopped(const std::string &) override;
   void remove(const std::string &) override;
 
 private:

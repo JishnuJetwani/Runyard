@@ -57,7 +57,7 @@ void validate(const RunSpec &spec) {
   require(spec.version == 1, "specification version must be 1");
   require(!spec.name.empty() && spec.name.size() <= 200 && safe_string(spec.name),
           "invalid run name");
-  require(std::regex_match(spec.image, image),
+  require(spec.image.size() <= 1024 && std::regex_match(spec.image, image),
           "image must be pinned with @sha256:<64 lowercase hex digits>");
   require(!spec.command.empty() && spec.command.size() <= 256 && !spec.command[0].empty(),
           "command must be a nonempty argv array");
@@ -75,6 +75,13 @@ void validate(const RunSpec &spec) {
   require(spec.parameters.size() <= 100 && spec.labels.size() <= 50 &&
               spec.environment.size() <= 100,
           "too many specification fields");
+  require(spec.source_repository.size() <= 2048 && safe_string(spec.source_repository) &&
+              spec.source_revision.size() <= 200 && safe_string(spec.source_revision),
+          "invalid source metadata");
+  for (const auto &[key, value] : spec.labels)
+    require(!key.empty() && key.size() <= 200 && value.size() <= 1024 && safe_string(key) &&
+                safe_string(value),
+            "invalid label");
   for (const auto &[key, value] : spec.environment) {
     require(std::regex_match(key, env_name) && !key.starts_with("RUNYARD_"),
             "invalid or reserved environment name");
@@ -94,9 +101,10 @@ void validate(const Telemetry &point) {
   require(point.kind == "stdout" || point.kind == "stderr" || point.kind == "metric" ||
               point.kind == "notice",
           "unknown telemetry kind");
-  require(point.text.size() <= 65536, "log record exceeds 64 KiB");
+  require(point.text.size() <= 65536 && safe_string(point.text), "log record exceeds 64 KiB");
   if (point.kind == "metric") {
-    require(!point.name.empty() && point.name.size() <= 200, "invalid metric name");
+    require(!point.name.empty() && point.name.size() <= 200 && safe_string(point.name),
+            "invalid metric name");
     require(std::isfinite(point.value) && point.step >= 0, "invalid metric value or step");
   }
 }
@@ -124,8 +132,10 @@ bool should_retry(const RetryPolicy &policy, int completed_attempts, Failure rea
          (reason == Failure::exit_error && policy.retry_exit) ||
          (reason == Failure::timeout && policy.retry_timeout);
 }
-int retry_delay(int generation, int base_seconds) {
-  return std::min(60, std::clamp(base_seconds, 1, 60) * (1 << std::clamp(generation - 1, 0, 6)));
+int retry_delay(int generation, int base_seconds, int max_seconds) {
+  auto factor = std::int64_t{1} << (std::clamp(generation, 1, 31) - 1);
+  return static_cast<int>(
+      std::min<std::int64_t>(std::max(1, max_seconds), std::max(1, base_seconds) * factor));
 }
 
 std::vector<RunSpec> expand_sweep(const RunSpec &base,

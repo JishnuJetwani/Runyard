@@ -14,7 +14,7 @@ public:
   std::vector<Event> events(const std::string &run_id, std::int64_t after, int limit) override;
   void register_worker(const std::string &, const std::string &, Resources) override;
   void worker_heartbeat(const std::string &, const std::string &) override;
-  std::vector<Worker> workers() override;
+  std::vector<Worker> workers(int limit = 100, const std::string &after = "") override;
   std::optional<Assignment> assign(const std::string &, const std::string &) override;
   void runtime_report(const std::string &, const std::string &, const std::string &,
                       const std::string &, bool) override;
@@ -39,6 +39,7 @@ public:
   std::map<std::string, double> statistics();
   std::optional<Assignment> admit_kubernetes(int max_active) override;
   std::vector<Assignment> kubernetes_attempts() override;
+  void kubernetes_stopped(const std::string &) override;
   void kubernetes_runtime(const std::string &, const std::string &, bool) override;
   Sweep submit_sweep(const SweepSpec &, const std::vector<RunSpec> &, const std::string &,
                      const std::string &) override;

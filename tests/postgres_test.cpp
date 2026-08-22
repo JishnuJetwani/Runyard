@@ -1,8 +1,11 @@
+#include "runyard/application/artifacts.hpp"
 #include "runyard/domain/error.hpp"
 #include "runyard/postgres/store.hpp"
 #include "runyard/serialization/json.hpp"
 #include "runyard/support/crypto.hpp"
+#include <barrier>
 #include <cstdlib>
+#include <fstream>
 #include <future>
 #include <gtest/gtest.h>
 
@@ -109,12 +112,15 @@ TEST_F(Database, TelemetryIsContiguousAndIdempotent) {
   EXPECT_EQ(store->report(a.id, a.generation, "i", {first, second}), 2);
   auto gap = first;
   gap.sequence = 4;
-  EXPECT_THROW(store->report(a.id, a.generation, "i", {gap}), Error);
+  EXPECT_EQ(store->report(a.id, a.generation, "i", {gap}), 2);
   EXPECT_EQ(store->telemetry(run.id, "", 0, 100, "logs", "").size(), 1);
   EXPECT_EQ(store->telemetry(run.id, "", 0, 100, "metric", "score").size(), 1);
+  auto missing = first;
+  missing.sequence = 3;
+  EXPECT_EQ(store->report(a.id, a.generation, "i", {missing, gap}), 4);
   store->begin_finalization(a.id, a.generation, "i");
   EXPECT_THROW(store->finish(a.id, a.generation, "i", 0, "", 1), Error);
-  EXPECT_NO_THROW(store->finish(a.id, a.generation, "i", 0, "", 2));
+  EXPECT_NO_THROW(store->finish(a.id, a.generation, "i", 0, "", 4));
 }
 
 TEST_F(Database, ArtifactsArePublishedOnlyByTheLiveFinalizingAttempt) {
@@ -133,6 +139,48 @@ TEST_F(Database, ArtifactsArePublishedOnlyByTheLiveFinalizingAttempt) {
   EXPECT_THROW(store->publish_artifact(changed, a.generation, "i"), Error);
   store->finish(a.id, a.generation, "i", 0, "", 0);
   EXPECT_THROW(store->publish_artifact(artifact, a.generation, "i"), Error);
+}
+
+TEST_F(Database, DownloadsNeverPublishUnverifiedCacheEntries) {
+  class ControlledStore final : public BlobStore {
+  public:
+    std::promise<void> written, proceed;
+    std::shared_future<void> gate{proceed.get_future()};
+    std::string content{"corrupt"};
+    bool block{true};
+    void put(const std::string &, const std::filesystem::path &) override {}
+    void get(const std::string &, const std::filesystem::path &destination) override {
+      std::ofstream(destination) << content;
+      if (block) {
+        written.set_value();
+        gate.wait();
+      }
+    }
+  } blobs;
+  store->submit(spec(), random_id(), "one");
+  store->register_worker("w", "s", {1000, 512});
+  auto attempt = store->assign("w", "s")->attempt;
+  store->start(attempt.id, attempt.generation, "i");
+  store->begin_finalization(attempt.id, attempt.generation, "i");
+  Artifact artifact{random_id(), attempt.id, "output", "object", sha256("expected"), 8};
+  store->publish_artifact(artifact, attempt.generation, "i");
+  auto root = std::filesystem::temp_directory_path() / random_id();
+  ArtifactService service(*store, blobs, root);
+  auto written = blobs.written.get_future();
+  auto downloading = std::async(std::launch::async, [&] { return service.download(artifact.id); });
+  EXPECT_EQ(written.wait_for(std::chrono::seconds(5)), std::future_status::ready);
+  auto cache = root / "downloads" / artifact.id;
+  EXPECT_FALSE(std::filesystem::exists(cache));
+  blobs.proceed.set_value();
+  EXPECT_THROW(downloading.get(), Error);
+  EXPECT_FALSE(std::filesystem::exists(cache));
+  EXPECT_TRUE(std::filesystem::is_empty(root / "downloads"));
+
+  blobs.block = false;
+  blobs.content = "expected";
+  std::ofstream(cache) << "damaged cache";
+  EXPECT_EQ(sha256_file(service.download(artifact.id).string()), artifact.sha256);
+  std::filesystem::remove_all(root);
 }
 
 TEST_F(Database, ExpiredAttemptRetriesWithNewIdentityAndRejectsOldWrites) {
@@ -282,8 +330,10 @@ TEST_F(Database, KubernetesUsesTheSameFencingAndRecoveryContract) {
   auto a = assigned->attempt;
   store->start(a.id, a.generation, "pod-one");
   EXPECT_THROW(store->start(a.id, a.generation, "duplicate-pod"), Error);
-  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted"}}), 1);
-  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted"}}), 1);
+  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted", "", 0, 0, 0}}),
+            1);
+  EXPECT_EQ(store->report(a.id, a.generation, "pod-one", {{1, "stdout", "persisted", "", 0, 0, 0}}),
+            1);
   {
     auto c = pool->acquire();
     pqxx::work tx(c.get());
@@ -296,4 +346,130 @@ TEST_F(Database, KubernetesUsesTheSameFencingAndRecoveryContract) {
   EXPECT_THROW(store->finish(a.id, a.generation, "pod-one", 0, "", 1), Error);
   EXPECT_EQ(store->get_run(run.id).status, RunStatus::retry_wait);
   EXPECT_EQ(store->attempts(run.id).front().reason, "LEASE_EXPIRED");
+}
+
+TEST_F(Database, StoppedKubernetesJobRetriesBeforeLaunchDeadline) {
+  auto run = store->submit(spec(), random_id(), "stopped-job");
+  auto assignment = store->admit_kubernetes(1);
+  ASSERT_TRUE(assignment);
+  auto a = assignment->attempt;
+  store->kubernetes_runtime(a.id, "job-uid", false);
+  store->kubernetes_stopped(a.id);
+  auto events = store->events(run.id, 0, 100).size();
+  store->kubernetes_stopped(a.id);
+  EXPECT_EQ(store->events(run.id, 0, 100).size(), events);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::retry_wait);
+  EXPECT_EQ(store->attempts(run.id).front().reason, "RUNTIME_STOPPED");
+  EXPECT_THROW(store->start(a.id, a.generation, "late-pod"), Error);
+  EXPECT_FALSE(store->admit_kubernetes(1));
+  store->kubernetes_runtime(a.id, "", true);
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE runs SET available_at=clock_timestamp() WHERE id=$1", pqxx::params{run.id});
+    tx.commit();
+  }
+  store->recover();
+  auto replacement = store->admit_kubernetes(1);
+  ASSERT_TRUE(replacement);
+  store->kubernetes_stopped(a.id);
+  EXPECT_EQ(store->get_run(run.id).active_attempt, replacement->attempt.id);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::starting);
+}
+
+TEST_F(Database, JobObservationCannotOverwriteAcceptedSuccess) {
+  auto run = store->submit(spec(), random_id(), "completed-job");
+  auto assignment = store->admit_kubernetes(1);
+  ASSERT_TRUE(assignment);
+  auto a = assignment->attempt;
+  store->start(a.id, a.generation, "pod");
+  store->begin_finalization(a.id, a.generation, "pod");
+  store->finish(a.id, a.generation, "pod", 0, "", 0);
+  store->kubernetes_stopped(a.id);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::succeeded);
+}
+
+TEST_F(Database, StoppedJobPastExecutionDeadlineHonorsTimeoutRetryPolicy) {
+  auto run = store->submit(spec(), random_id(), "timed-out-job");
+  auto assignment = store->admit_kubernetes(1);
+  ASSERT_TRUE(assignment);
+  auto a = assignment->attempt;
+  store->start(a.id, a.generation, "pod");
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE attempts SET execution_deadline=clock_timestamp()-interval '1 second' "
+            "WHERE id=$1",
+            pqxx::params{a.id});
+    tx.commit();
+  }
+  store->kubernetes_stopped(a.id);
+  EXPECT_EQ(store->get_run(run.id).status, RunStatus::failed);
+  EXPECT_EQ(store->attempts(run.id).front().reason, "TIMEOUT");
+}
+
+TEST_F(Database, CompetingWorkersCannotReserveTheSameRun) {
+  store->submit(spec(), random_id(), "race");
+  store->register_worker("one", "s", {1000, 512});
+  store->register_worker("two", "s", {1000, 512});
+  std::barrier gate(2);
+  auto claim = [&](const std::string &worker) {
+    gate.arrive_and_wait();
+    return store->assign(worker, "s");
+  };
+  auto first = std::async(std::launch::async, claim, "one");
+  auto second = std::async(std::launch::async, claim, "two");
+  auto a = first.get(), b = second.get();
+  EXPECT_NE(a.has_value(), b.has_value());
+}
+TEST_F(Database, ConcurrentRunnerClaimsHaveOneOwner) {
+  store->submit(spec(), random_id(), "race");
+  store->register_worker("w", "s", {1000, 512});
+  auto a = store->assign("w", "s")->attempt;
+  std::barrier gate(2);
+  auto claim = [&](const std::string &instance) {
+    gate.arrive_and_wait();
+    try {
+      store->start(a.id, a.generation, instance);
+      return true;
+    } catch (const Error &e) {
+      EXPECT_EQ(e.code(), ErrorCode::stale);
+      return false;
+    }
+  };
+  auto first = std::async(std::launch::async, claim, "one");
+  auto second = std::async(std::launch::async, claim, "two");
+  EXPECT_NE(first.get(), second.get());
+}
+TEST_F(Database, CompletionAndCancellationCommitOneTerminalDecision) {
+  for (int iteration = 0; iteration < 5; ++iteration) {
+    auto run = store->submit(spec(), random_id(), "race");
+    auto a = store->admit_kubernetes(100)->attempt;
+    store->start(a.id, a.generation, "runner");
+    store->begin_finalization(a.id, a.generation, "runner");
+    std::barrier gate(2);
+    auto complete = std::async(std::launch::async, [&] {
+      gate.arrive_and_wait();
+      try {
+        store->finish(a.id, a.generation, "runner", 0, "", 0);
+      } catch (const Error &e) {
+        EXPECT_EQ(e.code(), ErrorCode::stale);
+      }
+    });
+    auto cancel = std::async(std::launch::async, [&] {
+      gate.arrive_and_wait();
+      return store->cancel(run.id);
+    });
+    complete.get();
+    auto cancelled = cancel.get();
+    auto result = store->get_run(run.id);
+    EXPECT_EQ(result.status, cancelled.status);
+    EXPECT_TRUE(result.status == RunStatus::succeeded || result.status == RunStatus::cancelled);
+    auto events = store->events(run.id, 0, 100);
+    int terminal_events = 0;
+    for (const auto &event : events)
+      if (event.kind == "completed" || event.kind == "cancelled")
+        ++terminal_events;
+    EXPECT_EQ(terminal_events, 1);
+  }
 }

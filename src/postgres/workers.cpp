@@ -28,7 +28,7 @@ void PostgresStore::worker_heartbeat(const std::string &id, const std::string &s
   tx.exec("UPDATE workers SET heartbeat_at=clock_timestamp() WHERE id=$1", pqxx::params{id});
   tx.commit();
 }
-std::vector<Worker> PostgresStore::workers() {
+std::vector<Worker> PostgresStore::workers(int limit, const std::string &after) {
   auto c = pool_.acquire();
   pqxx::read_transaction tx(c.get());
   std::vector<Worker> result;
@@ -36,8 +36,8 @@ std::vector<Worker> PostgresStore::workers() {
       tx.exec(R"SQL(SELECT w.*,w.heartbeat_at>clock_timestamp()-$1*interval '1 second' AS available,
     COALESCE((SELECT sum(r.cpu_millis) FROM attempts a JOIN runs r ON a.run_id=r.id WHERE a.worker_id=w.id AND a.cleanup_status='PENDING'),0) AS reserved_cpu,
     COALESCE((SELECT sum(r.memory_mib) FROM attempts a JOIN runs r ON a.run_id=r.id WHERE a.worker_id=w.id AND a.cleanup_status='PENDING'),0) AS reserved_memory
-    FROM workers w ORDER BY w.id)SQL",
-              pqxx::params{timing_.worker_seconds});
+    FROM workers w WHERE w.id>$2 ORDER BY w.id LIMIT $3)SQL",
+              pqxx::params{timing_.worker_seconds, after, std::clamp(limit, 1, 200)});
   for (const auto &r : rows)
     result.push_back({pg::text(r["id"]),
                       pg::text(r["session"]),

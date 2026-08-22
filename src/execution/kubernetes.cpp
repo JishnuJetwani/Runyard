@@ -3,6 +3,15 @@
 #include "runyard/support/config.hpp"
 
 namespace runyard {
+bool kubernetes_job_finished(const Json &job) {
+  for (const auto &condition :
+       job.value("status", Json::object()).value("conditions", Json::array())) {
+    auto type = condition.value("type", "");
+    if ((type == "Failed" || type == "Complete") && condition.value("status", "") == "True")
+      return true;
+  }
+  return false;
+}
 Json kubernetes_job(const KubernetesConfig &config, const Launch &launch) {
   const auto &a = launch.assignment.attempt;
   const auto &s = launch.assignment.spec;
@@ -101,9 +110,25 @@ std::string KubernetesBackend::ensure(const Launch &launch) {
   if (response.status != 200 && response.status != 201)
     throw Error(ErrorCode::unavailable, "cannot reconcile Kubernetes Job");
   auto job = Json::parse(response.body);
-  if (job.at("metadata").at("labels").value("runyard.attempt", "") != launch.assignment.attempt.id)
+  if (job.at("metadata").at("labels").value("runyard.attempt", "") !=
+          launch.assignment.attempt.id ||
+      job.at("spec")
+              .at("template")
+              .at("spec")
+              .at("containers")
+              .at(0)
+              .at("image")
+              .get<std::string>() != launch.assignment.spec.image)
     throw Error(ErrorCode::conflict, "Kubernetes Job name belongs to another resource");
   return job.at("metadata").at("uid");
+}
+bool KubernetesBackend::has_stopped(const std::string &id) {
+  auto response = call("GET", jobs() + "/runyard-" + id);
+  if (response.status == 404)
+    return true;
+  if (response.status != 200)
+    throw Error(ErrorCode::unavailable, "cannot observe Kubernetes Job");
+  return kubernetes_job_finished(Json::parse(response.body));
 }
 void KubernetesBackend::remove(const std::string &id) {
   auto path = jobs() + "/runyard-" + id;

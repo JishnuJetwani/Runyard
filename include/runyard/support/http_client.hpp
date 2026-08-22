@@ -9,9 +9,9 @@ struct HttpResult {
   std::string body;
 };
 struct HttpOptions {
-  std::string unix_socket;
-  std::string ca_file;
-  std::string bearer;
+  std::string unix_socket{};
+  std::string ca_file{};
+  std::string bearer{};
   int timeout_seconds{30};
   std::size_t max_response_bytes{16 * 1024 * 1024};
 };

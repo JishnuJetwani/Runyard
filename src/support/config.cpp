@@ -54,9 +54,13 @@ ServerConfig ServerConfig::load() {
   c.timing.retry_base_seconds = env_int("RUNYARD_RETRY_BASE_SECONDS", 5);
   c.timing.termination_seconds = env_int("RUNYARD_TERMINATION_SECONDS", 10);
   c.timing.finalization_seconds = env_int("RUNYARD_FINALIZATION_SECONDS", 300);
+  c.timing.retry_max_seconds = env_int("RUNYARD_RETRY_MAX_SECONDS", 60);
+  c.timing.recovery_scan_millis = env_int("RUNYARD_RECOVERY_SCAN_MILLIS", 1000);
   if (c.database.empty() || c.owner_token.size() < 16)
     throw Error(ErrorCode::invalid,
                 "database URL and owner token (at least 16 characters) are required");
+  if (c.certificate.empty() != c.private_key.empty())
+    throw Error(ErrorCode::invalid, "TLS certificate and key must be configured together");
   if (!c.development && (c.certificate.empty() || c.private_key.empty()))
     throw Error(ErrorCode::invalid, "TLS certificate/key required outside development profile");
   if (c.mode != "docker" && c.mode != "kubernetes")

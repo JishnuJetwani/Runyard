@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+mkdir -p .local
 if [[ ! -f .env ]]; then
   umask 077
   {
@@ -9,7 +10,7 @@ if [[ ! -f .env ]]; then
     echo "RUNYARD_SIGNING_KEY=$(openssl rand -hex 32)"
   } > .env
 fi
-if ! rg -q '^RUNYARD_GRAFANA_PASSWORD=' .env; then
+if ! grep -q '^RUNYARD_GRAFANA_PASSWORD=' .env; then
   printf 'RUNYARD_GRAFANA_PASSWORD=%s\n' "$(openssl rand -hex 24)" >> .env
 fi
 echo 'Local credentials are in .env. Build and start with: docker compose up --build -d'

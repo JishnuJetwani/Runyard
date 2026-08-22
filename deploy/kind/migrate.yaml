@@ -4,7 +4,9 @@ metadata:
   name: migrate
   namespace: runyard
 spec:
-  backoffLimit: 0
+  # Service routing may settle just after PostgreSQL first becomes ready.
+  backoffLimit: 3
+  activeDeadlineSeconds: 120
   template:
     spec:
       restartPolicy: Never

@@ -19,3 +19,12 @@ not AWS IAM, TLS routing, or actual S3 service access.
 
 Staging files, downloaded objects, and orphaned objects require operator-managed
 retention in v1. Do not delete objects referenced by the artifacts table.
+
+The runner checks the working directory, output directory, and files before upload.
+It rejects symlinks, including a replaced output directory. The TLS integration
+test checks that this cannot publish files from outside the output directory.
+
+Filesystem storage syncs file contents, renames, and new directories before
+committing metadata. Cached downloads are checked again on reads and replaced if
+damaged. A concurrency test holds a corrupt transfer open to check that readers
+cannot see an unverified cache entry.

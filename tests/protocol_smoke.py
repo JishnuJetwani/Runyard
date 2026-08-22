@@ -1,5 +1,6 @@
 """Native network/runner integration against an empty disposable PostgreSQL database."""
 import json
+import hashlib
 import os
 import pathlib
 import subprocess
@@ -49,10 +50,11 @@ with tempfile.TemporaryDirectory(prefix="runyard-protocol-") as tmp:
                 return json.load(response)
         run = api("/v1/runs", {"name": "protocol", "image": "fixture@sha256:" + "a" * 64,
                   "command": [str(bin_dir / "runyard-fixture")], "priority": 9,
-                  "parameters": {"steps": 10, "delay_ms": 100}})
+                  "parameters": {"steps": 10, "delay_ms": 100, "mode": "malformed_metrics"}})
         assignment = agent.Poll(worker, metadata=auth, timeout=5).assignment
         assert assignment.run_id == run["id"]
         assert agent.Poll(worker, metadata=auth, timeout=5).assignment.attempt_id == assignment.attempt_id
+        channel.close()
         runner_env = dict(env, RUNYARD_COORDINATOR="localhost:19090", RUNYARD_ATTEMPT_ID=assignment.attempt_id,
                           RUNYARD_RUN_ID=run["id"], RUNYARD_GENERATION=str(assignment.generation),
                           RUNYARD_CAPABILITY=assignment.capability, RUNYARD_WORK_ROOT=tmp + "/runner")
@@ -67,11 +69,54 @@ with tempfile.TemporaryDirectory(prefix="runyard-protocol-") as tmp:
         assert api("/v1/runs/" + run["id"])["status"] == "SUCCEEDED"
         metrics = api("/v1/runs/" + run["id"] + "/metrics")["items"]
         assert len(metrics) == 10, metrics
+        logs = api("/v1/runs/" + run["id"] + "/logs")["items"]
+        assert sum(item["kind"] == "notice" for item in logs) >= 2
         artifact = next(a for a in api("/v1/runs/" + run["id"] + "/artifacts")["items"] if a["path"] == "result.json")
         client_env = dict(env, RUNYARD_URL=scheme+"://localhost:18080")
         subprocess.run([str(bin_dir / "runyard"), "artifacts", "download", artifact["id"], "--output", tmp + "/result.json"], env=client_env, check=True)
         assert json.loads(pathlib.Path(tmp + "/result.json").read_text())
-        print(("TLS " if tls else "") + "Native protocol passed: replay, duplicate runner fencing, process, telemetry, artifacts, CLI checksum download")
+        channel = grpc.secure_channel("localhost:19090", grpc.ssl_channel_credentials(ca.read_bytes())) if tls else grpc.insecure_channel("localhost:19090")
+        agent, runner = g.AgentServiceStub(channel), g.AttemptServiceStub(channel)
+        agent.Heartbeat(worker, metadata=auth, timeout=5)
+        agent.ReportRuntime(p.RuntimeReport(worker=worker, attempt_id=assignment.attempt_id, stopped=True), metadata=auth, timeout=5)
+        upload_run = api("/v1/runs", {"name": "upload-contract", "image": "fixture@sha256:" + "a"*64, "command": ["true"], "priority": 9})
+        assigned = agent.Poll(worker, metadata=auth, timeout=5).assignment
+        owner = p.Owner(attempt_id=assigned.attempt_id, generation=assigned.generation, instance_id="upload-test")
+        capability = [("authorization", "Bearer " + assigned.capability)]
+        runner.Start(owner, metadata=capability, timeout=5)
+        runner.BeginFinalization(owner, metadata=capability, timeout=5)
+        data = b"artifact-content" * 10000
+        digest = hashlib.sha256(data).hexdigest()
+        def chunks(interrupted=False):
+            yield p.ArtifactChunk(owner=owner, path="output.bin", sha256=digest)
+            yield p.ArtifactChunk(data=data[:65536])
+            if interrupted:
+                raise RuntimeError("injected producer interruption")
+            for offset in range(65536, len(data), 65536):
+                yield p.ArtifactChunk(data=data[offset:offset+65536])
+        try:
+            runner.Upload(chunks(True), metadata=capability, timeout=5)
+            raise AssertionError("interrupted upload succeeded")
+        except grpc.RpcError:
+            pass
+        assert not api("/v1/runs/" + upload_run["id"] + "/artifacts")["items"]
+        uploaded = runner.Upload(chunks(), metadata=capability, timeout=5)
+        assert runner.Upload(chunks(), metadata=capability, timeout=5).id == uploaded.id
+        runner.Complete(p.Completion(owner=owner, exit_code=0, final_sequence=0), metadata=capability, timeout=5)
+        agent.Heartbeat(worker, metadata=auth, timeout=5)
+        agent.ReportRuntime(p.RuntimeReport(worker=worker, attempt_id=assigned.attempt_id, stopped=True), metadata=auth, timeout=5)
+        unsafe = api("/v1/runs", {"name": "unsafe-output", "image": "fixture@sha256:" + "a"*64,
+                     "command": [str(bin_dir / "runyard-fixture")], "priority": 9,
+                     "parameters": {"mode": "symlink_output"}})
+        assigned = agent.Poll(worker, metadata=auth, timeout=5).assignment
+        assert assigned.run_id == unsafe["id"]
+        channel.close()
+        unsafe_env = dict(runner_env, RUNYARD_ATTEMPT_ID=assigned.attempt_id, RUNYARD_RUN_ID=unsafe["id"],
+                          RUNYARD_GENERATION=str(assigned.generation), RUNYARD_CAPABILITY=assigned.capability)
+        assert subprocess.run([str(bin_dir / "runyard-runner")], env=unsafe_env, stdout=log, stderr=log, timeout=30).returncode != 0
+        assert not api("/v1/runs/" + unsafe["id"] + "/artifacts")["items"]
+        api("/v1/runs/" + unsafe["id"] + "/cancel", {})
+        print(("TLS " if tls else "") + "Native protocol passed: replay, duplicate runner fencing, process, telemetry, interrupted/duplicate uploads, unsafe output rejection, CLI checksum download")
     finally:
         for process in processes:
             if process.poll() is None:

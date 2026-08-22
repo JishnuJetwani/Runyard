@@ -1,8 +1,32 @@
 #include "runyard/serialization/json.hpp"
 #include "runyard/domain/error.hpp"
+#include <algorithm>
+#include <climits>
 #include <set>
 
 namespace runyard {
+namespace {
+void fields(const Json &value, std::initializer_list<const char *> allowed) {
+  if (!value.is_object())
+    throw Error(ErrorCode::invalid, "expected a JSON object");
+  for (auto it = value.begin(); it != value.end(); ++it)
+    if (std::none_of(allowed.begin(), allowed.end(),
+                     [&](const char *name) { return it.key() == name; }))
+      throw Error(ErrorCode::invalid, "unknown field: " + it.key());
+}
+int integer(const Json &value, const char *key, int fallback) {
+  if (!value.contains(key))
+    return fallback;
+  const auto &field = value.at(key);
+  if (!field.is_number_integer() ||
+      (field.is_number_unsigned() && field.get<std::uint64_t>() > INT_MAX))
+    throw Error(ErrorCode::invalid, std::string(key) + " must be an integer in range");
+  auto result = field.get<std::int64_t>();
+  if (result < INT_MIN || result > INT_MAX)
+    throw Error(ErrorCode::invalid, std::string(key) + " is out of range");
+  return static_cast<int>(result);
+}
+} // namespace
 Scalar decode_scalar(const Json &j) {
   if (j.is_null())
     return nullptr;
@@ -51,7 +75,7 @@ RunSpec decode_spec(const Json &j) {
       if (!allowed.contains(it.key()))
         throw Error(ErrorCode::invalid, "unknown specification field: " + it.key());
     RunSpec s;
-    s.version = j.value("version", 1);
+    s.version = integer(j, "version", 1);
     s.name = j.at("name").get<std::string>();
     s.image = j.at("image").get<std::string>();
     s.command = j.at("command").get<std::vector<std::string>>();
@@ -63,13 +87,16 @@ RunSpec decode_spec(const Json &j) {
     s.environment = j.value("environment", std::map<std::string, std::string>{});
     s.labels = j.value("labels", std::map<std::string, std::string>{});
     auto r = j.value("resources", Json::object());
-    s.resources = {r.value("cpu_millis", 1000), r.value("memory_mib", 512)};
+    fields(r, {"cpu_millis", "memory_mib"});
+    s.resources = {integer(r, "cpu_millis", 1000), integer(r, "memory_mib", 512)};
     auto retry = j.value("retry", Json::object());
-    s.retry = {retry.value("max_attempts", 3), retry.value("retry_exit", false),
+    fields(retry, {"max_attempts", "retry_exit", "retry_timeout"});
+    s.retry = {integer(retry, "max_attempts", 3), retry.value("retry_exit", false),
                retry.value("retry_timeout", false)};
-    s.timeout_seconds = j.value("timeout_seconds", 1800);
-    s.priority = j.value("priority", 0);
+    s.timeout_seconds = integer(j, "timeout_seconds", 1800);
+    s.priority = integer(j, "priority", 0);
     auto source = j.value("source", Json::object());
+    fields(source, {"repository", "revision"});
     s.source_repository = source.value("repository", "");
     s.source_revision = source.value("revision", "");
     validate(s);
@@ -164,6 +191,7 @@ Json encode(const Sweep &s) {
       {"id", s.id}, {"spec", encode(s.spec)}, {"run_ids", s.run_ids}, {"created_at", s.created_at}};
 }
 SweepSpec decode_sweep(const Json &j) {
+  fields(j, {"base", "grid"});
   SweepSpec spec;
   spec.base = decode_spec(j.at("base"));
   auto grid = j.at("grid");

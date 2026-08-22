@@ -149,6 +149,10 @@ void MetricReader::poll() {
         if (!oversized_ && !partial_.empty()) {
           try {
             auto j = Json::parse(partial_);
+            if (!j.at("step").is_number_integer() || !j.at("value").is_number() ||
+                (j.at("step").is_number_unsigned() &&
+                 j.at("step").get<std::uint64_t>() > INT64_MAX))
+              throw Error(ErrorCode::invalid, "metric step/value types are invalid");
             reporter_.metric(j.at("name"), j.at("step"), j.at("value"));
           } catch (const Json::exception &) {
             reporter_.log("notice", "Ignored malformed metric record\n");

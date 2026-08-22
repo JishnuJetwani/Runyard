@@ -63,6 +63,7 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
   LeaseGuard lease(client, sent, start.lease_seconds(), start.heartbeat_seconds());
   auto root = std::filesystem::absolute(config.directory) / config.attempt_id;
   std::filesystem::create_directories(root / "artifacts");
+  root = std::filesystem::canonical(root);
   std::ofstream(root / "parameters.json") << encode(spec)["parameters"].dump(2);
   std::ofstream(root / "metrics.jsonl").close();
   std::map<std::string, std::string> environment{
@@ -123,6 +124,15 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
   client.begin_finalization();
   metrics.poll();
   auto sequence = reporter.flush(Steady::now() + std::chrono::seconds(30));
+  // A child can replace the output root or archive names while it runs.
+  if (std::filesystem::canonical(root) != root ||
+      !std::filesystem::is_directory(std::filesystem::symlink_status(root / "artifacts")))
+    throw Error(ErrorCode::invalid, "artifact root must remain a directory, not a symlink");
+  auto upload_file = [&](const std::filesystem::path &path, const std::string &relative) {
+    if (!std::filesystem::is_regular_file(std::filesystem::symlink_status(path)))
+      throw Error(ErrorCode::invalid, "artifact must be a regular file, not a symlink");
+    client.upload(path.string(), relative);
+  };
   for (const auto &entry : std::filesystem::recursive_directory_iterator(root / "artifacts")) {
     if (entry.is_symlink())
       throw Error(ErrorCode::invalid, "artifact symlinks are not supported");
@@ -131,10 +141,10 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
     auto relative = std::filesystem::relative(entry.path(), root / "artifacts").generic_string();
     if (relative == "_runyard" || relative.starts_with("_runyard/"))
       throw Error(ErrorCode::invalid, "_runyard artifact namespace is reserved");
-    client.upload(entry.path().string(), relative);
+    upload_file(entry.path(), relative);
   }
-  client.upload((root / "stdout.log").string(), "_runyard/stdout.log");
-  client.upload((root / "stderr.log").string(), "_runyard/stderr.log");
+  upload_file(root / "stdout.log", "_runyard/stdout.log");
+  upload_file(root / "stderr.log", "_runyard/stderr.log");
   client.complete(!reason.empty() && *status == 0 ? 143 : *status, reason, sequence);
   return *status;
 }

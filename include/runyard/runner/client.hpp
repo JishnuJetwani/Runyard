@@ -15,6 +15,7 @@ public:
   void complete(int exit_code, const std::string &reason, std::int64_t final_sequence);
 
 private:
+  void upload_once(const std::string &file, const std::string &relative);
   std::unique_ptr<wire::AttemptService::Stub> stub_;
   wire::Owner owner_;
   std::string token_;

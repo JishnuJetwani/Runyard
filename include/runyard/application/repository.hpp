@@ -8,6 +8,7 @@ public:
   virtual void recover() = 0;
   virtual std::optional<Assignment> admit_kubernetes(int max_active) = 0;
   virtual std::vector<Assignment> kubernetes_attempts() = 0;
+  virtual void kubernetes_stopped(const std::string &attempt) = 0;
   virtual void kubernetes_runtime(const std::string &attempt, const std::string &runtime,
                                   bool removed) = 0;
   virtual Sweep submit_sweep(const SweepSpec &, const std::vector<RunSpec> &,
@@ -38,7 +39,7 @@ public:
   virtual void register_worker(const std::string &id, const std::string &session,
                                Resources capacity) = 0;
   virtual void worker_heartbeat(const std::string &id, const std::string &session) = 0;
-  virtual std::vector<Worker> workers() = 0;
+  virtual std::vector<Worker> workers(int limit = 100, const std::string &after = "") = 0;
   virtual std::optional<Assignment> assign(const std::string &id, const std::string &session) = 0;
   virtual void runtime_report(const std::string &worker, const std::string &session,
                               const std::string &attempt, const std::string &runtime,

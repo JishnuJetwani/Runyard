@@ -146,6 +146,8 @@ struct Timing {
   int retry_base_seconds{5};
   int termination_seconds{10};
   int finalization_seconds{300};
+  int retry_max_seconds{60};
+  int recovery_scan_millis{1000};
 };
 
 class Clock {
@@ -164,7 +166,7 @@ void validate(const RunSpec &spec);
 void validate(const Telemetry &point);
 void validate_relative_path(const std::string &path);
 bool should_retry(const RetryPolicy &policy, int completed_attempts, Failure reason);
-int retry_delay(int generation, int base_seconds = 5);
+int retry_delay(int generation, int base_seconds = 5, int max_seconds = 60);
 std::vector<RunSpec> expand_sweep(const RunSpec &base,
                                   const std::map<std::string, std::vector<Scalar>> &grid);
 } // namespace runyard

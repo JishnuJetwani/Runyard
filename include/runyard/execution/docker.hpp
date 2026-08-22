@@ -19,6 +19,7 @@ public:
   }
   std::vector<std::string> inventory() override;
   std::string ensure(const Launch &) override;
+  bool has_stopped(const std::string &) override;
   void remove(const std::string &attempt_id) override;
 
 private:

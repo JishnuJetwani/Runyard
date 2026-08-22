@@ -47,6 +47,10 @@ Defaults: heartbeat 5 s, lease 30 s, worker availability 15 s, launch deadline
 The runner uses a conservative monotonic lease deadline and stops before expiry.
 An agent restart alone does not invalidate a live reporting runner.
 
+Recovery and Kubernetes reconciliation use `RUNYARD_RECOVERY_SCAN_MILLIS`.
+Retry delay uses `RUNYARD_RETRY_BASE_SECONDS` and `RUNYARD_RETRY_MAX_SECONDS`.
+Background waits are interruptible, so longer scan intervals do not delay shutdown.
+
 ## Storage and interfaces
 
 The public `/v1` HTTP API requires authentication and is documented in OpenAPI.

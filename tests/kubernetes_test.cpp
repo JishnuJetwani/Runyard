@@ -1,6 +1,18 @@
 #include "runyard/execution/kubernetes.hpp"
 #include <gtest/gtest.h>
 
+TEST(Kubernetes, FailureTargetIsNotYetAStoppedJob) {
+  using runyard::Json;
+  auto condition = [](const std::string &type, const std::string &status) {
+    return Json{{"status", {{"conditions", {{{"type", type}, {"status", status}}}}}}};
+  };
+  EXPECT_FALSE(runyard::kubernetes_job_finished(Json::object()));
+  EXPECT_FALSE(runyard::kubernetes_job_finished(condition("FailureTarget", "True")));
+  EXPECT_FALSE(runyard::kubernetes_job_finished(condition("Failed", "False")));
+  EXPECT_TRUE(runyard::kubernetes_job_finished(condition("Failed", "True")));
+  EXPECT_TRUE(runyard::kubernetes_job_finished(condition("Complete", "True")));
+}
+
 TEST(Kubernetes, JobUsesSharedRunnerWithoutIndependentRetriesOrServiceCredentials) {
   runyard::Launch launch;
   launch.assignment.attempt.id = "attempt";

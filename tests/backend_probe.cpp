@@ -38,10 +38,14 @@ int main(int argc, char **argv) {
       throw std::runtime_error("repeat launch changed identity");
     if (backend->inventory() != std::vector<std::string>{"test-attempt"})
       throw std::runtime_error("inventory mismatch");
+    if (backend->has_stopped("test-attempt"))
+      throw std::runtime_error("active runtime was classified as stopped");
     backend->remove("test-attempt");
     backend->remove("test-attempt");
     if (!backend->inventory().empty())
       throw std::runtime_error("cleanup failed");
+    if (!backend->has_stopped("test-attempt"))
+      throw std::runtime_error("missing runtime was classified as active");
     return 0;
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

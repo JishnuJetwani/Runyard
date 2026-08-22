@@ -2,95 +2,939 @@ openapi: 3.0.3
 info:
   title: Runyard API
   version: 0.1.0
-  description: Private experiment execution. All business endpoints require an owner token.
+  description: Private experiment execution for one trusted owner. Application errors
+    contain stable code, message, and request_id. Health/metrics endpoints are private-network
+    operational endpoints without owner authentication. Timestamps are database timestamp
+    strings with UTC offsets. List run/worker cursors are IDs; repeat until items
+    is empty. They do not provide a concurrent submission snapshot.
 servers:
-  - url: http://localhost:8080
+- url: https://localhost:8080
+  description: Private TLS deployment through port forwarding
+- url: http://localhost:8080
+  description: Explicit local development profile only
 security:
-  - ownerToken: []
+- ownerToken: []
 paths:
   /v1/runs:
     post:
       operationId: submitRun
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       parameters:
-        - in: header
-          name: Idempotency-Key
-          required: true
-          schema: {type: string, minLength: 1, maxLength: 200}
+      - &idempotencyKey
+        in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/RunSpec'}
-      responses:
-        '200': {description: Accepted run or existing idempotent submission}
-        '400': {description: Invalid specification}
-        '409': {description: Key reused with a different specification}
+            schema:
+              $ref: '#/components/schemas/RunSpec'
+      description: Immutable accepted submission. Repeating an idempotency key with
+        a different normalized specification returns 409.
     get:
       operationId: listRuns
-      parameters:
-        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 200, default: 50}}
-        - {in: query, name: after, schema: {type: string}}
-        - {in: query, name: status, schema: {type: string}}
       responses:
-        '200': {description: Items and next_cursor; repeat until items is empty}
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunPage'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      - &idCursor
+        in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum: &runStatuses
+          - QUEUED
+          - STARTING
+          - RUNNING
+          - FINALIZING
+          - RETRY_WAIT
+          - SUCCEEDED
+          - FAILED
+          - CANCELLED
   /v1/runs/{id}:
     parameters:
-      - {$ref: '#/components/parameters/RunId'}
+    - &resourceId
+      $ref: '#/components/parameters/RunId'
     get:
       operationId: getRun
       responses:
-        '200': {description: Run with immutable spec and current status}
-        '404': {description: Unknown run}
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/runs/{id}/attempts:
     parameters:
-      - {$ref: '#/components/parameters/RunId'}
+    - *resourceId
     get:
       operationId: listAttempts
       responses:
-        '200': {description: Attempt history in generation order}
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptPage'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: All attempts in generation order; bounded by max_attempts (10 maximum).
   /v1/runs/{id}/events:
     parameters:
-      - {$ref: '#/components/parameters/RunId'}
+    - *resourceId
     get:
       operationId: listEvents
-      parameters:
-        - {in: query, name: after, schema: {type: integer, minimum: 0}}
-        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 1000}}
       responses:
-        '200': {description: Durable ordered state changes}
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventPage'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - &sequenceCursor
+        in: query
+        name: after
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+          default: 0
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      description: Resume after the last returned event sequence. Sequence allocation
+        is transactional per run.
+  /v1/runs/{id}/cancel:
+    parameters:
+    - *resourceId
+    post:
+      operationId: cancelRun
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: First committed terminal decision wins. Inspect attempt cleanup_status
+        for physical termination; CANCELLED does not imply an unreachable runtime
+        has already stopped.
+  /v1/runs/{id}/rerun:
+    parameters:
+    - *resourceId
+    post:
+      operationId: rerunRun
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - *idempotencyKey
+      description: Creates a linked immutable run from a terminal run. The original
+        remains unchanged.
+  /v1/sweeps:
+    post:
+      operationId: submitSweep
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sweep'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - *idempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SweepSpec'
+      description: Atomically expands a parameter grid; at most 1000 runs and 16 MiB
+        estimated expanded specifications.
+  /v1/sweeps/{id}:
+    parameters:
+    - *resourceId
+    get:
+      operationId: getSweep
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sweep'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/runs/{id}/logs:
+    parameters:
+    - *resourceId
+    get:
+      operationId: listLogs
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryPage'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - &attemptFilter
+        in: query
+        name: attempt
+        schema:
+          type: string
+      - *sequenceCursor
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      description: Defaults to the current attempt, including the accepted successful
+        result. Explicit attempt selects historical output. Cursors are attempt-scoped;
+        reset when attempt_id changes. Logs are followed by approximately one-second
+        polling.
+  /v1/runs/{id}/metrics:
+    parameters:
+    - *resourceId
+    get:
+      operationId: listMetrics
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryPage'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - *attemptFilter
+      - *sequenceCursor
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      - in: query
+        name: name
+        schema:
+          type: string
+      description: Defaults to the current attempt, including the accepted successful
+        result. Explicit attempt selects historical output. Cursors are attempt-scoped;
+        reset when attempt_id changes. Logs are followed by approximately one-second
+        polling.
+  /v1/runs/{id}/artifacts:
+    parameters:
+    - *resourceId
+    get:
+      operationId: listArtifacts
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactPage'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - *attemptFilter
+      description: At most 1000 artifacts per attempt. Defaults to the current/accepted
+        attempt; historical attempt output remains available.
+  /v1/artifacts/{id}:
+    parameters:
+    - *resourceId
+    get:
+      operationId: getArtifact
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/artifacts/{id}/download:
+    parameters:
+    - *resourceId
+    get:
+      operationId: downloadArtifact
+      responses:
+        '200':
+          description: Complete artifact bytes; verify size and SHA-256 from metadata.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/workers:
+    get:
+      operationId: listWorkers
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerPage'
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 100
+      - *idCursor
+  /v1/workers/{id}/drain:
+    parameters:
+    - *resourceId
+    post:
+      operationId: drainWorker
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  drained:
+                    type: boolean
+                required:
+                - id
+                - drained
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                drained:
+                  type: boolean
+                  default: true
+      description: Stop new Docker assignments while preserving live attempts. Set
+        drained=false to resume.
+  /health/live:
+    get:
+      operationId: getStatus
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                required:
+                - status
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: []
+  /health/ready:
+    get:
+      operationId: getReady
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                required:
+                - ready
+        default:
+          description: Error code, message, and request ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: 'Not ready: database leadership unavailable'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                required:
+                - ready
+      security: []
+  /metrics:
+    get:
+      operationId: getOperationalMetrics
+      security: []
+      responses:
+        '200':
+          description: Prometheus exposition, on the private listener
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   securitySchemes:
-    ownerToken: {type: http, scheme: bearer}
+    ownerToken:
+      type: http
+      scheme: bearer
   parameters:
-    RunId: {in: path, name: id, required: true, schema: {type: string}}
+    RunId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
   schemas:
     RunSpec:
       type: object
       additionalProperties: false
-      required: [name, image, command]
+      required:
+      - name
+      - image
+      - command
       properties:
-        version: {type: integer, enum: [1], default: 1}
-        name: {type: string, minLength: 1, maxLength: 200}
-        image: {type: string, description: Immutable image reference ending in '@sha256:<64 lowercase hex digits>'}
-        command: {type: array, minItems: 1, maxItems: 256, items: {type: string}}
-        parameters: {type: object, description: Flat scalar values}
-        environment: {type: object, additionalProperties: {type: string}}
-        labels: {type: object, additionalProperties: {type: string}}
+        version:
+          type: integer
+          enum:
+          - 1
+          default: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        image:
+          type: string
+          description: Immutable image reference ending in '@sha256:<64 lowercase
+            hex digits>'
+          maxLength: 1024
+        command:
+          type: array
+          minItems: 1
+          maxItems: 256
+          items:
+            type: string
+            maxLength: 16384
+        parameters:
+          type: object
+          description: Flat scalar values
+          maxProperties: 100
+          additionalProperties:
+            $ref: '#/components/schemas/Scalar'
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+          maxProperties: 100
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          maxProperties: 50
         resources:
           type: object
           properties:
-            cpu_millis: {type: integer, minimum: 1, default: 1000}
-            memory_mib: {type: integer, minimum: 32, default: 512}
+            cpu_millis:
+              type: integer
+              minimum: 1
+              default: 1000
+              maximum: 1000000
+            memory_mib:
+              type: integer
+              minimum: 32
+              default: 512
+              maximum: 1048576
+          additionalProperties: false
         retry:
           type: object
           properties:
-            max_attempts: {type: integer, minimum: 1, maximum: 10, default: 3}
-            retry_exit: {type: boolean, default: false}
-            retry_timeout: {type: boolean, default: false}
-        timeout_seconds: {type: integer, minimum: 1, maximum: 604800, default: 1800}
-        priority: {type: integer, minimum: 0, maximum: 9, default: 0}
+            max_attempts:
+              type: integer
+              minimum: 1
+              maximum: 10
+              default: 3
+            retry_exit:
+              type: boolean
+              default: false
+            retry_timeout:
+              type: boolean
+              default: false
+          additionalProperties: false
+        timeout_seconds:
+          type: integer
+          minimum: 1
+          maximum: 604800
+          default: 1800
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 9
+          default: 0
         source:
           type: object
           properties:
-            repository: {type: string}
-            revision: {type: string}
+            repository:
+              type: string
+            revision:
+              type: string
+          additionalProperties: false
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            request_id:
+              type: string
+          required:
+          - code
+          - message
+          - request_id
+      required:
+      - error
+    Run:
+      type: object
+      properties:
+        id:
+          type: string
+        active_attempt:
+          type: string
+        sweep_id:
+          type: string
+        parent_run_id:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        status:
+          type: string
+          enum: *runStatuses
+        generation:
+          type: integer
+          format: int64
+        spec:
+          $ref: '#/components/schemas/RunSpec'
+      required:
+      - id
+      - active_attempt
+      - sweep_id
+      - parent_run_id
+      - created_at
+      - updated_at
+      - status
+      - generation
+      - spec
+    Attempt:
+      type: object
+      properties:
+        id:
+          type: string
+        run_id:
+          type: string
+        worker_id:
+          type: string
+        status:
+          type: string
+        reason:
+          type: string
+        runtime_id:
+          type: string
+        cleanup_status:
+          type: string
+        created_at:
+          type: string
+        started_at:
+          type: string
+        finished_at:
+          type: string
+        generation:
+          type: integer
+          format: int64
+        acknowledged_sequence:
+          type: integer
+          format: int64
+        exit_code:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - run_id
+      - worker_id
+      - status
+      - reason
+      - runtime_id
+      - cleanup_status
+      - created_at
+      - started_at
+      - finished_at
+      - generation
+      - acknowledged_sequence
+      - exit_code
+    Event:
+      type: object
+      properties:
+        sequence:
+          type: integer
+          format: int64
+        kind:
+          type: string
+        detail:
+          type: string
+        created_at:
+          type: string
+      required:
+      - sequence
+      - kind
+      - detail
+      - created_at
+    Telemetry:
+      type: object
+      properties:
+        sequence:
+          type: integer
+          format: int64
+        kind:
+          type: string
+          enum:
+          - stdout
+          - stderr
+          - notice
+          - metric
+        text:
+          type: string
+        name:
+          type: string
+        step:
+          type: integer
+          format: int64
+        value:
+          type: number
+        timestamp_ms:
+          type: integer
+          format: int64
+      required:
+      - sequence
+      - kind
+      - text
+      - name
+      - step
+      - value
+      - timestamp_ms
+    Artifact:
+      type: object
+      properties:
+        id:
+          type: string
+        attempt_id:
+          type: string
+        path:
+          type: string
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        size:
+          type: integer
+          format: int64
+      required:
+      - id
+      - attempt_id
+      - path
+      - sha256
+      - size
+    Resources:
+      type: object
+      properties:
+        cpu_millis:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+        memory_mib:
+          type: integer
+          minimum: 32
+          maximum: 1048576
+      required:
+      - cpu_millis
+      - memory_mib
+    Worker:
+      type: object
+      properties:
+        id:
+          type: string
+        capacity:
+          $ref: '#/components/schemas/Resources'
+        reserved:
+          type: object
+          properties:
+            cpu_millis:
+              type: integer
+              format: int64
+            memory_mib:
+              type: integer
+              format: int64
+          required:
+          - cpu_millis
+          - memory_mib
+        drained:
+          type: boolean
+        available:
+          type: boolean
+        heartbeat_at:
+          type: string
+      required:
+      - id
+      - capacity
+      - reserved
+      - drained
+      - available
+      - heartbeat_at
+    Scalar:
+      oneOf:
+      - type: string
+        nullable: true
+      - type: boolean
+      - type: number
+    SweepSpec:
+      type: object
+      properties:
+        base:
+          $ref: '#/components/schemas/RunSpec'
+        grid:
+          type: object
+          additionalProperties:
+            type: array
+            minItems: 1
+            maxItems: 1000
+            items:
+              $ref: '#/components/schemas/Scalar'
+      required:
+      - base
+      - grid
+      additionalProperties: false
+    Sweep:
+      type: object
+      properties:
+        id:
+          type: string
+        spec:
+          $ref: '#/components/schemas/SweepSpec'
+        run_ids:
+          type: array
+          maxItems: 1000
+          items:
+            type: string
+        created_at:
+          type: string
+      required:
+      - id
+      - spec
+      - run_ids
+      - created_at
+    RunPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Run'
+        next_cursor:
+          type: string
+      required:
+      - items
+      - next_cursor
+    WorkerPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Worker'
+        next_cursor:
+          type: string
+      required:
+      - items
+      - next_cursor
+    AttemptPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attempt'
+      required:
+      - items
+    ArtifactPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+      required:
+      - items
+    EventPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+      required:
+      - items
+    TelemetryPage:
+      type: object
+      properties:
+        attempt_id:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Telemetry'
+        next_cursor:
+          type: integer
+          format: int64
+      required:
+      - attempt_id
+      - items
+      - next_cursor

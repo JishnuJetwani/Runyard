@@ -4,7 +4,7 @@
 
 namespace runyard {
 namespace {
-std::string endpoint(const std::string &path) { return "http://localhost/v1.41" + path; }
+std::string endpoint(const std::string &path) { return "http://localhost/v1.44" + path; }
 void expect(const HttpResult &response, std::initializer_list<long> allowed) {
   for (auto status : allowed)
     if (response.status == status)
@@ -75,6 +75,14 @@ std::string DockerBackend::ensure(const Launch &launch) {
   if (container["State"].value("Status", "") == "created")
     expect(http_.request("POST", endpoint(path + "/start")), {204, 304});
   return container.at("Id").get<std::string>();
+}
+bool DockerBackend::has_stopped(const std::string &id) {
+  auto response = http_.request("GET", endpoint("/containers/runyard-" + id + "/json"));
+  if (response.status == 404)
+    return true;
+  expect(response, {200});
+  auto state = Json::parse(response.body).at("State").value("Status", "");
+  return state == "exited" || state == "dead";
 }
 void DockerBackend::remove(const std::string &id) {
   auto path = "/containers/runyard-" + id;
