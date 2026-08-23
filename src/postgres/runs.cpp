@@ -33,6 +33,8 @@ Attempt attempt(const RowView &r) {
   a.created_at = text(r["created_at"]);
   a.started_at = text(r["started_at"]);
   a.finished_at = text(r["finished_at"]);
+  a.gpu_count = r["gpu_count"].as<int>();
+  a.node_name = text(r["node_name"]);
   a.acknowledged_sequence = r["ack_sequence"].as<std::int64_t>();
   return a;
 }
@@ -101,8 +103,11 @@ std::vector<Attempt> PostgresStore::attempts(const std::string &id) {
   pqxx::read_transaction tx(c.get());
   std::vector<Attempt> result;
   for (const auto &r :
-       tx.exec("SELECT * FROM attempts WHERE run_id=$1 ORDER BY generation", pqxx::params{id}))
-    result.push_back(pg::attempt(r));
+       tx.exec("SELECT * FROM attempts WHERE run_id=$1 ORDER BY generation", pqxx::params{id})) {
+    auto attempt = pg::attempt(r);
+    pg::load_gpu_allocations(tx, attempt);
+    result.push_back(std::move(attempt));
+  }
   return result;
 }
 std::vector<Event> PostgresStore::events(const std::string &id, std::int64_t after, int limit) {

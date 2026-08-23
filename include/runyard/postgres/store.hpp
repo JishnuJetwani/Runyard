@@ -12,7 +12,9 @@ public:
                              const std::string &status) override;
   std::vector<Attempt> attempts(const std::string &run_id) override;
   std::vector<Event> events(const std::string &run_id, std::int64_t after, int limit) override;
-  void register_worker(const std::string &, const std::string &, Resources) override;
+  void register_worker(const std::string &, const std::string &, Resources,
+                       GpuRegistration = {}) override;
+  void report_gpu_inventory(const std::string &, const std::string &, const GpuSnapshot &) override;
   void worker_heartbeat(const std::string &, const std::string &) override;
   std::vector<Worker> workers(int limit = 100, const std::string &after = "") override;
   std::optional<Assignment> assign(const std::string &, const std::string &) override;
@@ -59,6 +61,7 @@ using RowView = decltype(std::declval<const pqxx::result &>()[0]);
 using FieldView = decltype(std::declval<const RowView &>()[0]);
 Run run(const RowView &row);
 Attempt attempt(const RowView &row);
+void load_gpu_allocations(pqxx::transaction_base &, Attempt &);
 void event(pqxx::work &tx, const std::string &run_id, const std::string &kind,
            const std::string &detail);
 std::string text(const FieldView &field);

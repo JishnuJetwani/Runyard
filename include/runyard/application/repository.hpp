@@ -37,7 +37,9 @@ public:
   virtual std::vector<Attempt> attempts(const std::string &run_id) = 0;
   virtual std::vector<Event> events(const std::string &run_id, std::int64_t after, int limit) = 0;
   virtual void register_worker(const std::string &id, const std::string &session,
-                               Resources capacity) = 0;
+                               Resources capacity, GpuRegistration gpu = {}) = 0;
+  virtual void report_gpu_inventory(const std::string &, const std::string &,
+                                    const GpuSnapshot &) = 0;
   virtual void worker_heartbeat(const std::string &id, const std::string &session) = 0;
   virtual std::vector<Worker> workers(int limit = 100, const std::string &after = "") = 0;
   virtual std::optional<Assignment> assign(const std::string &id, const std::string &session) = 0;

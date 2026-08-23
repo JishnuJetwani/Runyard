@@ -121,6 +121,9 @@ struct Attempt {
   std::string started_at;
   std::string finished_at;
   std::int64_t acknowledged_sequence{};
+  int gpu_count{};
+  std::string node_name;
+  std::vector<GpuAllocation> gpu_allocations;
 };
 
 struct Assignment {
@@ -136,6 +139,11 @@ struct Worker {
   bool drained{};
   bool available{};
   std::string heartbeat_at;
+  std::string engine_id;
+  bool gpu_ready{};
+  bool gpu_fresh{};
+  std::string gpu_observed_at;
+  std::vector<GpuDevice> gpu_devices;
 };
 
 struct Telemetry {

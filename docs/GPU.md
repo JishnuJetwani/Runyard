@@ -6,3 +6,10 @@ Sweeps use the same resources as their base specification.
 
 Placement uses GPU count, not model or memory size. GPU sharing, MIG, MPS, and
 distributed training are not supported.
+
+PostgreSQL stores inventory and allocation history. Apply migration 006 before
+starting the updated server. Each device UUID belongs to one worker and can have
+only one unreleased allocation. Inventory updates must match the worker session
+and have a newer sequence number. Failed discovery pauses GPU assignments but
+keeps the last inventory and existing reservations. A worker cannot change Docker
+engines while it has pending cleanup.

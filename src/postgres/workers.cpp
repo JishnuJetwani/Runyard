@@ -8,19 +8,6 @@ void pg::require_worker(pqxx::work &tx, const std::string &id, const std::string
   if (rows.empty() || rows[0][0].as<std::string>() != session)
     throw Error(ErrorCode::stale, "worker session is no longer current");
 }
-void PostgresStore::register_worker(const std::string &id, const std::string &session,
-                                    Resources capacity) {
-  if (id.empty() || id.starts_with("@") || id.size() > 100 || session.empty() ||
-      capacity.cpu_millis <= 0 || capacity.memory_mib <= 0)
-    throw Error(ErrorCode::invalid, "invalid worker registration");
-  auto c = pool_.acquire();
-  pqxx::work tx(c.get());
-  tx.exec(
-      "INSERT INTO workers(id,session,cpu_millis,memory_mib) VALUES($1,$2,$3,$4) ON CONFLICT(id) "
-      "DO UPDATE SET session=$2,cpu_millis=$3,memory_mib=$4,heartbeat_at=clock_timestamp()",
-      pqxx::params{id, session, capacity.cpu_millis, capacity.memory_mib});
-  tx.commit();
-}
 void PostgresStore::worker_heartbeat(const std::string &id, const std::string &session) {
   auto c = pool_.acquire();
   pqxx::work tx(c.get());
@@ -45,7 +32,12 @@ std::vector<Worker> PostgresStore::workers(int limit, const std::string &after) 
                       {r["reserved_cpu"].as<int>(), r["reserved_memory"].as<int>()},
                       r["drained"].as<bool>(),
                       r["available"].as<bool>(),
-                      pg::text(r["heartbeat_at"])});
+                      pg::text(r["heartbeat_at"]),
+                      "",
+                      false,
+                      false,
+                      "",
+                      {}});
   return result;
 }
 std::optional<Assignment> PostgresStore::assign(const std::string &id, const std::string &session) {

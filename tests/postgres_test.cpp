@@ -473,3 +473,45 @@ TEST_F(Database, CompletionAndCancellationCommitOneTerminalDecision) {
     EXPECT_EQ(terminal_events, 1);
   }
 }
+TEST_F(Database, GpuInventoryIsSessionFencedAndSequenceOrdered) {
+  store->register_worker("gpu", "s", {4000, 4096}, {"engine", true});
+  GpuSnapshot first{1, true, {{"GPU-a", "Example GPU", 24576, true, ""}}};
+  store->report_gpu_inventory("gpu", "s", first);
+  store->report_gpu_inventory("gpu", "s", {2, false, {}});
+  store->report_gpu_inventory("gpu", "s", first);
+  EXPECT_THROW(store->report_gpu_inventory("gpu", "old", {3, true, {}}), Error);
+  store->register_worker("other", "s", {4000, 4096}, {"engine", true});
+  EXPECT_THROW(store->report_gpu_inventory("other", "s", first), Error);
+  auto c = pool->acquire();
+  pqxx::read_transaction tx(c.get());
+  auto workers = tx.exec("SELECT gpu_ready,gpu_sequence FROM workers WHERE id='gpu'");
+  EXPECT_FALSE(workers[0][0].as<bool>());
+  EXPECT_EQ(workers[0][1].as<int>(), 2);
+  EXPECT_EQ(tx.exec("SELECT count(*) FROM gpu_devices WHERE present")[0][0].as<int>(), 1);
+}
+TEST_F(Database, GpuSchemaEnforcesExclusiveUnreleasedAllocations) {
+  store->register_worker("gpu", "s", {4000, 4096}, {"engine", true});
+  store->report_gpu_inventory("gpu", "s", {1, true, {{"GPU-a", "Example", 100, true, ""}}});
+  auto one = store->submit(spec(), "one", "one");
+  auto two = store->submit(spec(), "two", "two");
+  auto c = pool->acquire();
+  pqxx::work tx(c.get());
+  tx.exec("INSERT INTO attempts(id,run_id,generation,worker_id,launch_deadline) "
+          "VALUES('a',$1,1,'gpu',clock_timestamp()),('b',$2,1,'gpu',clock_timestamp())",
+          pqxx::params{one.id, two.id});
+  tx.exec("INSERT INTO attempt_gpus(attempt_id,uuid,name,memory_mib) "
+          "VALUES('a','GPU-a','Example',100)");
+  EXPECT_THROW(tx.exec("INSERT INTO attempt_gpus(attempt_id,uuid,name,memory_mib) "
+                       "VALUES('b','GPU-a','Example',100)"),
+               pqxx::unique_violation);
+}
+TEST_F(Database, WorkerEngineCannotChangeWithPendingCleanup) {
+  store->register_worker("gpu", "s", {1000, 512}, {"engine", true});
+  store->submit(spec(), "one", "one");
+  auto attempt = store->assign("gpu", "s");
+  ASSERT_TRUE(attempt);
+  EXPECT_THROW(store->register_worker("gpu", "next", {1000, 512}, {"replacement", true}), Error);
+  store->cancel(attempt->attempt.run_id);
+  store->runtime_report("gpu", "s", attempt->attempt.id, "", true);
+  EXPECT_NO_THROW(store->register_worker("gpu", "next", {1000, 512}, {"replacement", true}));
+}
