@@ -197,6 +197,7 @@ public:
 };
 
 void validate(const RunSpec &spec);
+void validate_submission(const RunSpec &spec);
 void validate(const Telemetry &point);
 void validate_relative_path(const std::string &path);
 bool should_retry(const RetryPolicy &policy, int completed_attempts, Failure reason);

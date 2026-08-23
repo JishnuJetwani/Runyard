@@ -15,9 +15,9 @@ std::optional<Assignment> PostgresStore::admit_kubernetes(int max_active) {
               "cleanup_status='PENDING'")[0][0]
           .as<int>() >= max_active)
     return std::nullopt;
-  auto rows =
-      tx.exec("SELECT * FROM runs WHERE status='QUEUED' AND available_at<=clock_timestamp() ORDER "
-              "BY priority DESC,created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED");
+  auto rows = tx.exec("SELECT * FROM runs WHERE status='QUEUED' AND gpu_count=0 AND "
+                      "available_at<=clock_timestamp() ORDER "
+                      "BY priority DESC,created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED");
   if (rows.empty())
     return std::nullopt;
   auto run = pg::run(rows[0]);

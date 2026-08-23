@@ -52,7 +52,7 @@ void event(pqxx::work &tx, const std::string &id, const std::string &kind,
 } // namespace pg
 Run PostgresStore::submit(const RunSpec &spec, const std::string &key,
                           const std::string &fingerprint) {
-  validate(spec);
+  validate_submission(spec);
   auto connection = pool_.acquire();
   pqxx::work tx(connection.get());
   // Serialize only callers sharing this key, including concurrent first submissions.
@@ -67,10 +67,10 @@ Run PostgresStore::submit(const RunSpec &spec, const std::string &key,
     return result;
   }
   auto id = random_id();
-  auto row = tx.exec("INSERT INTO runs(id,spec,priority,cpu_millis,memory_mib) "
-                     "VALUES($1,$2::jsonb,$3,$4,$5) RETURNING *",
+  auto row = tx.exec("INSERT INTO runs(id,spec,priority,cpu_millis,memory_mib,gpu_count) "
+                     "VALUES($1,$2::jsonb,$3,$4,$5,$6) RETURNING *",
                      pqxx::params{id, encode(spec).dump(), spec.priority, spec.resources.cpu_millis,
-                                  spec.resources.memory_mib});
+                                  spec.resources.memory_mib, spec.resources.gpu_count});
   tx.exec("INSERT INTO submissions(key,fingerprint,run_id) VALUES($1,$2,$3)",
           pqxx::params{key, fingerprint, id});
   pg::event(tx, id, "submitted", "run accepted");

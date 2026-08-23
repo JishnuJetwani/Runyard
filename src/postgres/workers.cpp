@@ -68,7 +68,7 @@ std::optional<Assignment> PostgresStore::assign(const std::string &id, const std
               pqxx::params{id});
   int cpu = worker[0]["cpu_millis"].as<int>() - reserved[0][0].as<int>();
   int memory = worker[0]["memory_mib"].as<int>() - reserved[0][1].as<int>();
-  auto candidates = tx.exec("SELECT * FROM runs WHERE status='QUEUED' AND "
+  auto candidates = tx.exec("SELECT * FROM runs WHERE status='QUEUED' AND gpu_count=0 AND "
                             "available_at<=clock_timestamp() AND cpu_millis<=$1 AND memory_mib<=$2 "
                             "ORDER BY priority DESC,created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED",
                             pqxx::params{cpu, memory});

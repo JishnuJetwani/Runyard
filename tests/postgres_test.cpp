@@ -515,3 +515,20 @@ TEST_F(Database, WorkerEngineCannotChangeWithPendingCleanup) {
   store->runtime_report("gpu", "s", attempt->attempt.id, "", true);
   EXPECT_NO_THROW(store->register_worker("gpu", "next", {1000, 512}, {"replacement", true}));
 }
+TEST_F(Database, GpuRequestsSurviveSubmissionSweepAndRerun) {
+  auto gpu = spec();
+  gpu.resources.gpu_count = 2;
+  auto run = store->submit(gpu, "gpu", sha256(encode(gpu).dump()));
+  EXPECT_EQ(store->get_run(run.id).spec.resources.gpu_count, 2);
+  store->register_worker("cpu", "s", {10000, 10000});
+  EXPECT_FALSE(store->assign("cpu", "s"));
+  store->cancel(run.id);
+  auto rerun = store->rerun(run.id, "again");
+  EXPECT_EQ(rerun.spec.resources.gpu_count, 2);
+  SweepSpec sweep{gpu, {{"seed", {std::int64_t{1}, std::int64_t{2}}}}};
+  auto result = store->submit_sweep(sweep, expand_sweep(gpu, sweep.grid), "sweep", "hash");
+  EXPECT_EQ(store->get_run(result.run_ids[0]).spec.resources.gpu_count, 2);
+  auto c = pool->acquire();
+  pqxx::read_transaction tx(c.get());
+  EXPECT_EQ(tx.exec("SELECT count(*) FROM runs WHERE gpu_count=2")[0][0].as<int>(), 4);
+}

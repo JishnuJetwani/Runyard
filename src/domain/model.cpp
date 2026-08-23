@@ -99,6 +99,12 @@ void validate(const RunSpec &spec) {
   }
 }
 
+void validate_submission(const RunSpec &spec) {
+  validate(spec);
+  for (const auto &name : {"NVIDIA_VISIBLE_DEVICES", "NVIDIA_DRIVER_CAPABILITIES"})
+    require(!spec.environment.contains(name), "NVIDIA exposure is controlled by Runyard");
+}
+
 void validate(const Telemetry &point) {
   require(point.sequence > 0, "telemetry sequence must be positive");
   require(point.kind == "stdout" || point.kind == "stderr" || point.kind == "metric" ||

@@ -576,6 +576,12 @@ components:
               minimum: 1
               default: 1000
               maximum: 1000000
+            gpu_count:
+              type: integer
+              minimum: 0
+              maximum: 64
+              default: 0
+              description: Whole NVIDIA GPUs on one worker or node.
             memory_mib:
               type: integer
               minimum: 32

@@ -13,3 +13,7 @@ only one unreleased allocation. Inventory updates must match the worker session
 and have a newer sequence number. Failed discovery pauses GPU assignments but
 keeps the last inventory and existing reservations. A worker cannot change Docker
 engines while it has pending cleanup.
+
+`gpu_count` is part of the version-1 specification. Omitting it and setting it to
+zero produce the same submission fingerprint. Runs, sweeps, and reruns preserve
+the count. New submissions cannot override NVIDIA device visibility variables.
