@@ -17,3 +17,8 @@ engines while it has pending cleanup.
 `gpu_count` is part of the version-1 specification. Omitting it and setting it to
 zero produce the same submission fingerprint. Runs, sweeps, and reruns preserve
 the count. New submissions cannot override NVIDIA device visibility variables.
+
+Discovery loads NVML at runtime and identifies devices by UUID. Inaccessible
+devices are omitted; MIG devices and devices with failed metadata queries are
+ineligible. A UUID allowlist divides devices between logical workers. If an
+allowlisted device is missing, the refresh is marked unavailable.

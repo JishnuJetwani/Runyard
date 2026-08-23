@@ -15,6 +15,7 @@ WORKDIR /src
 ARG TARGETARCH
 COPY CMakeLists.txt CMakePresets.json ./
 COPY include/ include/
+COPY third_party/ third_party/
 COPY src/ src/
 COPY apps/ apps/
 COPY proto/ proto/

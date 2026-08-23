@@ -84,3 +84,7 @@ add_library(runyard_observability observability/metrics.cpp observability/loggin
 target_include_directories(runyard_observability PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(runyard_observability PUBLIC runyard_options prometheus-cpp::core spdlog::spdlog nlohmann_json::nlohmann_json)
 target_link_libraries(runyard_rpc PUBLIC runyard_observability)
+
+add_library(runyard_nvidia nvidia/inventory.cpp)
+target_include_directories(runyard_nvidia SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/third_party/nvml)
+target_link_libraries(runyard_nvidia PUBLIC runyard_domain PRIVATE ${CMAKE_DL_LIBS})
