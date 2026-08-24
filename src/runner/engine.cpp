@@ -1,5 +1,6 @@
 #include "runyard/runner/engine.hpp"
 #include "runyard/domain/error.hpp"
+#include "runyard/runner/environment.hpp"
 #include "runyard/runner/process.hpp"
 #include "runyard/runner/telemetry.hpp"
 #include "runyard/serialization/json.hpp"
@@ -66,15 +67,8 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
   root = std::filesystem::canonical(root);
   std::ofstream(root / "parameters.json") << encode(spec)["parameters"].dump(2);
   std::ofstream(root / "metrics.jsonl").close();
-  std::map<std::string, std::string> environment{
-      {"PATH", "/usr/local/bin:/usr/bin:/bin"}, {"HOME", root.string()}, {"LANG", "C.UTF-8"}};
-  for (const auto &[key, value] : spec.environment)
-    environment[key] = value;
-  environment["RUNYARD_PARAMETERS_PATH"] = (root / "parameters.json").string();
-  environment["RUNYARD_METRICS_PATH"] = (root / "metrics.jsonl").string();
-  environment["RUNYARD_OUTPUT_DIR"] = (root / "artifacts").string();
-  environment["RUNYARD_RUN_ID"] = config.run_id;
-  environment["RUNYARD_ATTEMPT_NUMBER"] = std::to_string(config.generation);
+  auto environment =
+      workload_environment(spec, runtime_environment(), root, config.run_id, config.generation);
   if (lease.near_expiry(start.termination_seconds()))
     throw Error(ErrorCode::stale, "initial lease has insufficient time to launch");
   SteadyClock clock;

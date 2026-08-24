@@ -34,3 +34,8 @@ return the original assignment. Cancellation, lease expiry, draining, and restar
 keep allocations until runtime cleanup is confirmed.
 The lock order is worker, run, attempt, then devices sorted by UUID. Runtime calls
 happen after the transaction commits.
+
+The runner preserves selected image settings for PATH, libraries, Python, and CUDA.
+It resolves commands using the child's final PATH and working directory. Platform
+paths and GPU visibility take precedence over workload values. The child does not
+inherit coordinator or runner credentials.
