@@ -29,7 +29,16 @@ int main() {
                                    runyard::env("RUNYARD_RUNNER_COORDINATOR", config.endpoint),
                                    runyard::env("RUNYARD_DOCKER_CA_HOST_PATH"),
                                    config.development});
-    runyard::run_agent(config, docker, [] { return interrupted != 0; });
+    auto mode = runyard::env("RUNYARD_GPU_MODE", "disabled");
+    if (mode != "disabled" && mode != "nvidia")
+      throw std::runtime_error("RUNYARD_GPU_MODE must be disabled or nvidia");
+    std::unique_ptr<runyard::NvidiaInventory> gpus;
+    if (mode == "nvidia") {
+      gpus = std::make_unique<runyard::NvidiaInventory>(
+          runyard::gpu_allowlist(runyard::env("RUNYARD_GPU_UUIDS")));
+      config.gpu = {docker.engine_id(), true};
+    }
+    runyard::run_agent(config, docker, [] { return interrupted != 0; }, gpus.get());
     return 0;
   } catch (const std::exception &e) {
     std::cerr << "agent: " << e.what() << '\n';

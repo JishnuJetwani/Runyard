@@ -16,7 +16,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def reply(self, status, body=None):
         self.send_response(status)
         self.end_headers()
-        if body is not None:
+        if body is not None and status != 204:
             self.wfile.write(json.dumps(body).encode())
 
     def do_GET(self):
@@ -26,7 +26,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self.reply(200, {})
             if self.path.startswith("/v1.44/containers/json?"):
                 return self.reply(200, [{"Labels": {"runyard.attempt": "test-attempt"}}] if s.exists else [])
-            return self.reply(200, {"Id": "runtime-uid", "Config": s.spec, "State": {"Status": "running" if s.starts else "created"}}) if s.exists else self.reply(404)
+            return self.reply(200, {"Id": "runtime-uid", "Config": s.spec, "HostConfig": s.spec["HostConfig"], "State": {"Status": "running" if s.starts else "created"}}) if s.exists else self.reply(404)
         if "pods?" in self.path:
             return self.reply(200, {"items": []})
         if "?" in self.path:
@@ -50,6 +50,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         else:
             assert s.spec["HostConfig"]["Memory"] == 512 * 1024 * 1024
             assert "/var/run/docker.sock" not in json.dumps(s.spec)
+            if s.gpu:
+                assert s.spec["HostConfig"]["DeviceRequests"][0]["DeviceIDs"] == ["GPU-a"]
+            else:
+                assert "NVIDIA_VISIBLE_DEVICES=void" in s.spec["Env"]
         # Persist the object but fail the response, reproducing an ambiguous create.
         self.reply(503, {})
 
@@ -60,17 +64,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 with tempfile.TemporaryDirectory(prefix="runyard-adapter-") as tmp:
-    for backend in ("docker", "kubernetes"):
+    for backend, gpu in (("docker", False), ("docker", True), ("kubernetes", False)):
         token = pathlib.Path(tmp) / "token"
         token.write_text("test-token")
-        address = str(pathlib.Path(tmp) / "docker.sock") if backend == "docker" else ("127.0.0.1", 0)
+        address = str(pathlib.Path(tmp) / ("docker-gpu.sock" if gpu else "docker.sock")) if backend == "docker" else ("127.0.0.1", 0)
         server = (socketserver.UnixStreamServer if backend == "docker" else http.server.HTTPServer)(address, Handler)
         server.backend, server.exists, server.creates, server.starts = backend, False, 0, 0
+        server.gpu = gpu
         thread = threading.Thread(target=server.serve_forever)
         thread.start()
         try:
             target = address if backend == "docker" else "http://127.0.0.1:" + str(server.server_port)
-            subprocess.run([sys.argv[1], backend, target, str(token)], check=True, timeout=30)
+            subprocess.run([sys.argv[1], backend, target, str(token)] + (["gpu"] if gpu else []), check=True, timeout=30)
             assert server.creates == 1
             assert server.starts == (1 if backend == "docker" else 0)
         finally:

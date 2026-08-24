@@ -88,3 +88,5 @@ target_link_libraries(runyard_rpc PUBLIC runyard_observability)
 add_library(runyard_nvidia nvidia/inventory.cpp)
 target_include_directories(runyard_nvidia SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/third_party/nvml)
 target_link_libraries(runyard_nvidia PUBLIC runyard_domain PRIVATE ${CMAKE_DL_LIBS})
+
+target_link_libraries(runyard-agent PRIVATE runyard_nvidia)

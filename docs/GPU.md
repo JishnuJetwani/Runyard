@@ -39,3 +39,10 @@ The runner preserves selected image settings for PATH, libraries, Python, and CU
 It resolves commands using the child's final PATH and working directory. Platform
 paths and GPU visibility take precedence over workload values. The child does not
 inherit coordinator or runner credentials.
+
+Set `RUNYARD_GPU_MODE=nvidia` on a Linux Docker agent to enable discovery and GPU
+launches. `RUNYARD_GPU_UUIDS=GPU-...,GPU-...` optionally limits the advertised devices.
+The host needs the NVIDIA driver and Container Toolkit. DeviceRequests contain
+assigned UUIDs, never an unrestricted device count. CPU containers explicitly use
+`NVIDIA_VISIBLE_DEVICES=void`. Restart reconciliation compares image, worker,
+attempt, and GPU requests before reusing a deterministic container.
