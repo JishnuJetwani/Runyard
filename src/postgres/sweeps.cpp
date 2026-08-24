@@ -36,11 +36,12 @@ Sweep PostgresStore::submit_sweep(const SweepSpec &spec, const std::vector<RunSp
   tx.exec("INSERT INTO sweeps(id,spec,key,fingerprint) VALUES($1,$2::jsonb,$3,$4)",
           pqxx::params{id, encode(spec).dump(), key, fingerprint});
   for (const auto &run : runs) {
+    validate_submission(run);
     auto run_id = random_id();
-    tx.exec("INSERT INTO runs(id,spec,priority,cpu_millis,memory_mib,sweep_id) "
-            "VALUES($1,$2::jsonb,$3,$4,$5,$6)",
+    tx.exec("INSERT INTO runs(id,spec,priority,cpu_millis,memory_mib,sweep_id,gpu_count) "
+            "VALUES($1,$2::jsonb,$3,$4,$5,$6,$7)",
             pqxx::params{run_id, encode(run).dump(), run.priority, run.resources.cpu_millis,
-                         run.resources.memory_mib, id});
+                         run.resources.memory_mib, id, run.resources.gpu_count});
     pg::event(tx, run_id, "submitted", "sweep " + id);
   }
   auto result = load_sweep(tx, id);
@@ -73,12 +74,14 @@ Run PostgresStore::rerun(const std::string &id, const std::string &key) {
   auto old = pg::run(source[0]);
   if (!terminal(old.status))
     throw Error(ErrorCode::conflict, "only terminal runs can be rerun");
+  validate_submission(old.spec);
   auto new_id = random_id();
   auto rows =
-      tx.exec("INSERT INTO runs(id,spec,priority,cpu_millis,memory_mib,parent_run_id) "
-              "VALUES($1,$2::jsonb,$3,$4,$5,$6) RETURNING *",
+      tx.exec("INSERT INTO runs(id,spec,priority,cpu_millis,memory_mib,parent_run_id,gpu_count) "
+              "VALUES($1,$2::jsonb,$3,$4,$5,$6,$7) RETURNING *",
               pqxx::params{new_id, encode(old.spec).dump(), old.spec.priority,
-                           old.spec.resources.cpu_millis, old.spec.resources.memory_mib, id});
+                           old.spec.resources.cpu_millis, old.spec.resources.memory_mib, id,
+                           old.spec.resources.gpu_count});
   tx.exec("INSERT INTO submissions(key,fingerprint,run_id) VALUES($1,$2,$3)",
           pqxx::params{key, fingerprint, new_id});
   pg::event(tx, new_id, "submitted", "rerun of " + id);

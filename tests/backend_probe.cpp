@@ -24,6 +24,10 @@ int main(int argc, char **argv) {
     launch.assignment.attempt.run_id = "test-run";
     launch.assignment.spec.image = "fixture@sha256:" + std::string(64, 'a');
     launch.capability = "attempt-token";
+    if (argc > 4 && std::string(argv[4]) == "gpu") {
+      launch.assignment.spec.resources.gpu_count = 1;
+      launch.assignment.attempt.gpu_allocations = {{{"GPU-a", "", 0, true, ""}, "", ""}};
+    }
     bool failed = false;
     try {
       backend->ensure(launch);

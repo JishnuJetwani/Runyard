@@ -1,5 +1,6 @@
 #include "runyard/runner/process.hpp"
 #include "runyard/domain/error.hpp"
+#include "runyard/runner/environment.hpp"
 #include <array>
 #include <cerrno>
 #include <cstring>
@@ -44,6 +45,7 @@ PosixProcess::PosixProcess(const std::vector<std::string> &command,
     : clock_(clock) {
   if (command.empty())
     throw Error(ErrorCode::invalid, "empty process command");
+  auto executable = resolve_executable(command[0], environment, directory);
   Pipe output, error;
   SpawnActions spawn;
   posix_spawn_file_actions_addopen(&spawn.actions, STDIN_FILENO, "/dev/null", O_RDONLY, 0);
@@ -76,8 +78,8 @@ PosixProcess::PosixProcess(const std::vector<std::string> &command,
     envp.push_back(value.data());
   envp.push_back(nullptr);
   // posix_spawn avoids running allocation/locking code in a forked gRPC process.
-  int result =
-      posix_spawnp(&pid_, args[0], &spawn.actions, &spawn.attributes, args.data(), envp.data());
+  int result = posix_spawn(&pid_, executable.c_str(), &spawn.actions, &spawn.attributes,
+                           args.data(), envp.data());
   if (result != 0) {
     pid_ = -1;
     throw Error(ErrorCode::invalid,

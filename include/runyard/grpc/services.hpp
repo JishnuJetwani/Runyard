@@ -20,6 +20,8 @@ public:
       : repository_(repository), config_(config), ready_(std::move(ready)), metrics_(metrics) {}
   grpc::Status Reconcile(grpc::ServerContext *, const wire::Inventory *,
                          wire::Decisions *) override;
+  grpc::Status ReportGpuInventory(grpc::ServerContext *, const wire::GpuInventory *,
+                                  wire::Empty *) override;
   grpc::Status Register(grpc::ServerContext *, const wire::RegisterRequest *,
                         wire::Empty *) override;
   grpc::Status Heartbeat(grpc::ServerContext *, const wire::WorkerIdentity *,

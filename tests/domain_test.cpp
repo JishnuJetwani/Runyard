@@ -86,3 +86,23 @@ TEST(Domain, ArtifactPathsCannotEscape) {
     EXPECT_THROW(validate_relative_path(path), Error);
   EXPECT_NO_THROW(validate_relative_path("checkpoints/epoch-1.bin"));
 }
+TEST(Domain, GpusMustFitAlongsideCpuAndMemory) {
+  EXPECT_TRUE((Resources{1000, 512, 2}.fits({4000, 4096, 2})));
+  EXPECT_FALSE((Resources{1000, 512, 2}.fits({4000, 4096, 1})));
+  EXPECT_FALSE((Resources{1000, 512, 1}.fits({500, 4096, 4})));
+  EXPECT_TRUE((Resources{1000, 512}.fits({4000, 4096, 0})));
+}
+TEST(Domain, GpuRequestsAreBoundedWholeDeviceCounts) {
+  auto spec = example();
+  for (int count : {0, 1, 8, 64}) {
+    spec.resources.gpu_count = count;
+    EXPECT_NO_THROW(validate(spec));
+    EXPECT_EQ(
+        expand_sweep(spec, {{"seed", {std::int64_t{1}, std::int64_t{2}}}})[1].resources.gpu_count,
+        count);
+  }
+  for (int count : {-1, 65, INT_MAX}) {
+    spec.resources.gpu_count = count;
+    EXPECT_THROW(validate(spec), Error);
+  }
+}

@@ -4,7 +4,7 @@
 namespace runyard {
 Run RunService::submit(const RunSpec &spec, const std::string &key,
                        const std::string &fingerprint) {
-  validate(spec);
+  validate_submission(spec);
   if (key.empty() || key.size() > 200)
     throw Error(ErrorCode::invalid, "Idempotency-Key must contain 1 to 200 characters");
   return repository_.submit(spec, key, fingerprint);

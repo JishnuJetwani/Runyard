@@ -47,22 +47,27 @@ Json encode(const RunSpec &s) {
   Json p = Json::object();
   for (const auto &[key, value] : s.parameters)
     std::visit([&](const auto &v) { p[key] = v; }, value);
-  return {{"version", s.version},
-          {"name", s.name},
-          {"image", s.image},
-          {"command", s.command},
-          {"parameters", p},
-          {"environment", s.environment},
-          {"labels", s.labels},
-          {"resources",
-           {{"cpu_millis", s.resources.cpu_millis}, {"memory_mib", s.resources.memory_mib}}},
-          {"retry",
-           {{"max_attempts", s.retry.max_attempts},
-            {"retry_exit", s.retry.retry_exit},
-            {"retry_timeout", s.retry.retry_timeout}}},
-          {"timeout_seconds", s.timeout_seconds},
-          {"priority", s.priority},
-          {"source", {{"repository", s.source_repository}, {"revision", s.source_revision}}}};
+  Json result = {
+      {"version", s.version},
+      {"name", s.name},
+      {"image", s.image},
+      {"command", s.command},
+      {"parameters", p},
+      {"environment", s.environment},
+      {"labels", s.labels},
+      {"resources",
+       {{"cpu_millis", s.resources.cpu_millis}, {"memory_mib", s.resources.memory_mib}}},
+      {"retry",
+       {{"max_attempts", s.retry.max_attempts},
+        {"retry_exit", s.retry.retry_exit},
+        {"retry_timeout", s.retry.retry_timeout}}},
+      {"timeout_seconds", s.timeout_seconds},
+      {"priority", s.priority},
+      {"source", {{"repository", s.source_repository}, {"revision", s.source_revision}}}};
+  // Keep historical CPU submission fingerprints byte-for-byte compatible.
+  if (s.resources.gpu_count != 0)
+    result["resources"]["gpu_count"] = s.resources.gpu_count;
+  return result;
 }
 RunSpec decode_spec(const Json &j) {
   try {
@@ -87,8 +92,9 @@ RunSpec decode_spec(const Json &j) {
     s.environment = j.value("environment", std::map<std::string, std::string>{});
     s.labels = j.value("labels", std::map<std::string, std::string>{});
     auto r = j.value("resources", Json::object());
-    fields(r, {"cpu_millis", "memory_mib"});
-    s.resources = {integer(r, "cpu_millis", 1000), integer(r, "memory_mib", 512)};
+    fields(r, {"cpu_millis", "memory_mib", "gpu_count"});
+    s.resources = {integer(r, "cpu_millis", 1000), integer(r, "memory_mib", 512),
+                   integer(r, "gpu_count", 0)};
     auto retry = j.value("retry", Json::object());
     fields(retry, {"max_attempts", "retry_exit", "retry_timeout"});
     s.retry = {integer(retry, "max_attempts", 3), retry.value("retry_exit", false),

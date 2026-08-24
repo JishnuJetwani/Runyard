@@ -31,7 +31,33 @@ bool transition_allowed(RunStatus from, RunStatus to);
 struct Resources {
   int cpu_millis{1000};
   int memory_mib{512};
+  int gpu_count{0};
   bool fits(const Resources &available) const;
+};
+
+struct GpuDevice {
+  std::string uuid;
+  std::string name;
+  std::uint64_t memory_mib{};
+  bool eligible{true};
+  std::string reason;
+};
+
+struct GpuRegistration {
+  std::string engine_id;
+  bool capable{};
+};
+
+struct GpuSnapshot {
+  std::int64_t sequence{};
+  bool ready{};
+  std::vector<GpuDevice> devices;
+};
+
+struct GpuAllocation {
+  GpuDevice device;
+  std::string allocated_at;
+  std::string released_at;
 };
 
 struct RetryPolicy {
@@ -95,6 +121,9 @@ struct Attempt {
   std::string started_at;
   std::string finished_at;
   std::int64_t acknowledged_sequence{};
+  int gpu_count{};
+  std::string node_name;
+  std::vector<GpuAllocation> gpu_allocations;
 };
 
 struct Assignment {
@@ -110,6 +139,11 @@ struct Worker {
   bool drained{};
   bool available{};
   std::string heartbeat_at;
+  std::string engine_id;
+  bool gpu_ready{};
+  bool gpu_fresh{};
+  std::string gpu_observed_at;
+  std::vector<GpuDevice> gpu_devices;
 };
 
 struct Telemetry {
@@ -163,6 +197,7 @@ public:
 };
 
 void validate(const RunSpec &spec);
+void validate_submission(const RunSpec &spec);
 void validate(const Telemetry &point);
 void validate_relative_path(const std::string &path);
 bool should_retry(const RetryPolicy &policy, int completed_attempts, Failure reason);

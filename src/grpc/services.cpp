@@ -97,7 +97,20 @@ grpc::Status AgentRpc::Register(grpc::ServerContext *c, const wire::RegisterRequ
   return guard(metrics_, __func__, [&] {
     authorize(c);
     repository_.register_worker(r->worker().id(), r->worker().session(),
-                                {r->cpu_millis(), r->memory_mib()});
+                                {r->cpu_millis(), r->memory_mib()},
+                                {r->engine_id(), r->gpu_capable()});
+  });
+}
+grpc::Status AgentRpc::ReportGpuInventory(grpc::ServerContext *c, const wire::GpuInventory *r,
+                                          wire::Empty *) {
+  return guard(metrics_, __func__, [&] {
+    authorize(c);
+    if (r->devices_size() > 64)
+      throw Error(ErrorCode::invalid, "GPU inventory exceeds 64 devices");
+    GpuSnapshot snapshot{r->sequence(), r->ready(), {}};
+    for (const auto &d : r->devices())
+      snapshot.devices.push_back({d.uuid(), d.name(), d.memory_mib(), d.eligible(), d.reason()});
+    repository_.report_gpu_inventory(r->worker().id(), r->worker().session(), snapshot);
   });
 }
 grpc::Status AgentRpc::Heartbeat(grpc::ServerContext *c, const wire::WorkerIdentity *r,
@@ -122,6 +135,8 @@ grpc::Status AgentRpc::Poll(grpc::ServerContext *c, const wire::WorkerIdentity *
     a->set_run_id(assignment->attempt.run_id);
     a->set_generation(assignment->attempt.generation);
     a->set_specification_json(encode(assignment->spec).dump());
+    for (const auto &allocation : assignment->attempt.gpu_allocations)
+      a->add_gpu_uuids(allocation.device.uuid);
     a->set_capability(attempt_capability(config_.signing_key, a->attempt_id(), a->generation()));
   });
 }

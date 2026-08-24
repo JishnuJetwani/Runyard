@@ -12,18 +12,20 @@ struct DockerConfig {
   std::string ca_host_path;
   bool development;
 };
+Json docker_container_spec(const DockerConfig &, const Launch &);
+bool docker_container_matches(const Json &, const DockerConfig &, const Launch &);
 class DockerBackend final : public ExecutionBackend {
 public:
   explicit DockerBackend(DockerConfig config)
       : config_(std::move(config)), http_({.unix_socket = config_.socket, .timeout_seconds = 300}) {
   }
+  std::string engine_id();
   std::vector<std::string> inventory() override;
   std::string ensure(const Launch &) override;
   bool has_stopped(const std::string &) override;
   void remove(const std::string &attempt_id) override;
 
 private:
-  Json container_spec(const Launch &) const;
   DockerConfig config_;
   HttpClient http_;
 };

@@ -3,11 +3,13 @@ package runyard.rpc.v1;
 
 message Empty {}
 message WorkerIdentity { string id = 1; string session = 2; }
-message RegisterRequest { WorkerIdentity worker = 1; int32 cpu_millis = 2; int32 memory_mib = 3; }
+message RegisterRequest { WorkerIdentity worker = 1; int32 cpu_millis = 2; int32 memory_mib = 3; string engine_id = 4; bool gpu_capable = 5; }
 message Owner { string attempt_id = 1; int32 generation = 2; string instance_id = 3; }
-message WorkAssignment { string attempt_id = 1; string run_id = 2; int32 generation = 3; string specification_json = 4; string capability = 5; }
+message WorkAssignment { string attempt_id = 1; string run_id = 2; int32 generation = 3; string specification_json = 4; string capability = 5; repeated string gpu_uuids = 6; }
 message WorkReply { bool has_work = 1; WorkAssignment assignment = 2; repeated string cleanup_attempts = 3; }
 message Inventory { WorkerIdentity worker = 1; repeated string attempts = 2; }
+message GpuDevice { string uuid = 1; string name = 2; uint64 memory_mib = 3; bool eligible = 4; string reason = 5; }
+message GpuInventory { WorkerIdentity worker = 1; int64 sequence = 2; bool ready = 3; repeated GpuDevice devices = 4; }
 message Decisions { repeated string stop_attempts = 1; }
 message RuntimeReport { WorkerIdentity worker = 1; string attempt_id = 2; string runtime_id = 3; bool stopped = 4; }
 message StartReply { string specification_json = 1; int32 lease_seconds = 2; int32 heartbeat_seconds = 3; int32 termination_seconds = 4; int32 finalization_seconds = 5; }
@@ -20,6 +22,7 @@ message Completion { Owner owner = 1; int32 exit_code = 2; string reason = 3; in
 
 service AgentService {
   rpc Reconcile(Inventory) returns (Decisions);
+  rpc ReportGpuInventory(GpuInventory) returns (Empty);
   rpc Register(RegisterRequest) returns (Empty);
   rpc Heartbeat(WorkerIdentity) returns (Empty);
   rpc Poll(WorkerIdentity) returns (WorkReply);
