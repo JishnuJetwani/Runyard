@@ -1,4 +1,5 @@
 #include "runyard/agent/agent.hpp"
+#include "gpus.hpp"
 #include "runyard/domain/error.hpp"
 #include "runyard/runner/client.hpp"
 #include "runyard/serialization/json.hpp"
@@ -10,7 +11,9 @@
 
 namespace runyard {
 void run_agent(const AgentConfig &config, ExecutionBackend &backend,
-               const std::function<bool()> &stop_requested) {
+               const std::function<bool()> &stop_requested, GpuInventory *gpus) {
+  if (config.gpu.capable && !gpus)
+    throw Error(ErrorCode::invalid, "GPU inventory provider required");
   auto stub = wire::AgentService::NewStub(
       make_channel(config.endpoint, config.ca_file, config.development));
   wire::WorkerIdentity identity;
@@ -20,6 +23,8 @@ void run_agent(const AgentConfig &config, ExecutionBackend &backend,
   *registration.mutable_worker() = identity;
   registration.set_cpu_millis(config.capacity.cpu_millis);
   registration.set_memory_mib(config.capacity.memory_mib);
+  registration.set_engine_id(config.gpu.engine_id);
+  registration.set_gpu_capable(config.gpu.capable);
   while (!stop_requested()) {
     grpc::ClientContext context;
     prepare(context, config.token);
@@ -31,7 +36,12 @@ void run_agent(const AgentConfig &config, ExecutionBackend &backend,
       check_rpc(status);
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  std::atomic<bool> stale{false};
+  std::atomic<bool> stale{false}, reconciled{false};
+  std::jthread gpu_reporter;
+  if (config.gpu.capable)
+    gpu_reporter = std::jthread([&](std::stop_token stop) {
+      report_gpus(*stub, identity, config.token, *gpus, reconciled, stop);
+    });
   std::jthread heartbeat([&](std::stop_token stop) {
     std::mutex mutex;
     std::condition_variable_any wake;
@@ -71,6 +81,7 @@ void run_agent(const AgentConfig &config, ExecutionBackend &backend,
       check_rpc(stub->Reconcile(&inventory_context, inventory, &decisions));
       for (const auto &id : decisions.stop_attempts())
         backend.remove(id);
+      reconciled = true;
       grpc::ClientContext context;
       prepare(context, config.token);
       wire::WorkReply reply;
@@ -85,6 +96,8 @@ void run_agent(const AgentConfig &config, ExecutionBackend &backend,
         attempt.id = a.attempt_id();
         attempt.run_id = a.run_id();
         attempt.generation = a.generation();
+        for (const auto &uuid : a.gpu_uuids())
+          attempt.gpu_allocations.push_back({{uuid, "", 0, true, ""}, "", ""});
         Launch launch{{attempt, decode_spec(Json::parse(a.specification_json()))}, a.capability()};
         auto runtime = backend.ensure(launch);
         report(attempt.id, runtime, false);

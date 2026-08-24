@@ -20,7 +20,8 @@ int main() {
                                 runyard::env("RUNYARD_TLS_CA"),
                                 {runyard::env_int("RUNYARD_CPU_MILLIS", 4000),
                                  runyard::env_int("RUNYARD_MEMORY_MIB", 4096)},
-                                runyard::env("RUNYARD_PROFILE") == "development"};
+                                runyard::env("RUNYARD_PROFILE") == "development",
+                                {}};
     if (config.id.empty() || config.token.empty())
       throw std::runtime_error("worker identity and token required");
     runyard::DockerBackend docker({runyard::env("RUNYARD_DOCKER_SOCKET", "/var/run/docker.sock"),

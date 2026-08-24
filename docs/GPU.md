@@ -22,3 +22,7 @@ Discovery loads NVML at runtime and identifies devices by UUID. Inaccessible
 devices are omitted; MIG devices and devices with failed metadata queries are
 ineligible. A UUID allowlist divides devices between logical workers. If an
 allowlisted device is missing, the refresh is marked unavailable.
+
+Agents report GPU launch support when they register. After reconciling existing
+containers, they refresh inventory every ten seconds, separately from heartbeats.
+Older agents receive CPU work only. GPU assignments contain exact device UUIDs.
