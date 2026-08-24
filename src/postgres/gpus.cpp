@@ -84,3 +84,45 @@ void pg::load_gpu_allocations(pqxx::transaction_base &tx, Attempt &attempt) {
   }
 }
 } // namespace runyard
+
+namespace runyard::pg {
+void load_worker_gpus(pqxx::transaction_base &tx, Worker &worker) {
+  for (const auto &r :
+       tx.exec("SELECT * FROM gpu_devices WHERE worker_id=$1 AND present ORDER BY uuid",
+               pqxx::params{worker.id})) {
+    worker.gpu_devices.push_back({text(r["uuid"]), text(r["name"]),
+                                  r["memory_mib"].as<std::uint64_t>(), r["eligible"].as<bool>(),
+                                  text(r["reason"])});
+    if (worker.gpu_devices.back().eligible)
+      ++worker.capacity.gpu_count;
+  }
+  worker.reserved.gpu_count =
+      tx.exec("SELECT count(*) FROM attempt_gpus ag JOIN attempts a ON a.id=ag.attempt_id "
+              "WHERE a.worker_id=$1 AND ag.released_at IS NULL",
+              pqxx::params{worker.id})[0][0]
+          .as<int>();
+}
+std::vector<GpuDevice> free_gpus(pqxx::work &tx, const std::string &worker) {
+  std::vector<GpuDevice> devices;
+  for (const auto &r :
+       tx.exec("SELECT * FROM gpu_devices d WHERE worker_id=$1 AND present AND eligible "
+               "AND NOT EXISTS(SELECT 1 FROM attempt_gpus a WHERE a.uuid=d.uuid AND a.released_at "
+               "IS NULL) "
+               "ORDER BY uuid",
+               pqxx::params{worker}))
+    devices.push_back(
+        {text(r["uuid"]), text(r["name"]), r["memory_mib"].as<std::uint64_t>(), true, ""});
+  return devices;
+}
+void reserve_gpus(pqxx::work &tx, const std::string &attempt, int count,
+                  const std::vector<GpuDevice> &devices) {
+  // The worker lock serializes discovery and claims. Lock run/attempt before device rows;
+  // retain reservations until runtime cleanup, even after the run becomes terminal.
+  for (int i = 0; i < count; ++i) {
+    const auto &device = devices.at(static_cast<std::size_t>(i));
+    tx.exec("SELECT uuid FROM gpu_devices WHERE uuid=$1 FOR UPDATE", pqxx::params{device.uuid});
+    tx.exec("INSERT INTO attempt_gpus(attempt_id,uuid,name,memory_mib) VALUES($1,$2,$3,$4)",
+            pqxx::params{attempt, device.uuid, device.name, device.memory_mib});
+  }
+}
+} // namespace runyard::pg

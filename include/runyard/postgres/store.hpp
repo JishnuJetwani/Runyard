@@ -62,6 +62,10 @@ using FieldView = decltype(std::declval<const RowView &>()[0]);
 Run run(const RowView &row);
 Attempt attempt(const RowView &row);
 void load_gpu_allocations(pqxx::transaction_base &, Attempt &);
+void load_worker_gpus(pqxx::transaction_base &, Worker &);
+std::vector<GpuDevice> free_gpus(pqxx::work &, const std::string &worker);
+void reserve_gpus(pqxx::work &, const std::string &attempt, int count,
+                  const std::vector<GpuDevice> &);
 void event(pqxx::work &tx, const std::string &run_id, const std::string &kind,
            const std::string &detail);
 std::string text(const FieldView &field);

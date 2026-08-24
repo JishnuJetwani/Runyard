@@ -21,11 +21,12 @@ std::vector<Worker> PostgresStore::workers(int limit, const std::string &after) 
   std::vector<Worker> result;
   auto rows =
       tx.exec(R"SQL(SELECT w.*,w.heartbeat_at>clock_timestamp()-$1*interval '1 second' AS available,
+    COALESCE(w.gpu_observed_at>clock_timestamp()-interval '30 seconds',false) AS gpu_fresh,
     COALESCE((SELECT sum(r.cpu_millis) FROM attempts a JOIN runs r ON a.run_id=r.id WHERE a.worker_id=w.id AND a.cleanup_status='PENDING'),0) AS reserved_cpu,
     COALESCE((SELECT sum(r.memory_mib) FROM attempts a JOIN runs r ON a.run_id=r.id WHERE a.worker_id=w.id AND a.cleanup_status='PENDING'),0) AS reserved_memory
     FROM workers w WHERE w.id>$2 ORDER BY w.id LIMIT $3)SQL",
               pqxx::params{timing_.worker_seconds, after, std::clamp(limit, 1, 200)});
-  for (const auto &r : rows)
+  for (const auto &r : rows) {
     result.push_back({pg::text(r["id"]),
                       pg::text(r["session"]),
                       {r["cpu_millis"].as<int>(), r["memory_mib"].as<int>()},
@@ -33,11 +34,13 @@ std::vector<Worker> PostgresStore::workers(int limit, const std::string &after) 
                       r["drained"].as<bool>(),
                       r["available"].as<bool>(),
                       pg::text(r["heartbeat_at"]),
-                      "",
-                      false,
-                      false,
-                      "",
+                      pg::text(r["engine_id"]),
+                      r["gpu_ready"].as<bool>() && r["gpu_capable"].as<bool>(),
+                      r["gpu_fresh"].as<bool>(),
+                      pg::text(r["gpu_observed_at"]),
                       {}});
+    pg::load_worker_gpus(tx, result.back());
+  }
   return result;
 }
 std::optional<Assignment> PostgresStore::assign(const std::string &id, const std::string &session) {
@@ -45,17 +48,22 @@ std::optional<Assignment> PostgresStore::assign(const std::string &id, const std
   pqxx::work tx(c.get());
   pg::require_worker(tx, id, session);
   auto worker = tx.exec("SELECT *,heartbeat_at>clock_timestamp()-$2*interval '1 second' AS "
-                        "available FROM workers WHERE id=$1",
+                        "available, gpu_capable AND gpu_ready AND COALESCE(gpu_observed_at>"
+                        "clock_timestamp()-interval '30 seconds',false) AS gpu_available "
+                        "FROM workers WHERE id=$1",
                         pqxx::params{id, timing_.worker_seconds});
   if (!worker[0]["available"].as<bool>())
     return std::nullopt;
+  bool gpu_available = worker[0]["gpu_available"].as<bool>();
   // Replay an unacknowledged launch before reserving any more capacity.
   auto pending = tx.exec("SELECT a.* FROM attempts a JOIN runs r ON r.active_attempt=a.id WHERE "
                          "a.worker_id=$1 AND a.status='STARTING' AND a.runtime_id IS NULL AND "
-                         "a.launch_deadline>clock_timestamp() ORDER BY a.created_at LIMIT 1",
-                         pqxx::params{id});
+                         "a.launch_deadline>clock_timestamp() AND (a.gpu_count=0 OR $2) "
+                         "ORDER BY a.created_at LIMIT 1",
+                         pqxx::params{id, gpu_available});
   if (!pending.empty()) {
     auto a = pg::attempt(pending[0]);
+    pg::load_gpu_allocations(tx, a);
     auto r = pg::run(tx.exec("SELECT * FROM runs WHERE id=$1", pqxx::params{a.run_id})[0]);
     tx.commit();
     return Assignment{a, r.spec};
@@ -68,23 +76,27 @@ std::optional<Assignment> PostgresStore::assign(const std::string &id, const std
               pqxx::params{id});
   int cpu = worker[0]["cpu_millis"].as<int>() - reserved[0][0].as<int>();
   int memory = worker[0]["memory_mib"].as<int>() - reserved[0][1].as<int>();
-  auto candidates = tx.exec("SELECT * FROM runs WHERE status='QUEUED' AND gpu_count=0 AND "
+  auto devices = gpu_available ? pg::free_gpus(tx, id) : std::vector<GpuDevice>{};
+  auto candidates = tx.exec("SELECT * FROM runs WHERE status='QUEUED' AND gpu_count<=$3 AND "
                             "available_at<=clock_timestamp() AND cpu_millis<=$1 AND memory_mib<=$2 "
                             "ORDER BY priority DESC,created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED",
-                            pqxx::params{cpu, memory});
+                            pqxx::params{cpu, memory, devices.size()});
   if (candidates.empty())
     return std::nullopt;
   auto run = pg::run(candidates[0]);
   auto attempt_id = random_id();
   int generation = run.generation + 1;
   auto attempts =
-      tx.exec("INSERT INTO attempts(id,run_id,generation,worker_id,launch_deadline) "
-              "VALUES($1,$2,$3,$4,clock_timestamp()+$5*interval '1 second') RETURNING *",
-              pqxx::params{attempt_id, run.id, generation, id, timing_.launch_seconds});
+      tx.exec("INSERT INTO attempts(id,run_id,generation,worker_id,launch_deadline,gpu_count) "
+              "VALUES($1,$2,$3,$4,clock_timestamp()+$5*interval '1 second',$6) RETURNING *",
+              pqxx::params{attempt_id, run.id, generation, id, timing_.launch_seconds,
+                           run.spec.resources.gpu_count});
   tx.exec("UPDATE runs SET status='STARTING',active_attempt=$2,generation=$3 WHERE id=$1",
           pqxx::params{run.id, attempt_id, generation});
   pg::event(tx, run.id, "assigned", "attempt " + std::to_string(generation) + " assigned to " + id);
+  pg::reserve_gpus(tx, attempt_id, run.spec.resources.gpu_count, devices);
   auto result = Assignment{pg::attempt(attempts[0]), run.spec};
+  pg::load_gpu_allocations(tx, result.attempt);
   tx.commit();
   return result;
 }
@@ -102,6 +114,9 @@ void PostgresStore::runtime_report(const std::string &worker, const std::string 
         a.attempt.status == "FINALIZING")
       throw Error(ErrorCode::conflict, "attempt is still active");
     tx.exec("UPDATE attempts SET cleanup_status='DONE' WHERE id=$1", pqxx::params{id});
+    tx.exec("UPDATE attempt_gpus SET released_at=clock_timestamp() "
+            "WHERE attempt_id=$1 AND released_at IS NULL",
+            pqxx::params{id});
   } else
     tx.exec("UPDATE attempts SET runtime_id=$2 WHERE id=$1", pqxx::params{id, runtime});
   tx.commit();

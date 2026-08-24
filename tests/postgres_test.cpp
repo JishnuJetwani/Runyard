@@ -23,7 +23,7 @@ protected:
     {
       auto c = pool->acquire();
       pqxx::work tx(c.get());
-      tx.exec("TRUNCATE runs,workers CASCADE");
+      tx.exec("TRUNCATE runs,workers,sweeps CASCADE");
       tx.commit();
     }
     store = std::make_unique<PostgresStore>(*pool);
@@ -527,8 +527,111 @@ TEST_F(Database, GpuRequestsSurviveSubmissionSweepAndRerun) {
   EXPECT_EQ(rerun.spec.resources.gpu_count, 2);
   SweepSpec sweep{gpu, {{"seed", {std::int64_t{1}, std::int64_t{2}}}}};
   auto result = store->submit_sweep(sweep, expand_sweep(gpu, sweep.grid), "sweep", "hash");
+  ASSERT_EQ(result.run_ids.size(), 2);
   EXPECT_EQ(store->get_run(result.run_ids[0]).spec.resources.gpu_count, 2);
   auto c = pool->acquire();
   pqxx::read_transaction tx(c.get());
   EXPECT_EQ(tx.exec("SELECT count(*) FROM runs WHERE gpu_count=2")[0][0].as<int>(), 4);
+}
+namespace {
+void enable_gpu(PostgresStore &store, const std::string &session = "s", int count = 1) {
+  store.register_worker("gpu", session, {16000, 16384}, {"engine", true});
+  GpuSnapshot snapshot{1, true, {}};
+  for (int i = 0; i < count; ++i)
+    snapshot.devices.push_back({"GPU-" + std::to_string(i), "Device", 24576, true, ""});
+  store.report_gpu_inventory("gpu", session, snapshot);
+}
+} // namespace
+TEST_F(Database, GpuReservationReplaysAndSurvivesCancellationUntilCleanup) {
+  enable_gpu(*store);
+  auto s = spec();
+  s.resources.gpu_count = 1;
+  auto one = store->submit(s, "one", "one");
+  store->submit(s, "two", "two");
+  auto first = store->assign("gpu", "s");
+  ASSERT_TRUE(first);
+  ASSERT_EQ(first->attempt.gpu_allocations.size(), 1);
+  EXPECT_EQ(first->attempt.gpu_allocations[0].device.uuid, "GPU-0");
+  EXPECT_EQ(store->assign("gpu", "s")->attempt.id, first->attempt.id);
+  store->runtime_report("gpu", "s", first->attempt.id, "container", false);
+  store->cancel(one.id);
+  EXPECT_FALSE(store->assign("gpu", "s"));
+  EXPECT_EQ(store->workers()[0].reserved.gpu_count, 1);
+  store->runtime_report("gpu", "s", first->attempt.id, "", true);
+  EXPECT_TRUE(store->assign("gpu", "s"));
+  auto historical = store->attempts(one.id)[0].gpu_allocations;
+  ASSERT_EQ(historical.size(), 1);
+  EXPECT_FALSE(historical[0].released_at.empty());
+}
+TEST_F(Database, MultiGpuClaimsAreAtomicAndSkipInfeasiblePriority) {
+  enable_gpu(*store, "s", 2);
+  auto too_large = spec();
+  too_large.resources.gpu_count = 3;
+  too_large.priority = 9;
+  store->submit(too_large, "large", "large");
+  auto s = spec();
+  s.resources.gpu_count = 2;
+  auto expected = store->submit(s, "fit", "fit");
+  auto assignment = store->assign("gpu", "s");
+  ASSERT_TRUE(assignment);
+  EXPECT_EQ(assignment->attempt.run_id, expected.id);
+  EXPECT_EQ(assignment->attempt.gpu_allocations.size(), 2);
+  store->runtime_report("gpu", "s", assignment->attempt.id, "container", false);
+  auto cpu = store->submit(spec(), "cpu", "cpu");
+  EXPECT_EQ(store->assign("gpu", "s")->attempt.run_id, cpu.id);
+}
+TEST_F(Database, ConcurrentGpuPollsCannotAllocateADeviceTwice) {
+  enable_gpu(*store);
+  auto s = spec();
+  s.resources.gpu_count = 1;
+  store->submit(s, "one", "one");
+  store->submit(s, "two", "two");
+  auto a = std::async(std::launch::async, [&] { return store->assign("gpu", "s"); });
+  auto b = std::async(std::launch::async, [&] { return store->assign("gpu", "s"); });
+  auto first = a.get(), second = b.get();
+  ASSERT_TRUE(first);
+  ASSERT_TRUE(second);
+  EXPECT_EQ(first->attempt.id, second->attempt.id);
+  EXPECT_EQ(store->workers()[0].reserved.gpu_count, 1);
+}
+TEST_F(Database, GpuInventoryFailureAndRestartPreserveReservations) {
+  enable_gpu(*store, "s", 2);
+  auto s = spec();
+  s.resources.gpu_count = 1;
+  store->submit(s, "one", "one");
+  store->submit(s, "two", "two");
+  auto first = store->assign("gpu", "s");
+  ASSERT_TRUE(first);
+  store->runtime_report("gpu", "s", first->attempt.id, "container", false);
+  store->report_gpu_inventory("gpu", "s", {2, false, {}});
+  EXPECT_FALSE(store->assign("gpu", "s"));
+  EXPECT_EQ(store->workers()[0].reserved.gpu_count, 1);
+  enable_gpu(*store, "new", 2);
+  PostgresStore restarted(*pool);
+  auto second = restarted.assign("gpu", "new");
+  ASSERT_TRUE(second);
+  EXPECT_NE(first->attempt.gpu_allocations[0].device.uuid,
+            second->attempt.gpu_allocations[0].device.uuid);
+  EXPECT_THROW(store->assign("gpu", "s"), Error);
+}
+TEST_F(Database, StaleGpuInventoryAndDrainBlockOnlyNewGpuClaims) {
+  enable_gpu(*store);
+  auto s = spec();
+  s.resources.gpu_count = 1;
+  store->submit(s, "gpu", "gpu");
+  {
+    auto c = pool->acquire();
+    pqxx::work tx(c.get());
+    tx.exec("UPDATE workers SET gpu_observed_at=clock_timestamp()-interval '31 seconds'");
+    tx.commit();
+  }
+  EXPECT_FALSE(store->assign("gpu", "s"));
+  auto cpu = store->submit(spec(), "cpu", "cpu");
+  auto a = store->assign("gpu", "s");
+  ASSERT_TRUE(a);
+  EXPECT_EQ(a->attempt.run_id, cpu.id);
+  store->runtime_report("gpu", "s", a->attempt.id, "container", false);
+  store->report_gpu_inventory("gpu", "s", {2, true, {{"GPU-0", "Device", 100, true, ""}}});
+  store->drain_worker("gpu", true);
+  EXPECT_FALSE(store->assign("gpu", "s"));
 }

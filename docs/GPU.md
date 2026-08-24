@@ -26,3 +26,11 @@ allowlisted device is missing, the refresh is marked unavailable.
 Agents report GPU launch support when they register. After reconciling existing
 containers, they refresh inventory every ten seconds, separately from heartbeats.
 Older agents receive CPU work only. GPU assignments contain exact device UUIDs.
+
+The scheduler selects a run that fits CPU, memory, and GPU capacity, ordered by
+priority then submission time. It reserves all devices in one transaction.
+Inventory older than 30 seconds cannot receive new GPU work. Lost launch replies
+return the original assignment. Cancellation, lease expiry, draining, and restarts
+keep allocations until runtime cleanup is confirmed.
+The lock order is worker, run, attempt, then devices sorted by UUID. Runtime calls
+happen after the transaction commits.
