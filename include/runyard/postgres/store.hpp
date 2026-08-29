@@ -21,7 +21,8 @@ public:
   void runtime_report(const std::string &, const std::string &, const std::string &,
                       const std::string &, bool) override;
   std::vector<Attempt> cleanup(const std::string &, const std::string &) override;
-  Assignment start(const std::string &, int, const std::string &) override;
+  Assignment start(const std::string &, int, const std::string &,
+                   const std::string &node_name = "") override;
   void heartbeat(const std::string &, int, const std::string &) override;
   void begin_finalization(const std::string &, int, const std::string &) override;
   void finish(const std::string &, int, const std::string &, int, const std::string &,

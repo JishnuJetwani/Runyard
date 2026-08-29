@@ -635,3 +635,16 @@ TEST_F(Database, StaleGpuInventoryAndDrainBlockOnlyNewGpuClaims) {
   store->drain_worker("gpu", true);
   EXPECT_FALSE(store->assign("gpu", "s"));
 }
+TEST_F(Database, KubernetesGpuClaimRecordsOnlyTheWinningNode) {
+  auto s = spec();
+  s.resources.gpu_count = 2;
+  auto run = store->submit(s, "gpu", "gpu");
+  auto assignment = store->admit_kubernetes(10);
+  ASSERT_TRUE(assignment);
+  EXPECT_EQ(assignment->attempt.gpu_count, 2);
+  const auto &a = assignment->attempt;
+  store->start(a.id, a.generation, "one", "gpu-node-a");
+  EXPECT_THROW(store->start(a.id, a.generation, "two", "gpu-node-b"), Error);
+  EXPECT_EQ(store->attempts(run.id)[0].node_name, "gpu-node-a");
+  EXPECT_TRUE(store->attempts(run.id)[0].gpu_allocations.empty());
+}

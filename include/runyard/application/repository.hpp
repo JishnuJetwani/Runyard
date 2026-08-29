@@ -47,8 +47,8 @@ public:
                               const std::string &attempt, const std::string &runtime,
                               bool stopped) = 0;
   virtual std::vector<Attempt> cleanup(const std::string &worker, const std::string &session) = 0;
-  virtual Assignment start(const std::string &attempt, int generation,
-                           const std::string &instance) = 0;
+  virtual Assignment start(const std::string &attempt, int generation, const std::string &instance,
+                           const std::string &node_name = "") = 0;
   virtual void heartbeat(const std::string &attempt, int generation,
                          const std::string &instance) = 0;
   virtual void begin_finalization(const std::string &attempt, int generation,

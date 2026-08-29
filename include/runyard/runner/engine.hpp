@@ -12,6 +12,7 @@ struct RunnerConfig {
   std::string ca_file;
   std::string directory;
   bool development;
+  std::string node_name;
 };
 int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_requested);
 } // namespace runyard

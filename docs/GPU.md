@@ -46,3 +46,10 @@ The host needs the NVIDIA driver and Container Toolkit. DeviceRequests contain
 assigned UUIDs, never an unrestricted device count. CPU containers explicitly use
 `NVIDIA_VISIBLE_DEVICES=void`. Restart reconciliation compares image, worker,
 attempt, and GPU requests before reusing a deterministic container.
+
+Kubernetes Jobs request and limit `nvidia.com/gpu` equally. GPU Jobs select nodes
+labeled `runyard.io/gpu-mode=exclusive` and tolerate the `nvidia.com/gpu:NoSchedule`
+taint. Set `RUNYARD_KUBERNETES_GPU_RUNTIME_CLASS` when the cluster uses a dedicated
+NVIDIA runtime. Runyard leaves device visibility to the device plugin. The winning
+runner claim records its node through the Downward API; duplicate runners cannot
+replace that placement record. Kubernetes owns physical device allocation.

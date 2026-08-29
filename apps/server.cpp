@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
       k.name_space = runyard::env("RUNYARD_KUBERNETES_NAMESPACE", k.name_space);
       k.coordinator = runyard::env("RUNYARD_RUNNER_COORDINATOR", k.coordinator);
       k.development = config.development;
+      k.gpu_runtime_class = runyard::env("RUNYARD_KUBERNETES_GPU_RUNTIME_CLASS");
       k.runner_ca_configmap = runyard::env("RUNYARD_RUNNER_CA_CONFIGMAP");
       kubernetes_backend = std::make_unique<runyard::KubernetesBackend>(k);
       kubernetes_controller = std::make_unique<runyard::KubernetesController>(

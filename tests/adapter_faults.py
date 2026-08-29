@@ -47,6 +47,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if s.backend == "kubernetes":
             s.spec["metadata"]["uid"] = "runtime-uid"
             assert s.spec["spec"]["backoffLimit"] == 0
+            pod = s.spec["spec"]["template"]["spec"]
+            if s.gpu:
+                assert pod["containers"][0]["resources"]["limits"]["nvidia.com/gpu"] == "1"
+                assert pod["nodeSelector"]["runyard.io/gpu-mode"] == "exclusive"
         else:
             assert s.spec["HostConfig"]["Memory"] == 512 * 1024 * 1024
             assert "/var/run/docker.sock" not in json.dumps(s.spec)
@@ -64,7 +68,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 with tempfile.TemporaryDirectory(prefix="runyard-adapter-") as tmp:
-    for backend, gpu in (("docker", False), ("docker", True), ("kubernetes", False)):
+    for backend, gpu in (("docker", False), ("docker", True), ("kubernetes", False), ("kubernetes", True)):
         token = pathlib.Path(tmp) / "token"
         token.write_text("test-token")
         address = str(pathlib.Path(tmp) / ("docker-gpu.sock" if gpu else "docker.sock")) if backend == "docker" else ("127.0.0.1", 0)
