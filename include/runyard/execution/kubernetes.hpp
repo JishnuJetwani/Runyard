@@ -14,6 +14,8 @@ struct KubernetesConfig {
   bool development{};
   std::string gpu_runtime_class;
 };
+HttpResult kubernetes_request(const KubernetesConfig &, const std::string &method,
+                              const std::string &path, const Json &body = Json());
 Json kubernetes_job(const KubernetesConfig &, const Launch &);
 bool kubernetes_job_finished(const Json &job);
 class KubernetesBackend final : public ExecutionBackend {

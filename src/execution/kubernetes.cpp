@@ -83,16 +83,20 @@ Json kubernetes_job(const KubernetesConfig &config, const Launch &launch) {
 std::string KubernetesBackend::jobs() const {
   return "/apis/batch/v1/namespaces/" + HttpClient::escape(config_.name_space) + "/jobs";
 }
-HttpResult KubernetesBackend::call(const std::string &method, const std::string &path,
-                                   const Json &body) const {
-  auto token = read_file(config_.token_file);
+HttpResult kubernetes_request(const KubernetesConfig &config, const std::string &method,
+                              const std::string &path, const Json &body) {
+  auto token = read_file(config.token_file);
   while (!token.empty() && std::isspace(static_cast<unsigned char>(token.back())))
     token.pop_back();
-  HttpClient http({.ca_file = config_.api_ca, .bearer = token, .timeout_seconds = 10});
-  auto result = http.request(method, config_.api + path, body.is_null() ? "" : body.dump());
+  HttpClient http({.ca_file = config.api_ca, .bearer = token, .timeout_seconds = 10});
+  auto result = http.request(method, config.api + path, body.is_null() ? "" : body.dump());
   if (result.status >= 500 || result.status == 429)
     throw Error(ErrorCode::unavailable, "Kubernetes API unavailable");
   return result;
+}
+HttpResult KubernetesBackend::call(const std::string &method, const std::string &path,
+                                   const Json &body) const {
+  return kubernetes_request(config_, method, path, body);
 }
 std::vector<std::string> KubernetesBackend::inventory() {
   std::vector<std::string> result;

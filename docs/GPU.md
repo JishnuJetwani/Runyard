@@ -53,3 +53,12 @@ taint. Set `RUNYARD_KUBERNETES_GPU_RUNTIME_CLASS` when the cluster uses a dedica
 NVIDIA runtime. Runyard leaves device visibility to the device plugin. The winning
 runner claim records its node through the Downward API; duplicate runners cannot
 replace that placement record. Kubernetes owns physical device allocation.
+
+Cluster capacity is observed every 15 seconds with read-only Node/Pod access across
+namespaces. Each scan is paginated and bounded to 10,000 resources per kind and a
+ten-second scan budget (an in-flight HTTP request can take another ten seconds).
+The collector retains only resource summaries. Bound nonterminal Pods count toward
+reservations, including terminating Pods and init/sidecar resource peaks. Unbound
+GPU demand is reported separately. Read failures or observations aged 45 seconds
+make availability unknown while retaining the last observation. This is capacity
+visibility; Kubernetes remains the placement authority.

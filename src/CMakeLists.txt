@@ -75,7 +75,7 @@ add_library(runyard_s3 storage/s3.cpp)
 target_link_libraries(runyard_s3 PUBLIC runyard_storage ${AWSSDK_LINK_LIBRARIES})
 target_link_libraries(runyard-server PRIVATE runyard_s3)
 
-add_library(runyard_kubernetes execution/kubernetes.cpp application/kubernetes.cpp)
+add_library(runyard_kubernetes execution/kubernetes.cpp execution/kubernetes_resources.cpp execution/kubernetes_capacity.cpp application/kubernetes.cpp)
 target_link_libraries(runyard_kubernetes PUBLIC runyard_application runyard_http_client runyard_json spdlog::spdlog)
 target_link_libraries(runyard-server PRIVATE runyard_kubernetes)
 
