@@ -1,4 +1,5 @@
 #include "runyard/observability/metrics.hpp"
+#include <limits>
 #include <prometheus/text_serializer.h>
 
 namespace runyard {
@@ -25,6 +26,17 @@ void Metrics::update(const std::map<std::string, double> &values) {
                .first;
     it->second->Set(value);
   }
+}
+void Metrics::gpus(const GpuCapacityTotals &g) {
+  const auto unknown = std::numeric_limits<double>::quiet_NaN();
+  update({{"gpu_capacity", static_cast<double>(g.capacity)},
+          {"gpu_allocatable", static_cast<double>(g.allocatable)},
+          {"gpu_reserved", static_cast<double>(g.reserved)},
+          {"gpu_available_estimate", g.fresh ? static_cast<double>(g.available) : unknown},
+          {"gpu_pending", static_cast<double>(g.pending)},
+          {"gpu_inventory_fresh", g.fresh ? 1 : 0},
+          {"gpu_inventory_age_seconds",
+           g.age_seconds ? static_cast<double>(*g.age_seconds) : unknown}});
 }
 void Metrics::rpc(const std::string &method, int status, double seconds) {
   std::lock_guard lock(mutex_);

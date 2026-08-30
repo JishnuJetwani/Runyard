@@ -104,7 +104,10 @@ void run_agent(const AgentConfig &config, ExecutionBackend &backend,
         spdlog::info("{}", Json{{"event", "attempt_launched"},
                                 {"attempt_id", attempt.id},
                                 {"run_id", attempt.run_id},
-                                {"worker_id", config.id}}
+                                {"worker_id", config.id},
+                                {"gpu_count", launch.assignment.spec.resources.gpu_count},
+                                {"gpu_uuids", std::vector<std::string>(a.gpu_uuids().begin(),
+                                                                       a.gpu_uuids().end())}}
                                .dump());
       }
     } catch (const Error &e) {

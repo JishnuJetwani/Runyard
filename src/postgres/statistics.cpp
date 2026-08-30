@@ -46,6 +46,11 @@ std::map<std::string, double> PostgresStore::statistics() {
       tx.exec("SELECT COALESCE(EXTRACT(epoch FROM clock_timestamp()-min(available_at)),0) FROM "
               "runs WHERE status='QUEUED'")[0][0]
           .as<double>();
+  auto gpu_queue =
+      tx.exec("SELECT count(*),COALESCE(EXTRACT(epoch FROM clock_timestamp()-min(available_at)),0) "
+              "FROM runs WHERE status='QUEUED' AND gpu_count>0");
+  values["gpu_queued_runs"] = gpu_queue[0][0].as<double>();
+  values["gpu_queue_oldest_seconds"] = gpu_queue[0][1].as<double>();
   for (const auto &[name, expression] : std::map<std::string, std::string>{
            {"queue_delay", "extract(epoch FROM a.created_at-r.created_at)"},
            {"dispatch_delay", "extract(epoch FROM a.started_at-a.created_at)"}}) {

@@ -94,6 +94,8 @@ int main(int argc, char **argv) {
             snapshot["process_max_rss_bytes"] = usage.ru_maxrss * 1024.0;
 #endif
             metrics.update(snapshot);
+            metrics.gpus(cluster_capacity ? runyard::summarize(cluster_capacity->snapshot())
+                                          : store.gpu_capacity());
 
           } catch (const std::exception &e) {
             spdlog::warn("recovery: {}", e.what());

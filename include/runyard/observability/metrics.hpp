@@ -1,4 +1,5 @@
 #pragma once
+#include "runyard/domain/capacity.hpp"
 #include <map>
 #include <mutex>
 #include <prometheus/counter.h>
@@ -12,6 +13,7 @@ class Metrics {
 public:
   Metrics();
   void update(const std::map<std::string, double> &values);
+  void gpus(const GpuCapacityTotals &);
   void rpc(const std::string &method, int status, double seconds);
   std::string render() const;
 

@@ -1,18 +1,46 @@
-rule_files: [alerts.yaml]
+rule_files:
+- alerts.yaml
 evaluation_interval: 5s
 tests:
-  - interval: 5s
-    input_series:
-      - {series: 'runyard_queue_oldest_seconds', values: '180+0x30'}
-      - {series: 'runyard_cleanup_pending', values: '1+0x30'}
-    alert_rule_test:
-      - eval_time: 150s
-        alertname: RunyardQueueStalled
-        exp_alerts:
-          - exp_labels: {severity: warning}
-            exp_annotations: {summary: 'Experiments have waited over two minutes for admission'}
-      - eval_time: 150s
-        alertname: RunyardCleanupDelayed
-        exp_alerts:
-          - exp_labels: {severity: warning}
-            exp_annotations: {summary: 'Terminal attempts still have unconfirmed runtime cleanup'}
+- interval: 5s
+  input_series:
+  - series: runyard_queue_oldest_seconds
+    values: 180+0x30
+  - series: runyard_cleanup_pending
+    values: 1+0x30
+  alert_rule_test:
+  - eval_time: 150s
+    alertname: RunyardQueueStalled
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+      exp_annotations:
+        summary: Experiments have waited over two minutes for admission
+  - eval_time: 150s
+    alertname: RunyardCleanupDelayed
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+      exp_annotations:
+        summary: Terminal attempts still have unconfirmed runtime cleanup
+- interval: 5s
+  input_series:
+  - series: runyard_gpu_inventory_fresh
+    values: 0+0x30
+  - series: runyard_gpu_queue_oldest_seconds
+    values: 180+0x30
+  alert_rule_test:
+  - eval_time: 90s
+    alertname: RunyardGpuInventoryStale
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+      exp_annotations:
+        summary: GPU inventory is stale or unavailable
+  - eval_time: 90s
+    alertname: RunyardGpuQueueWaiting
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+      exp_annotations:
+        summary: GPU experiments have waited over two minutes for admission
