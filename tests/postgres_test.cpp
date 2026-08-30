@@ -648,3 +648,48 @@ TEST_F(Database, KubernetesGpuClaimRecordsOnlyTheWinningNode) {
   EXPECT_EQ(store->attempts(run.id)[0].node_name, "gpu-node-a");
   EXPECT_TRUE(store->attempts(run.id)[0].gpu_allocations.empty());
 }
+
+#include "runyard/application/capacity.hpp"
+TEST_F(Database, CapacityTotalsDoNotDependOnDetailPagination) {
+  enable_gpu(*store, "s", 2);
+  store->register_worker("cpu", "s", {1000, 512});
+  CapacityService capacity(*store);
+  auto page = capacity.get(1, "");
+  EXPECT_EQ(page.gpu.capacity, 2);
+  EXPECT_EQ(page.gpu.available, 2);
+  ASSERT_EQ(page.workers.size(), 1);
+  auto second = capacity.get(1, page.next_cursor);
+  EXPECT_EQ(second.gpu.capacity, 2);
+  ASSERT_EQ(second.workers.size(), 1);
+  EXPECT_EQ(second.workers[0].capacity.gpu_count, 2);
+  store->report_gpu_inventory("gpu", "s", {2, false, {}});
+  EXPECT_TRUE(encode(capacity.get(1, ""))["gpu"]["available_estimate"].is_null());
+}
+TEST_F(Database, CapacityReportsAvailableDevicesEvenWhenAnotherDeviceDisappears) {
+  enable_gpu(*store, "s", 2);
+  auto s = spec();
+  s.resources.gpu_count = 1;
+  store->submit(s, "gpu", "gpu");
+  auto a = store->assign("gpu", "s");
+  ASSERT_TRUE(a);
+  store->report_gpu_inventory("gpu", "s", {2, true, {{"GPU-1", "Device", 100, true, ""}}});
+  auto capacity = store->gpu_capacity();
+  EXPECT_EQ(capacity.capacity, 1);
+  EXPECT_EQ(capacity.reserved, 1);
+  EXPECT_EQ(capacity.available, 1);
+  EXPECT_EQ(store->workers()[0].available_gpus, 1);
+}
+TEST_F(Database, ClusterCapacityServiceSummarizesAllNodesBeforePagination) {
+  ClusterGpuSnapshot snapshot;
+  snapshot.fresh = true;
+  snapshot.nodes = {{"a", 4, 4, 1, true, true, true}, {"b", 8, 8, 2, true, false, false}};
+  CapacityService capacity(*store, [&] { return snapshot; });
+  auto page = capacity.get(1, "");
+  EXPECT_EQ(page.backend, "kubernetes");
+  EXPECT_EQ(page.gpu.capacity, 12);
+  EXPECT_EQ(page.gpu.available, 3);
+  ASSERT_EQ(page.nodes.size(), 1);
+  EXPECT_EQ(capacity.get(1, page.next_cursor).nodes[0].name, "b");
+  snapshot.fresh = false;
+  EXPECT_TRUE(encode(capacity.get(1, ""))["gpu"]["available_estimate"].is_null());
+}

@@ -38,27 +38,4 @@ Json Client::get(const std::string &path) const { return call("GET", path, "", "
 Json Client::post(const std::string &path, const Json &body, const std::string &key) const {
   return call("POST", path, body.dump(), key);
 }
-void print_result(const Json &value, bool json) {
-  if (json) {
-    std::cout << value.dump(2) << '\n';
-    return;
-  }
-  if (value.contains("items")) {
-    for (const auto &item : value["items"])
-      print_result(item, false);
-    if (value["items"].empty())
-      std::cout << "No items.\n";
-    if (value.contains("next_cursor") && value["next_cursor"].is_string() &&
-        !value["next_cursor"].get<std::string>().empty())
-      std::cout << "Next cursor: " << value["next_cursor"].get<std::string>() << '\n';
-    return;
-  }
-  if (value.contains("id") && value.contains("status")) {
-    std::cout << value["id"].get<std::string>() << "  " << value["status"].get<std::string>();
-    if (value.contains("spec"))
-      std::cout << "  " << value["spec"]["name"].get<std::string>();
-    std::cout << '\n';
-  } else
-    std::cout << value.dump(2) << '\n';
-}
 } // namespace runyard

@@ -38,7 +38,9 @@ std::vector<Worker> PostgresStore::workers(int limit, const std::string &after) 
                       r["gpu_ready"].as<bool>() && r["gpu_capable"].as<bool>(),
                       r["gpu_fresh"].as<bool>(),
                       pg::text(r["gpu_observed_at"]),
-                      {}});
+                      {},
+                      r["gpu_capable"].as<bool>(),
+                      0});
     pg::load_worker_gpus(tx, result.back());
   }
   return result;

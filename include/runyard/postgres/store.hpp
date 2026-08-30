@@ -39,6 +39,7 @@ public:
   Artifact get_artifact(const std::string &) override;
 
   void recover() override;
+  GpuCapacityTotals gpu_capacity() override;
   std::map<std::string, double> statistics();
   std::optional<Assignment> admit_kubernetes(int max_active) override;
   std::vector<Assignment> kubernetes_attempts() override;

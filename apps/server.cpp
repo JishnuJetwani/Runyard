@@ -125,8 +125,13 @@ int main(int argc, char **argv) {
     else
       throw std::runtime_error("storage must be filesystem or s3");
     runyard::ArtifactService artifacts(store, *blobs, config.artifacts);
-    runyard::Api api(runs, artifacts, executor, config.owner_token,
-                     [&] { return leadership.ready(); });
+    std::function<runyard::ClusterGpuSnapshot()> cluster_snapshot;
+    if (cluster_capacity)
+      cluster_snapshot = [&] { return cluster_capacity->snapshot(); };
+    runyard::CapacityService capacity(store, std::move(cluster_snapshot));
+    runyard::Api api(
+        runs, artifacts, executor, config.owner_token, [&] { return leadership.ready(); },
+        capacity);
     api.mount();
     drogon::app().registerHandler(
         "/metrics",

@@ -144,6 +144,8 @@ struct Worker {
   bool gpu_fresh{};
   std::string gpu_observed_at;
   std::vector<GpuDevice> gpu_devices;
+  bool gpu_capable{};
+  int available_gpus{};
 };
 
 struct Telemetry {

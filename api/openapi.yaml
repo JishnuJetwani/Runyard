@@ -2,16 +2,15 @@ openapi: 3.0.3
 info:
   title: Runyard API
   version: 0.1.0
-  description: Private experiment execution for one trusted owner. Application errors
-    contain stable code, message, and request_id. Health/metrics endpoints are private-network
-    operational endpoints without owner authentication. Timestamps are database timestamp
-    strings with UTC offsets. List run/worker cursors are IDs; repeat until items
-    is empty. They do not provide a concurrent submission snapshot.
+  description: Run experiments for one trusted owner. Errors contain code, message, and request_id.
+    Health and metrics routes do not require authentication; keep them on a private network.
+    Timestamps include UTC offsets. Run and worker lists use ID cursors; page until items is empty.
+    Lists may change while you read them.
 servers:
 - url: https://localhost:8080
   description: Private TLS deployment through port forwarding
 - url: http://localhost:8080
-  description: Explicit local development profile only
+  description: Local development only
 security:
 - ownerToken: []
 paths:
@@ -32,8 +31,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       parameters:
-      - &idempotencyKey
-        in: header
+      - in: header
         name: Idempotency-Key
         required: true
         schema:
@@ -46,8 +44,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RunSpec'
-      description: Immutable accepted submission. Repeating an idempotency key with
-        a different normalized specification returns 409.
+      description: Save a run with a specification that cannot change. Reusing a request key with a
+        different normalized specification returns 409.
     get:
       operationId: listRuns
       responses:
@@ -71,8 +69,7 @@ paths:
           minimum: 1
           maximum: 200
           default: 50
-      - &idCursor
-        in: query
+      - in: query
         name: after
         schema:
           type: string
@@ -80,7 +77,7 @@ paths:
         name: status
         schema:
           type: string
-          enum: &runStatuses
+          enum:
           - QUEUED
           - STARTING
           - RUNNING
@@ -91,8 +88,7 @@ paths:
           - CANCELLED
   /v1/runs/{id}:
     parameters:
-    - &resourceId
-      $ref: '#/components/parameters/RunId'
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: getRun
       responses:
@@ -110,7 +106,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /v1/runs/{id}/attempts:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: listAttempts
       responses:
@@ -129,7 +125,7 @@ paths:
       description: All attempts in generation order; bounded by max_attempts (10 maximum).
   /v1/runs/{id}/events:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: listEvents
       responses:
@@ -146,8 +142,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       parameters:
-      - &sequenceCursor
-        in: query
+      - in: query
         name: after
         schema:
           type: integer
@@ -161,11 +156,11 @@ paths:
           minimum: 1
           maximum: 1000
           default: 100
-      description: Resume after the last returned event sequence. Sequence allocation
-        is transactional per run.
+      description: Resume after the last returned event sequence. Sequence allocation is transactional
+        per run.
   /v1/runs/{id}/cancel:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     post:
       operationId: cancelRun
       responses:
@@ -181,12 +176,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      description: First committed terminal decision wins. Inspect attempt cleanup_status
-        for physical termination; CANCELLED does not imply an unreachable runtime
-        has already stopped.
+      description: The first committed completion or cancellation wins. Check attempt cleanup_status
+        to confirm the process has stopped; CANCELLED can still have pending cleanup.
   /v1/runs/{id}/rerun:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     post:
       operationId: rerunRun
       responses:
@@ -203,9 +197,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       parameters:
-      - *idempotencyKey
-      description: Creates a linked immutable run from a terminal run. The original
-        remains unchanged.
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      description: Creates a linked immutable run from a terminal run. The original remains unchanged.
   /v1/sweeps:
     post:
       operationId: submitSweep
@@ -223,18 +222,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       parameters:
-      - *idempotencyKey
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SweepSpec'
-      description: Atomically expands a parameter grid; at most 1000 runs and 16 MiB
-        estimated expanded specifications.
+      description: Atomically expands a parameter grid; at most 1000 runs and 16 MiB estimated expanded
+        specifications.
   /v1/sweeps/{id}:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: getSweep
       responses:
@@ -252,7 +257,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /v1/runs/{id}/logs:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: listLogs
       responses:
@@ -269,12 +274,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       parameters:
-      - &attemptFilter
-        in: query
+      - in: query
         name: attempt
         schema:
           type: string
-      - *sequenceCursor
+      - in: query
+        name: after
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+          default: 0
       - in: query
         name: limit
         schema:
@@ -282,13 +292,12 @@ paths:
           minimum: 1
           maximum: 1000
           default: 100
-      description: Defaults to the current attempt, including the accepted successful
-        result. Explicit attempt selects historical output. Cursors are attempt-scoped;
-        reset when attempt_id changes. Logs are followed by approximately one-second
-        polling.
+      description: Defaults to the current attempt, including the accepted successful result. Explicit
+        attempt selects historical output. Cursors are attempt-scoped; reset when attempt_id changes.
+        Logs are followed by approximately one-second polling.
   /v1/runs/{id}/metrics:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: listMetrics
       responses:
@@ -305,8 +314,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       parameters:
-      - *attemptFilter
-      - *sequenceCursor
+      - in: query
+        name: attempt
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+          default: 0
       - in: query
         name: limit
         schema:
@@ -318,13 +336,12 @@ paths:
         name: name
         schema:
           type: string
-      description: Defaults to the current attempt, including the accepted successful
-        result. Explicit attempt selects historical output. Cursors are attempt-scoped;
-        reset when attempt_id changes. Logs are followed by approximately one-second
-        polling.
+      description: Defaults to the current attempt, including the accepted successful result. Explicit
+        attempt selects historical output. Cursors are attempt-scoped; reset when attempt_id changes.
+        Logs are followed by approximately one-second polling.
   /v1/runs/{id}/artifacts:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: listArtifacts
       responses:
@@ -341,12 +358,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       parameters:
-      - *attemptFilter
-      description: At most 1000 artifacts per attempt. Defaults to the current/accepted
-        attempt; historical attempt output remains available.
+      - in: query
+        name: attempt
+        schema:
+          type: string
+      description: At most 1000 artifacts per attempt. Defaults to the current/accepted attempt; historical
+        attempt output remains available.
   /v1/artifacts/{id}:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: getArtifact
       responses:
@@ -364,7 +384,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /v1/artifacts/{id}/download:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     get:
       operationId: downloadArtifact
       responses:
@@ -405,10 +425,13 @@ paths:
           minimum: 1
           maximum: 200
           default: 100
-      - *idCursor
+      - in: query
+        name: after
+        schema:
+          type: string
   /v1/workers/{id}/drain:
     parameters:
-    - *resourceId
+    - $ref: '#/components/parameters/RunId'
     post:
       operationId: drainWorker
       responses:
@@ -442,8 +465,7 @@ paths:
                 drained:
                   type: boolean
                   default: true
-      description: Stop new Docker assignments while preserving live attempts. Set
-        drained=false to resume.
+      description: Stop new Docker assignments while preserving live attempts. Set drained=false to resume.
   /health/live:
     get:
       operationId: getStatus
@@ -510,6 +532,34 @@ paths:
             text/plain:
               schema:
                 type: string
+  /v1/capacity:
+    get:
+      summary: Inspect GPU capacity and reservations
+      description: Returns deployment totals and a page of worker or node details. Stale availability
+        is null. Kubernetes availability estimates free resources on eligible nodes; it does not guarantee placement.
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 100
+      - name: after
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: GPU capacity snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapacityPage'
+        '400':
+          description: Invalid pagination
+        '401':
+          description: Owner credentials required
 components:
   securitySchemes:
     ownerToken:
@@ -542,8 +592,7 @@ components:
           maxLength: 200
         image:
           type: string
-          description: Immutable image reference ending in '@sha256:<64 lowercase
-            hex digits>'
+          description: Immutable image reference ending in '@sha256:<64 lowercase hex digits>'
           maxLength: 1024
         command:
           type: array
@@ -656,7 +705,15 @@ components:
           type: string
         status:
           type: string
-          enum: *runStatuses
+          enum:
+          - QUEUED
+          - STARTING
+          - RUNNING
+          - FINALIZING
+          - RETRY_WAIT
+          - SUCCEEDED
+          - FAILED
+          - CANCELLED
         generation:
           type: integer
           format: int64
@@ -704,6 +761,16 @@ components:
         exit_code:
           type: integer
           nullable: true
+        gpu_count:
+          type: integer
+          format: int64
+          minimum: 0
+        node_name:
+          type: string
+        gpu_allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/GpuAllocation'
       required:
       - id
       - run_id
@@ -800,6 +867,10 @@ components:
           type: integer
           minimum: 32
           maximum: 1048576
+        gpu_count:
+          type: integer
+          format: int64
+          minimum: 0
       required:
       - cpu_millis
       - memory_mib
@@ -819,6 +890,10 @@ components:
             memory_mib:
               type: integer
               format: int64
+            gpu_count:
+              type: integer
+              format: int64
+              minimum: 0
           required:
           - cpu_millis
           - memory_mib
@@ -828,6 +903,33 @@ components:
           type: boolean
         heartbeat_at:
           type: string
+        gpu_inventory:
+          type: object
+          properties:
+            capable:
+              type: boolean
+            ready:
+              type: boolean
+            fresh:
+              type: boolean
+            observed_at:
+              type: string
+            devices:
+              type: array
+              items:
+                $ref: '#/components/schemas/GpuDevice'
+            available_estimate:
+              type: integer
+              format: int64
+              minimum: 0
+              nullable: true
+          required:
+          - capable
+          - ready
+          - fresh
+          - observed_at
+          - devices
+          - available_estimate
       required:
       - id
       - capacity
@@ -943,4 +1045,143 @@ components:
       required:
       - attempt_id
       - items
+      - next_cursor
+    GpuDevice:
+      type: object
+      properties:
+        uuid:
+          type: string
+        name:
+          type: string
+        memory_mib:
+          type: integer
+          format: int64
+          minimum: 0
+        eligible:
+          type: boolean
+        reason:
+          type: string
+      required:
+      - uuid
+      - name
+      - memory_mib
+      - eligible
+      - reason
+    GpuAllocation:
+      type: object
+      properties:
+        device:
+          $ref: '#/components/schemas/GpuDevice'
+        allocated_at:
+          type: string
+        released_at:
+          type: string
+      required:
+      - device
+      - allocated_at
+      - released_at
+    GpuCapacity:
+      type: object
+      properties:
+        capacity:
+          type: integer
+          format: int64
+          minimum: 0
+        allocatable:
+          type: integer
+          format: int64
+          minimum: 0
+        reserved:
+          type: integer
+          format: int64
+          minimum: 0
+        available_estimate:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        pending:
+          type: integer
+          format: int64
+          minimum: 0
+        fresh:
+          type: boolean
+        observed_at:
+          type: string
+        age_seconds:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+      required:
+      - capacity
+      - allocatable
+      - reserved
+      - available_estimate
+      - pending
+      - fresh
+      - observed_at
+      - age_seconds
+    GpuNodeCapacity:
+      type: object
+      properties:
+        name:
+          type: string
+        capacity:
+          type: integer
+          format: int64
+          minimum: 0
+        allocatable:
+          type: integer
+          format: int64
+          minimum: 0
+        reserved:
+          type: integer
+          format: int64
+          minimum: 0
+        ready:
+          type: boolean
+        schedulable:
+          type: boolean
+        eligible:
+          type: boolean
+        available_estimate:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+      required:
+      - name
+      - capacity
+      - allocatable
+      - reserved
+      - ready
+      - schedulable
+      - eligible
+      - available_estimate
+    CapacityPage:
+      type: object
+      properties:
+        backend:
+          type: string
+          enum:
+          - docker
+          - kubernetes
+        gpu:
+          $ref: '#/components/schemas/GpuCapacity'
+        workers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Worker'
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GpuNodeCapacity'
+        next_cursor:
+          type: string
+      required:
+      - backend
+      - gpu
+      - workers
+      - nodes
       - next_cursor
