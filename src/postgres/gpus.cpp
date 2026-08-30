@@ -96,6 +96,13 @@ void load_worker_gpus(pqxx::transaction_base &tx, Worker &worker) {
     if (worker.gpu_devices.back().eligible)
       ++worker.capacity.gpu_count;
   }
+  if (worker.gpu_ready && worker.gpu_fresh && worker.available && !worker.drained)
+    worker.available_gpus =
+        tx.exec("SELECT count(*) FROM gpu_devices d WHERE worker_id=$1 AND present AND eligible "
+                "AND NOT EXISTS(SELECT 1 FROM attempt_gpus ag WHERE ag.uuid=d.uuid AND "
+                "ag.released_at IS NULL)",
+                pqxx::params{worker.id})[0][0]
+            .as<int>();
   worker.reserved.gpu_count =
       tx.exec("SELECT count(*) FROM attempt_gpus ag JOIN attempts a ON a.id=ag.attempt_id "
               "WHERE a.worker_id=$1 AND ag.released_at IS NULL",

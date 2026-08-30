@@ -1,10 +1,14 @@
 #pragma once
+#include "runyard/domain/capacity.hpp"
 #include "runyard/domain/model.hpp"
 #include <nlohmann/json.hpp>
 
 namespace runyard {
 using Json = nlohmann::json;
 Json encode(const RunSpec &value);
+Json encode(const CapacityPage &);
+Json encode(const GpuDevice &);
+Json encode(const GpuAllocation &);
 Json encode(const SweepSpec &value);
 Json encode(const Sweep &value);
 SweepSpec decode_sweep(const Json &value);

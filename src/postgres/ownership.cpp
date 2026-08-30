@@ -30,8 +30,11 @@ LockedAttempt owned(pqxx::work &tx, const std::string &id, int generation,
   return a;
 }
 } // namespace pg
-Assignment PostgresStore::start(const std::string &id, int generation,
-                                const std::string &instance) {
+Assignment PostgresStore::start(const std::string &id, int generation, const std::string &instance,
+                                const std::string &node_name) {
+  if (node_name.size() > 253 ||
+      node_name.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789.-") != std::string::npos)
+    throw Error(ErrorCode::invalid, "invalid node name");
   if (instance.empty() || instance.size() > 200)
     throw Error(ErrorCode::invalid, "invalid runner instance identity");
   auto c = pool_.acquire();
@@ -42,20 +45,23 @@ Assignment PostgresStore::start(const std::string &id, int generation,
   if (a.run.status != RunStatus::starting && a.run.status != RunStatus::running &&
       a.run.status != RunStatus::finalizing)
     throw Error(ErrorCode::stale, "attempt is no longer executing");
+  if (!node_name.empty() && a.attempt.worker_id != "@kubernetes")
+    throw Error(ErrorCode::invalid, "node placement only applies to Kubernetes");
   if (!a.attempt.instance_id.empty()) {
-    if (a.attempt.instance_id != instance || !a.lease_valid || !a.deadline_valid)
+    if (a.attempt.instance_id != instance || a.attempt.node_name != node_name || !a.lease_valid ||
+        !a.deadline_valid)
       throw Error(ErrorCode::stale, "attempt already claimed or expired");
     tx.commit();
     return {a.attempt, a.run.spec};
   }
   if (a.run.status != RunStatus::starting || !a.launch_valid)
     throw Error(ErrorCode::stale, "launch deadline expired");
-  auto row =
-      tx.exec("UPDATE attempts SET "
-              "instance_id=$2,status='RUNNING',started_at=clock_timestamp(),lease_until=clock_"
-              "timestamp()+$3*interval '1 second',execution_deadline=clock_timestamp()+$4*interval "
-              "'1 second' WHERE id=$1 RETURNING *",
-              pqxx::params{id, instance, timing_.lease_seconds, a.run.spec.timeout_seconds});
+  auto row = tx.exec(
+      "UPDATE attempts SET "
+      "node_name=$5,instance_id=$2,status='RUNNING',started_at=clock_timestamp(),lease_until=clock_"
+      "timestamp()+$3*interval '1 second',execution_deadline=clock_timestamp()+$4*interval "
+      "'1 second' WHERE id=$1 RETURNING *",
+      pqxx::params{id, instance, timing_.lease_seconds, a.run.spec.timeout_seconds, node_name});
   tx.exec("UPDATE runs SET status='RUNNING' WHERE id=$1", pqxx::params{a.run.id});
   pg::event(tx, a.run.id, "started", "runner claimed execution");
   auto result = Assignment{pg::attempt(row[0]), a.run.spec};

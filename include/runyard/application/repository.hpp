@@ -1,4 +1,5 @@
 #pragma once
+#include "runyard/domain/capacity.hpp"
 #include "runyard/domain/model.hpp"
 
 namespace runyard {
@@ -6,6 +7,7 @@ class Repository {
 public:
   virtual ~Repository() = default;
   virtual void recover() = 0;
+  virtual GpuCapacityTotals gpu_capacity() = 0;
   virtual std::optional<Assignment> admit_kubernetes(int max_active) = 0;
   virtual std::vector<Assignment> kubernetes_attempts() = 0;
   virtual void kubernetes_stopped(const std::string &attempt) = 0;
@@ -47,8 +49,8 @@ public:
                               const std::string &attempt, const std::string &runtime,
                               bool stopped) = 0;
   virtual std::vector<Attempt> cleanup(const std::string &worker, const std::string &session) = 0;
-  virtual Assignment start(const std::string &attempt, int generation,
-                           const std::string &instance) = 0;
+  virtual Assignment start(const std::string &attempt, int generation, const std::string &instance,
+                           const std::string &node_name = "") = 0;
   virtual void heartbeat(const std::string &attempt, int generation,
                          const std::string &instance) = 0;
   virtual void begin_finalization(const std::string &attempt, int generation,

@@ -114,6 +114,14 @@ void Api::dispatch_response(const drogon::HttpRequestPtr &request, HttpCallback 
 }
 void Api::mount() {
   auto &app = drogon::app();
+  app.registerHandler("/v1/capacity",
+                      [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb) {
+                        dispatch(r, std::move(cb), [this, r] {
+                          return encode(
+                              capacity_.get(page_size(r, 100, 200), r->getParameter("after")));
+                        });
+                      },
+                      {drogon::Get});
   app.registerHandler("/v1/sweeps",
                       [this](const drogon::HttpRequestPtr &r, HttpCallback &&cb) {
                         dispatch(r, std::move(cb), [this, r] {

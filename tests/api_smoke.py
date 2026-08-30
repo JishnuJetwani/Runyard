@@ -60,10 +60,19 @@ with open(".local/api-smoke.log", "w") as log:
     try:
         assert request("/v1/runs", authorized=False)[0] == 401
         spec = {"name": "api-smoke", "image": "fixture@sha256:" + "a" * 64, "command": ["true"]}
+        assert request("/v1/capacity", authorized=False)[0] == 401
+        assert request("/v1/capacity?limit=201")[0] == 400
+        capacity_status, capacity = request("/v1/capacity?limit=1")
+        assert capacity_status == 200 and capacity["backend"] == "docker", capacity
         key = str(uuid.uuid4())
         status, run = request("/v1/runs", spec, key)
         assert status == 200, run
         assert request("/v1/runs", spec, key)[1]["id"] == run["id"]
+        assert request("/v1/runs", dict(spec, resources={"gpu_count": 0}), key)[1]["id"] == run["id"]
+        gpu_status, gpu_run = request("/v1/runs", dict(spec, resources={"gpu_count": 2}), str(uuid.uuid4()))
+        assert gpu_status == 200 and gpu_run["spec"]["resources"]["gpu_count"] == 2
+        for count in (-1, 65, 1.5):
+            assert request("/v1/runs", dict(spec, resources={"gpu_count": count}), str(uuid.uuid4()))[0] == 400
         assert request("/v1/runs", dict(spec, name="changed"), key)[0] == 409
         assert request("/v1/runs", dict(spec, image="mutable:latest"), str(uuid.uuid4()))[0] == 400
         assert request("/v1/runs?limit=500")[0] == 400
@@ -91,6 +100,9 @@ with open(".local/api-smoke.log", "w") as log:
             assert len(sweep["run_ids"]) == 3
             assert command("sweeps", "get", sweep["id"])["id"] == sweep["id"]
             assert "items" in command("workers", "list")
+            assert command("capacity")["backend"] == "docker"
+            readable = subprocess.check_output([str(cli), "capacity"], env=client_env).decode()
+            assert "GPU capacity:" in readable
             assert command("artifacts", "list", run["id"])["items"] == []
             print("CLI smoke passed: submission, inspection, cancellation, rerun, sweep, workers, artifacts")
         with urllib.request.urlopen(base + "/metrics", timeout=5) as response:

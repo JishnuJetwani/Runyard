@@ -19,7 +19,8 @@ int main() {
                                  runyard::env("RUNYARD_CAPABILITY"),
                                  runyard::env("RUNYARD_TLS_CA"),
                                  runyard::env("RUNYARD_WORK_ROOT", "/tmp/runyard"),
-                                 runyard::env("RUNYARD_PROFILE") == "development"};
+                                 runyard::env("RUNYARD_PROFILE") == "development",
+                                 runyard::env("RUNYARD_NODE_NAME")};
     if (config.attempt_id.empty() || config.capability.empty())
       throw std::runtime_error("attempt identity and capability required");
     return runyard::run_attempt(config, [] { return interrupted != 0; });

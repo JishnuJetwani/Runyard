@@ -15,7 +15,7 @@ std::optional<Assignment> PostgresStore::admit_kubernetes(int max_active) {
               "cleanup_status='PENDING'")[0][0]
           .as<int>() >= max_active)
     return std::nullopt;
-  auto rows = tx.exec("SELECT * FROM runs WHERE status='QUEUED' AND gpu_count=0 AND "
+  auto rows = tx.exec("SELECT * FROM runs WHERE status='QUEUED' AND "
                       "available_at<=clock_timestamp() ORDER "
                       "BY priority DESC,created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED");
   if (rows.empty())
@@ -23,10 +23,10 @@ std::optional<Assignment> PostgresStore::admit_kubernetes(int max_active) {
   auto run = pg::run(rows[0]);
   auto id = random_id();
   int generation = run.generation + 1;
-  auto attempt =
-      tx.exec("INSERT INTO attempts(id,run_id,generation,worker_id,launch_deadline) "
-              "VALUES($1,$2,$3,'@kubernetes',clock_timestamp()+$4*interval '1 second') RETURNING *",
-              pqxx::params{id, run.id, generation, timing_.launch_seconds});
+  auto attempt = tx.exec(
+      "INSERT INTO attempts(id,run_id,generation,worker_id,launch_deadline,gpu_count) "
+      "VALUES($1,$2,$3,'@kubernetes',clock_timestamp()+$4*interval '1 second',$5) RETURNING *",
+      pqxx::params{id, run.id, generation, timing_.launch_seconds, run.spec.resources.gpu_count});
   tx.exec("UPDATE runs SET status='STARTING',active_attempt=$2,generation=$3 WHERE id=$1",
           pqxx::params{run.id, id, generation});
   pg::event(tx, run.id, "assigned",

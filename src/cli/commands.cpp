@@ -64,6 +64,9 @@ int command_line(int argc, char **argv) {
   auto *download = sub(artifacts, "download", "Download one artifact and verify its checksum");
   download->add_option("id", id)->required();
   download->add_option("--output,-o", output)->required();
+  auto *capacity = sub(&app, "capacity", "Inspect GPU capacity across workers or nodes");
+  capacity->add_option("--limit", limit)->check(CLI::Range(1, 200));
+  capacity->add_option("--after", after);
   auto *workers = sub(&app, "workers", "Inspect worker capacity");
   workers->require_subcommand(1);
   auto *worker_list = sub(workers, "list", "List workers");
@@ -119,7 +122,10 @@ int command_line(int argc, char **argv) {
     else if (*download) {
       download_artifact(client, id, output);
       return 0;
-    } else if (*worker_list)
+    } else if (*capacity)
+      result = client.get("/v1/capacity?limit=" + std::to_string(limit) +
+                          "&after=" + HttpClient::escape(after));
+    else if (*worker_list)
       result = client.get("/v1/workers?limit=" + std::to_string(limit) +
                           "&after=" + HttpClient::escape(after));
     else if (*drain)

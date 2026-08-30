@@ -2,7 +2,7 @@
   "uid": "runyard-overview",
   "title": "Runyard execution",
   "schemaVersion": 41,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
   "time": {
     "from": "now-30m",
@@ -285,6 +285,133 @@
           "expr": "rate(runyard_process_cpu_seconds[1m])",
           "refId": "A",
           "legendFormat": "CPU seconds / second"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "GPU capacity and reservations",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_gpu_capacity",
+          "refId": "A",
+          "legendFormat": "gpu_capacity"
+        },
+        {
+          "expr": "runyard_gpu_reserved",
+          "refId": "B",
+          "legendFormat": "gpu_reserved"
+        },
+        {
+          "expr": "runyard_gpu_available_estimate",
+          "refId": "C",
+          "legendFormat": "gpu_available_estimate"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "GPU demand",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_gpu_queued_runs",
+          "refId": "A",
+          "legendFormat": "gpu_queued_runs"
+        },
+        {
+          "expr": "runyard_gpu_pending",
+          "refId": "B",
+          "legendFormat": "gpu_pending"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "GPU inventory freshness",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_gpu_inventory_fresh",
+          "refId": "A",
+          "legendFormat": "gpu_inventory_fresh"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "GPU inventory age",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "runyard-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "runyard_gpu_inventory_age_seconds",
+          "refId": "A",
+          "legendFormat": "gpu_inventory_age_seconds"
         }
       ]
     }

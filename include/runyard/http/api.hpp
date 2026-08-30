@@ -1,5 +1,6 @@
 #pragma once
 #include "runyard/application/artifacts.hpp"
+#include "runyard/application/capacity.hpp"
 #include "runyard/application/runs.hpp"
 #include "runyard/serialization/json.hpp"
 #include "runyard/support/executor.hpp"
@@ -10,9 +11,9 @@ using HttpCallback = std::function<void(const drogon::HttpResponsePtr &)>;
 class Api {
 public:
   Api(RunService &runs, ArtifactService &artifacts, Executor &executor, std::string token,
-      std::function<bool()> ready)
+      std::function<bool()> ready, CapacityService &capacity)
       : runs_(runs), artifacts_(artifacts), executor_(executor), token_(std::move(token)),
-        ready_(std::move(ready)) {}
+        ready_(std::move(ready)), capacity_(capacity) {}
   void mount();
 
 private:
@@ -25,6 +26,7 @@ private:
   Executor &executor_;
   std::string token_;
   std::function<bool()> ready_;
+  CapacityService &capacity_;
 };
 drogon::HttpResponsePtr json_response(const Json &body, int status = 200,
                                       const std::string &request_id = "");

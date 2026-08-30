@@ -21,7 +21,8 @@ public:
   void runtime_report(const std::string &, const std::string &, const std::string &,
                       const std::string &, bool) override;
   std::vector<Attempt> cleanup(const std::string &, const std::string &) override;
-  Assignment start(const std::string &, int, const std::string &) override;
+  Assignment start(const std::string &, int, const std::string &,
+                   const std::string &node_name = "") override;
   void heartbeat(const std::string &, int, const std::string &) override;
   void begin_finalization(const std::string &, int, const std::string &) override;
   void finish(const std::string &, int, const std::string &, int, const std::string &,
@@ -38,6 +39,7 @@ public:
   Artifact get_artifact(const std::string &) override;
 
   void recover() override;
+  GpuCapacityTotals gpu_capacity() override;
   std::map<std::string, double> statistics();
   std::optional<Assignment> admit_kubernetes(int max_active) override;
   std::vector<Assignment> kubernetes_attempts() override;

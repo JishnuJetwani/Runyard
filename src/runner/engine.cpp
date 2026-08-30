@@ -56,6 +56,7 @@ int run_attempt(const RunnerConfig &config, const std::function<bool()> &stop_re
   owner.set_attempt_id(config.attempt_id);
   owner.set_generation(config.generation);
   owner.set_instance_id(random_id());
+  owner.set_node_name(config.node_name);
   AttemptClient client(make_channel(config.endpoint, config.ca_file, config.development), owner,
                        config.capability);
   auto sent = Steady::now();

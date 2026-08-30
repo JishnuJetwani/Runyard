@@ -29,8 +29,14 @@ Json kubernetes_job(const KubernetesConfig &config, const Launch &launch) {
   env("RUNYARD_COORDINATOR", config.coordinator);
   if (config.development)
     env("RUNYARD_PROFILE", "development");
+  environment.push_back({{"name", "RUNYARD_NODE_NAME"},
+                         {"valueFrom", {{"fieldRef", {{"fieldPath", "spec.nodeName"}}}}}});
+  if (s.resources.gpu_count == 0)
+    env("NVIDIA_VISIBLE_DEVICES", "void");
   Json resources = {{"cpu", std::to_string(s.resources.cpu_millis) + "m"},
                     {"memory", std::to_string(s.resources.memory_mib) + "Mi"}};
+  if (s.resources.gpu_count > 0)
+    resources["nvidia.com/gpu"] = std::to_string(s.resources.gpu_count);
   Json container = {
       {"name", "experiment"},
       {"image", s.image},
@@ -49,6 +55,13 @@ Json kubernetes_job(const KubernetesConfig &config, const Launch &launch) {
                 {"runAsUser", 10001},
                 {"runAsGroup", 10001},
                 {"seccompProfile", {{"type", "RuntimeDefault"}}}}}};
+  if (s.resources.gpu_count > 0) {
+    pod["nodeSelector"] = {{"runyard.io/gpu-mode", "exclusive"}};
+    pod["tolerations"] = Json::array(
+        {{{"key", "nvidia.com/gpu"}, {"operator", "Exists"}, {"effect", "NoSchedule"}}});
+    if (!config.gpu_runtime_class.empty())
+      pod["runtimeClassName"] = config.gpu_runtime_class;
+  }
   if (!config.runner_ca_configmap.empty()) {
     container["env"].push_back({{"name", "RUNYARD_TLS_CA"}, {"value", "/etc/runyard/ca/ca.crt"}});
     container["volumeMounts"] =
@@ -70,16 +83,20 @@ Json kubernetes_job(const KubernetesConfig &config, const Launch &launch) {
 std::string KubernetesBackend::jobs() const {
   return "/apis/batch/v1/namespaces/" + HttpClient::escape(config_.name_space) + "/jobs";
 }
-HttpResult KubernetesBackend::call(const std::string &method, const std::string &path,
-                                   const Json &body) const {
-  auto token = read_file(config_.token_file);
+HttpResult kubernetes_request(const KubernetesConfig &config, const std::string &method,
+                              const std::string &path, const Json &body) {
+  auto token = read_file(config.token_file);
   while (!token.empty() && std::isspace(static_cast<unsigned char>(token.back())))
     token.pop_back();
-  HttpClient http({.ca_file = config_.api_ca, .bearer = token, .timeout_seconds = 10});
-  auto result = http.request(method, config_.api + path, body.is_null() ? "" : body.dump());
+  HttpClient http({.ca_file = config.api_ca, .bearer = token, .timeout_seconds = 10});
+  auto result = http.request(method, config.api + path, body.is_null() ? "" : body.dump());
   if (result.status >= 500 || result.status == 429)
     throw Error(ErrorCode::unavailable, "Kubernetes API unavailable");
   return result;
+}
+HttpResult KubernetesBackend::call(const std::string &method, const std::string &path,
+                                   const Json &body) const {
+  return kubernetes_request(config_, method, path, body);
 }
 std::vector<std::string> KubernetesBackend::inventory() {
   std::vector<std::string> result;
@@ -120,6 +137,17 @@ std::string KubernetesBackend::ensure(const Launch &launch) {
               .at("image")
               .get<std::string>() != launch.assignment.spec.image)
     throw Error(ErrorCode::conflict, "Kubernetes Job name belongs to another resource");
+  const auto &pod = job.at("spec").at("template").at("spec");
+  const auto &resources = pod.at("containers").at(0).at("resources");
+  auto count = launch.assignment.spec.resources.gpu_count;
+  for (const auto *kind : {"requests", "limits"}) {
+    auto quantity = resources.value(kind, Json::object()).value("nvidia.com/gpu", Json("0"));
+    if (quantity != Json(std::to_string(count)) && quantity != Json(count))
+      throw Error(ErrorCode::conflict, "Kubernetes GPU request does not match assignment");
+  }
+  if (count > 0 &&
+      pod.value("nodeSelector", Json::object()).value("runyard.io/gpu-mode", "") != "exclusive")
+    throw Error(ErrorCode::conflict, "Kubernetes GPU placement does not match assignment");
   return job.at("metadata").at("uid");
 }
 bool KubernetesBackend::has_stopped(const std::string &id) {

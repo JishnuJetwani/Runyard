@@ -135,17 +135,34 @@ Json encode(const Attempt &a) {
             {"started_at", a.started_at},
             {"finished_at", a.finished_at},
             {"acknowledged_sequence", a.acknowledged_sequence}};
+  j["gpu_count"] = a.gpu_count;
+  j["gpu_allocations"] = encode_list(a.gpu_allocations);
+  j["node_name"] = a.node_name;
   j["exit_code"] = a.exit_code ? Json(*a.exit_code) : Json(nullptr);
   return j;
 }
 Json encode(const Worker &w) {
-  return {
-      {"id", w.id},
-      {"capacity", {{"cpu_millis", w.capacity.cpu_millis}, {"memory_mib", w.capacity.memory_mib}}},
-      {"reserved", {{"cpu_millis", w.reserved.cpu_millis}, {"memory_mib", w.reserved.memory_mib}}},
-      {"drained", w.drained},
-      {"available", w.available},
-      {"heartbeat_at", w.heartbeat_at}};
+  return {{"id", w.id},
+          {"capacity",
+           {{"cpu_millis", w.capacity.cpu_millis},
+            {"memory_mib", w.capacity.memory_mib},
+            {"gpu_count", w.capacity.gpu_count}}},
+          {"reserved",
+           {{"cpu_millis", w.reserved.cpu_millis},
+            {"memory_mib", w.reserved.memory_mib},
+            {"gpu_count", w.reserved.gpu_count}}},
+          {"drained", w.drained},
+          {"available", w.available},
+          {"heartbeat_at", w.heartbeat_at},
+          {"gpu_inventory",
+           {{"capable", w.gpu_capable},
+            {"ready", w.gpu_ready},
+            {"fresh", w.gpu_fresh},
+            {"observed_at", w.gpu_observed_at},
+            {"devices", encode_list(w.gpu_devices)},
+            {"available_estimate", w.gpu_capable && (!w.gpu_ready || !w.gpu_fresh)
+                                       ? Json(nullptr)
+                                       : Json(w.available_gpus)}}}};
 }
 Json encode(const Telemetry &t) {
   return {{"sequence", t.sequence},

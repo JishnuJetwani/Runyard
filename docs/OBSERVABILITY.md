@@ -34,3 +34,13 @@ The dashboard is installed automatically. Alerts cover lost readiness,
 stalled queues, unavailable Docker capacity, repeated failures, pool saturation,
 and delayed cleanup. Alerts appear in Prometheus; external notifications are not
 configured. `promtool test rules` checks queue and cleanup alert timing.
+
+## GPU scheduling
+
+The dashboard includes GPU capacity, reservations, estimated availability, pending
+demand, inventory freshness, and observation age. `runyard_gpu_queued_runs` and
+`runyard_gpu_queue_oldest_seconds` describe Runyard's admission queue. Capacity
+metrics use the same snapshot as the capacity API; Kubernetes reservations include
+all namespaces. Stale availability and unknown observation ages export `NaN`.
+Alerts cover unavailable inventory and GPU experiments waiting for admission.
+Device UUIDs appear in attempt launch logs and API records, never metric labels.

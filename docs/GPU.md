@@ -7,6 +7,8 @@ Sweeps use the same resources as their base specification.
 Placement uses GPU count, not model or memory size. GPU sharing, MIG, MPS, and
 distributed training are not supported.
 
+## Allocation and recovery
+
 PostgreSQL stores inventory and allocation history. Apply migration 006 before
 starting the updated server. Each device UUID belongs to one worker and can have
 only one unreleased allocation. Inventory updates must match the worker session
@@ -40,9 +42,34 @@ It resolves commands using the child's final PATH and working directory. Platfor
 paths and GPU visibility take precedence over workload values. The child does not
 inherit coordinator or runner credentials.
 
-Set `RUNYARD_GPU_MODE=nvidia` on a Linux Docker agent to enable discovery and GPU
-launches. `RUNYARD_GPU_UUIDS=GPU-...,GPU-...` optionally limits the advertised devices.
-The host needs the NVIDIA driver and Container Toolkit. DeviceRequests contain
-assigned UUIDs, never an unrestricted device count. CPU containers explicitly use
-`NVIDIA_VISIBLE_DEVICES=void`. Restart reconciliation compares image, worker,
-attempt, and GPU requests before reusing a deterministic container.
+Docker launches request only the assigned UUIDs. CPU containers set
+`NVIDIA_VISIBLE_DEVICES=void`, including when using CUDA images. After a restart,
+the agent checks the image, worker, attempt, and GPU request before reusing a container.
+
+Kubernetes Jobs use equal requests and limits for `nvidia.com/gpu`. They select
+nodes labeled `runyard.io/gpu-mode=exclusive` and tolerate the
+`nvidia.com/gpu:NoSchedule` taint. The device plugin controls GPU visibility.
+The runner that claims the attempt records its node through the Downward API;
+duplicate runners cannot replace that record.
+
+## Capacity
+
+Kubernetes capacity refreshes every 15 seconds using read-only Node and Pod access
+across namespaces. Scans use pagination, with a limit of 10,000 resources per kind
+and ten seconds per scan. An in-flight request can take another ten seconds.
+Only resource summaries are retained.
+
+Bound, nonterminal Pods count as reservations, including terminating Pods and
+init/sidecar resource peaks. Unscheduled demand is reported separately. A failed
+refresh or a snapshot older than 45 seconds makes availability unknown while
+preserving the last observation. Kubernetes still handles placement.
+
+`runyard capacity [--json] [--limit N] [--after CURSOR]` requires the owner key.
+Totals cover the whole deployment; pagination applies to worker or node details.
+Kubernetes reservations include other namespaces. Check per-node counts for
+multi-GPU requests, since available GPUs may be on different nodes. Unknown
+availability is JSON `null`.
+
+Docker pending demand counts queued and retry-wait runs. Kubernetes pending demand
+counts GPU requests from unscheduled Pods. Run and attempt views show requested
+counts, Docker device allocation history, and Kubernetes node placement.

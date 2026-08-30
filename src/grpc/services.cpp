@@ -156,7 +156,7 @@ grpc::Status AttemptRpc::Start(grpc::ServerContext *c, const wire::Owner *r,
                                wire::StartReply *reply) {
   return guard(metrics_, __func__, [&] {
     authorize(c, *r);
-    auto a = repository_.start(r->attempt_id(), r->generation(), r->instance_id());
+    auto a = repository_.start(r->attempt_id(), r->generation(), r->instance_id(), r->node_name());
     spdlog::info("{}", Json{{"event", "attempt_claimed"},
                             {"run_id", a.attempt.run_id},
                             {"attempt_id", a.attempt.id}}

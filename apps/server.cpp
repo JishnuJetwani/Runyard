@@ -1,6 +1,7 @@
 #include "runyard/application/kubernetes.hpp"
 #include "runyard/application/runs.hpp"
 #include "runyard/execution/kubernetes.hpp"
+#include "runyard/execution/kubernetes_capacity.hpp"
 #include "runyard/grpc/services.hpp"
 #include "runyard/http/api.hpp"
 #include "runyard/postgres/leadership.hpp"
@@ -45,6 +46,8 @@ int main(int argc, char **argv) {
     runyard::Executor executor;
     runyard::Leadership leadership(config.database);
     leadership.refresh();
+    runyard::SteadyClock clock;
+    std::unique_ptr<runyard::KubernetesCapacity> cluster_capacity;
     std::unique_ptr<runyard::KubernetesBackend> kubernetes_backend;
     std::unique_ptr<runyard::KubernetesController> kubernetes_controller;
     if (config.mode == "kubernetes") {
@@ -53,12 +56,24 @@ int main(int argc, char **argv) {
       k.name_space = runyard::env("RUNYARD_KUBERNETES_NAMESPACE", k.name_space);
       k.coordinator = runyard::env("RUNYARD_RUNNER_COORDINATOR", k.coordinator);
       k.development = config.development;
+      k.gpu_runtime_class = runyard::env("RUNYARD_KUBERNETES_GPU_RUNTIME_CLASS");
       k.runner_ca_configmap = runyard::env("RUNYARD_RUNNER_CA_CONFIGMAP");
+      cluster_capacity = std::make_unique<runyard::KubernetesCapacity>(k, clock);
       kubernetes_backend = std::make_unique<runyard::KubernetesBackend>(k);
       kubernetes_controller = std::make_unique<runyard::KubernetesController>(
           store, *kubernetes_backend, config.signing_key,
           runyard::env_int("RUNYARD_MAX_ACTIVE_JOBS", 16));
     }
+    std::jthread inventory([&](std::stop_token stop) {
+      while (!stop.stop_requested() && cluster_capacity) {
+        try {
+          cluster_capacity->refresh(stop);
+        } catch (const std::exception &e) {
+          spdlog::warn("cluster capacity: {}", e.what());
+        }
+        pause(stop, std::chrono::seconds(15));
+      }
+    });
     std::jthread monitor([&](std::stop_token stop) {
       while (!stop.stop_requested()) {
         metrics.update({{"ready", leadership.refresh() ? 1.0 : 0.0}});
@@ -79,6 +94,8 @@ int main(int argc, char **argv) {
             snapshot["process_max_rss_bytes"] = usage.ru_maxrss * 1024.0;
 #endif
             metrics.update(snapshot);
+            metrics.gpus(cluster_capacity ? runyard::summarize(cluster_capacity->snapshot())
+                                          : store.gpu_capacity());
 
           } catch (const std::exception &e) {
             spdlog::warn("recovery: {}", e.what());
@@ -110,8 +127,13 @@ int main(int argc, char **argv) {
     else
       throw std::runtime_error("storage must be filesystem or s3");
     runyard::ArtifactService artifacts(store, *blobs, config.artifacts);
-    runyard::Api api(runs, artifacts, executor, config.owner_token,
-                     [&] { return leadership.ready(); });
+    std::function<runyard::ClusterGpuSnapshot()> cluster_snapshot;
+    if (cluster_capacity)
+      cluster_snapshot = [&] { return cluster_capacity->snapshot(); };
+    runyard::CapacityService capacity(store, std::move(cluster_snapshot));
+    runyard::Api api(
+        runs, artifacts, executor, config.owner_token, [&] { return leadership.ready(); },
+        capacity);
     api.mount();
     drogon::app().registerHandler(
         "/metrics",
@@ -134,6 +156,8 @@ int main(int argc, char **argv) {
     http.run();
     grpc_server->Shutdown(std::chrono::system_clock::now() + std::chrono::seconds(5));
     grpc_server->Wait();
+    inventory.request_stop();
+    inventory.join();
     dispatch.request_stop();
     dispatch.join();
     monitor.request_stop();
