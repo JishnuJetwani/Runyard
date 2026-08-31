@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "gpu-training",
+  "image": "localhost:5001/runyard-gpu-training@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "command": ["python", "/opt/experiment/train.py"],
+  "resources": {"cpu_millis": 4000, "memory_mib": 8192, "gpu_count": 1},
+  "parameters": {"learning_rate": 0.01, "batch_size": 128, "epochs": 10, "seed": 7},
+  "timeout_seconds": 600
+}

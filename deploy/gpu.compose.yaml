@@ -1,0 +1,20 @@
+services:
+  agent-gpu:
+    extends:
+      file: compose.yaml
+      service: agent-1
+    profiles: [gpu]
+    environment:
+      RUNYARD_WORKER_ID: ${RUNYARD_GPU_WORKER_ID:-gpu-1}
+      RUNYARD_GPU_MODE: nvidia
+      RUNYARD_GPU_UUIDS: ${RUNYARD_GPU_UUIDS:?Set the UUIDs dedicated to this worker}
+      RUNYARD_CPU_MILLIS: ${RUNYARD_GPU_CPU_MILLIS:-4000}
+      RUNYARD_MEMORY_MIB: ${RUNYARD_GPU_MEMORY_MIB:-8192}
+      NVIDIA_DRIVER_CAPABILITIES: utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

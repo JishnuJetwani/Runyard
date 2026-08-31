@@ -46,6 +46,8 @@ jobs:
           scripts/tls-certificates.sh
           PGPASSWORD=runyard-test-only psql -h localhost -U postgres -d runyard -c 'TRUNCATE runs,workers,sweeps CASCADE'
           python3 tests/protocol_smoke.py build/vcpkg/src --tls
+          PGPASSWORD=runyard-test-only psql -h localhost -U postgres -d runyard -c 'TRUNCATE runs,workers,sweeps CASCADE'
+          python3 tests/gpu_protocol_smoke.py build/vcpkg/src
           python3 tests/adapter_faults.py build/vcpkg/tests/backend_probe
           scripts/test-s3.sh
         env:
@@ -53,13 +55,13 @@ jobs:
       - name: Address and undefined behavior sanitizers
         run: |
           cmake --preset asan -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_INSTALLED_DIR="$PWD/build/vcpkg/vcpkg_installed"
-          cmake --build --preset asan --target domain_test process_test executor_test -j 3
-          ctest --preset asan -R 'Domain|Process|Executor'
-      - name: Thread sanitizer on the bounded executor
+          cmake --build --preset asan --target domain_test process_test executor_test capacity_test nvidia_test -j 3
+          ctest --preset asan -R 'Domain|Process|Environment|Executor|Capacity|Nvidia'
+      - name: Thread sanitizer on owned concurrency
         run: |
           cmake --preset tsan -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_INSTALLED_DIR="$PWD/build/vcpkg/vcpkg_installed"
-          cmake --build --preset tsan --target executor_test -j 3
-          ctest --preset tsan -R Executor
+          cmake --build --preset tsan --target executor_test capacity_test -j 3
+          ctest --preset tsan -R 'Executor|Capacity.Readers'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -86,6 +88,17 @@ jobs:
           kubectl kustomize deploy/kubernetes/overlays/aws > /tmp/aws.yaml
           python3 tests/deployment_render.py
           python3 tests/benchmark_test.py
+          python3 tests/build_source_times_test.py
           scripts/dev-setup.sh
+          python3 tests/gpu_deployment_test.py
           docker compose -f compose.yaml -f deploy/monitoring.compose.yaml config --quiet
           docker run --rm --entrypoint promtool -v "$PWD/deploy/monitoring:/config:ro" -w /config prom/prometheus:v3.5.0@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996 test rules alert-tests.yaml
+  training-example:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Check training contract and CUDA requirement
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --require-hashes --index-url https://download.pytorch.org/whl/cpu -r tests/gpu-training-requirements.lock
+          .venv/bin/python tests/gpu_training_test.py

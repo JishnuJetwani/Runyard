@@ -5,7 +5,7 @@ It keeps each run's configuration, image digest, attempt history, and output.
 The backend is written in C++20 for one trusted owner, with a C++ CLI.
 
 The backend handles scheduling, leases, retries, cancellation, and parameter
-sweeps. It includes filesystem/S3 storage, monitoring,
+sweeps. It includes NVIDIA GPU allocation, filesystem/S3 storage, monitoring,
 and AWS infrastructure definitions.
 
 ```mermaid
@@ -28,7 +28,7 @@ leases, and results for both.
 |---|---|
 | Services | C++20, Drogon, gRPC/Protobuf, CLI11 |
 | Persistence and integration | PostgreSQL/libpqxx, libcurl, AWS SDK for C++ |
-| Execution | Docker Engine API, Kubernetes Jobs, shared Linux process supervisor |
+| Execution | Docker Engine API, Kubernetes Jobs, NVML GPU discovery, shared Linux process supervisor |
 | Operations | spdlog, prometheus-cpp, Prometheus, Grafana |
 | Engineering | CMake, Ninja, vcpkg, GoogleTest, GitHub Actions |
 | Deployment | Compose, kind, Terraform, AWS definitions |
@@ -88,6 +88,7 @@ See [failure behavior](docs/FAILURES.md).
 ## Other workflows
 
 - [CLI commands](docs/CLI.md) and [OpenAPI contract](api/openapi.yaml).
+- [GPU execution and capacity](docs/GPU.md), with a [PyTorch training example](examples/gpu-training/README.md).
 - [Local Kubernetes](docs/KUBERNETES.md), using `scripts/kind-setup.sh` after image builds.
 - [Operations and troubleshooting](docs/OPERATIONS.md).
 - [Prometheus/Grafana](docs/OBSERVABILITY.md) and [storage](docs/STORAGE.md).

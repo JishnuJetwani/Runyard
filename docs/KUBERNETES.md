@@ -23,6 +23,9 @@ committed by the runner. Launch and lease deadlines still apply during API outag
 Workload Pods use a service account without role bindings, disable projected API
 credentials, and receive only their attempt capability. The coordinator role can
 create/get/list/delete Jobs and get/list Pods in its namespace.
+The separate capacity-reader ClusterRole grants only get/list on Nodes and Pods
+across namespaces. Its collector returns resource summaries and does not change
+placement or expose unrelated Pod configuration.
 
 For local setup, build the images, then run `scripts/kind-setup.sh`. This creates
 only cluster `runyard` and uses context `kind-runyard` explicitly. It installs a
@@ -41,3 +44,8 @@ native CLI. The helper reconnects after a server Pod replacement; ordinary
 `kubectl port-forward` exits when its selected Pod disappears. Publish the fixture
 with `scripts/publish-fixture.sh`; the cluster registry alias resolves its same
 `localhost:5001/...@sha256:...` digest.
+
+GPU Jobs add equal whole-device requests/limits, the exclusive-node selector,
+and the configured NVIDIA RuntimeClass. `runyard capacity` exposes node capacity,
+effective Pod reservations, unbound GPU demand, and snapshot freshness. See
+[GPU operations](GPU.md) for the device-plugin profile and node/runtime setup.

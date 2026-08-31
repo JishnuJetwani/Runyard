@@ -66,7 +66,7 @@ that has not been acknowledged. Dropped or truncated output is marked.
 Workload images include the runner. The child receives paths for parameters,
 metrics, and output files. Commands run as argument arrays without shell expansion.
 Metrics contain a name, step, and finite value. Only regular files under the output
-directory can become artifacts.
+directory can become artifacts. See [packaging experiments](WORKLOADS.md).
 
 ## Deployment
 
@@ -84,3 +84,37 @@ AWS definitions cover VPC, EKS/CPU nodes, ECR, private single-AZ RDS, S3, and IA
 Application services stay private. Infrastructure provisioning and application
 installation are separate. See [AWS deployment](AWS.md) for the operator procedure.
 
+## Whole-device GPU allocation
+
+`Resources` includes a GPU count. Canonical JSON omits a zero count to preserve
+existing CPU submission fingerprints. Runs, sweeps, and reruns store the count in
+the column added by migration 006.
+
+`GpuInventory` separates discovery from scheduling. Its NVIDIA adapter loads NVML
+dynamically and uses RAII to manage the library and session. Devices use UUIDs
+because indices can change after a reboot. After container reconciliation, the
+agent reports inventory with its session and a sequence number. Discovery errors
+pause GPU admission without deleting inventory or reservations.
+
+The PostgreSQL adapter locks worker, run, attempt, then UUID-ordered device rows.
+One transaction selects a feasible CPU/memory/GPU request and reserves all its
+devices. A partial unique index prevents two unreleased allocations for one UUID.
+An unacknowledged assignment is returned again before new work is assigned.
+GPU allocations are released only when runtime cleanup is confirmed in the same
+transaction. Released records remain in the attempt history.
+
+Docker uses the assigned UUIDs in `DeviceRequests` and checks existing containers
+before reuse. Kubernetes requests whole `nvidia.com/gpu` resources on exclusive
+nodes. Its device plugin chooses the physical devices; Runyard records the node.
+Both backends use the same runner protocol.
+
+Kubernetes capacity collection runs in a separate thread with a mutex-protected
+snapshot. It reads Nodes and Pods across namespaces using a read-only ClusterRole,
+and stores only resource summaries. Requests include init containers and restartable
+sidecars. Availability is an estimate and becomes unknown when stale. The collector
+does not schedule work or block recovery.
+
+The environment builder preserves selected library and Python settings, then
+applies workload values and platform-controlled paths and GPU visibility.
+It does not pass coordinator or runner credentials to the child.
+See [GPU operations](GPU.md) for configuration and refresh intervals.

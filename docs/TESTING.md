@@ -29,6 +29,7 @@ database for these harnesses as well; run each against empty application tables.
 ```sh
 python3 tests/api_smoke.py build/vcpkg/src/runyard-server build/vcpkg/src/runyard
 python3 tests/protocol_smoke.py build/vcpkg/src
+python3 tests/gpu_protocol_smoke.py build/vcpkg/src
 python3 tests/adapter_faults.py build/vcpkg/tests/backend_probe
 ```
 
@@ -65,6 +66,21 @@ The acceptance script builds images unless `--skip-build` is supplied. Existing
 application data requires `--reuse`; it is not erased. Results are written to
 `.local/` and `benchmarks/results/`. See the [benchmark guide](../benchmarks/README.md)
 for timing definitions and reproduction commands.
+
+## GPU contracts
+
+GPU database tests cover exclusive allocation, concurrent reservations, inventory
+loss, cleanup, and device reuse. NVIDIA discovery uses a test-only NVML library.
+Capacity tests check Kubernetes resource accounting and snapshot freshness.
+
+```sh
+python3 tests/gpu_deployment_test.py
+python3 tests/gpu_training_test.py
+```
+
+The training tests need the environment pinned in
+`tests/gpu-training-requirements.lock`. Hardware execution uses the acceptance
+command in [GPU operations](GPU.md), with an NVIDIA worker or Kubernetes node.
 
 ## Sanitizers and CI
 

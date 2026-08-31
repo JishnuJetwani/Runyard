@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: runyard-nvidia-device-plugin
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels: {app: runyard-nvidia-device-plugin}
+  template:
+    metadata:
+      labels: {app: runyard-nvidia-device-plugin}
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: system-node-critical
+      runtimeClassName: nvidia
+      nodeSelector: {runyard.io/gpu-mode: exclusive}
+      tolerations:
+        - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: device-plugin
+          image: nvcr.io/nvidia/k8s-device-plugin:v0.17.1@sha256:af31e2b7c7f89834c4e5219860def7ac2e49a207b3d4e8610d5a26772b7738e5
+          args:
+            - --mig-strategy=none
+            - --fail-on-init-error=true
+            - --device-list-strategy=envvar
+            - --device-id-strategy=uuid
+            - --pass-device-specs=false
+          env:
+            - {name: NVIDIA_VISIBLE_DEVICES, value: all}
+            - {name: NVIDIA_DRIVER_CAPABILITIES, value: utility}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 256Mi}
+          volumeMounts:
+            - {name: device-plugins, mountPath: /var/lib/kubelet/device-plugins}
+      volumes:
+        - name: device-plugins
+          hostPath: {path: /var/lib/kubelet/device-plugins, type: Directory}

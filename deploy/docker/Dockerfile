@@ -22,7 +22,10 @@ COPY proto/ proto/
 COPY tests/ tests/
 COPY examples/ examples/
 COPY migrations/ migrations/
-RUN --mount=type=cache,id=runyard-build-fa8cecf-${TARGETARCH},target=/tmp/build,sharing=locked cmake -S . -B /tmp/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+COPY scripts/build-source-times.py /opt/runyard-build-source-times.py
+RUN --mount=type=cache,id=runyard-build-fa8cecf-${TARGETARCH},target=/tmp/build,sharing=locked \
+    python3 /opt/runyard-build-source-times.py /src /tmp/build \
+    && cmake -S . -B /tmp/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake \
     -DVCPKG_INSTALLED_DIR=/opt/dependencies/vcpkg_installed -DCMAKE_INSTALL_PREFIX=/opt/runyard \
     && cmake --build /tmp/build -j 3 && ctest --test-dir /tmp/build --output-on-failure \
