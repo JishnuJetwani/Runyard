@@ -1,5 +1,7 @@
 #include "runyard/domain/error.hpp"
 #include "runyard/execution/kubernetes_capacity.hpp"
+#include <barrier>
+#include <future>
 #include <gtest/gtest.h>
 using namespace runyard;
 namespace {
@@ -98,4 +100,27 @@ TEST(Capacity, RepeatedPaginationCursorFailsWithoutPublishingPartialSnapshot) {
   EXPECT_THROW(capacity.refresh(), Error);
   EXPECT_FALSE(capacity.snapshot().age_seconds);
   EXPECT_TRUE(capacity.snapshot().nodes.empty());
+}
+TEST(Capacity, ReadersObserveCompleteSnapshotsDuringRefresh) {
+  TestClock clock;
+  int generation = 0;
+  KubernetesCapacity capacity({}, clock, [&](const std::string &path) {
+    if (path.starts_with("/api/v1/nodes"))
+      return page(Json::array({node()}));
+    return page(
+        Json::array({pod("Running", "gpu-node", generation), pod("Pending", "", generation)}));
+  });
+  capacity.refresh();
+  std::barrier gate(2);
+  auto reader = std::async(std::launch::async, [&] {
+    gate.arrive_and_wait();
+    for (int i = 0; i < 1000; ++i) {
+      auto snapshot = capacity.snapshot();
+      EXPECT_EQ(snapshot.nodes[0].reserved, snapshot.pending);
+    }
+  });
+  gate.arrive_and_wait();
+  for (generation = 1; generation < 100; ++generation)
+    capacity.refresh();
+  reader.get();
 }

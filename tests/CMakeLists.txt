@@ -1,7 +1,7 @@
 add_executable(domain_test domain_test.cpp)
 target_link_libraries(domain_test PRIVATE runyard_domain GTest::gtest_main)
 gtest_discover_tests(domain_test)
-add_executable(postgres_test postgres_test.cpp)
+add_executable(postgres_test postgres_test.cpp postgres_gpu_test.cpp)
 target_link_libraries(postgres_test PRIVATE runyard_postgres runyard_application GTest::gtest_main)
 target_compile_definitions(postgres_test PRIVATE RUNYARD_MIGRATIONS="${PROJECT_SOURCE_DIR}/migrations")
 gtest_discover_tests(postgres_test)

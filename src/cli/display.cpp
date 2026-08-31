@@ -29,11 +29,19 @@ void print_result(const Json &value, bool json) {
     return;
   }
   if (value.contains("gpu_inventory")) {
+    const auto &inventory = value.at("gpu_inventory");
     std::cout << value.at("id").get<std::string>() << "  CPU=" << value["capacity"]["cpu_millis"]
               << "m  memory=" << value["capacity"]["memory_mib"]
               << "MiB  GPUs=" << value["capacity"]["gpu_count"]
-              << "  reserved=" << value["reserved"]["gpu_count"] << "  drained=" << value["drained"]
-              << '\n';
+              << "  reserved=" << value["reserved"]["gpu_count"] << "  available="
+              << (inventory.at("available_estimate").is_null()
+                      ? "unknown"
+                      : inventory.at("available_estimate").dump())
+              << "  fresh=" << inventory.at("fresh") << "  drained=" << value["drained"] << '\n';
+    for (const auto &device : inventory.at("devices"))
+      std::cout << "  " << device.at("uuid").get<std::string>() << "  "
+                << device.at("name").get<std::string>() << "  " << device.at("memory_mib")
+                << "MiB  eligible=" << device.at("eligible") << '\n';
     return;
   }
   if (value.contains("items")) {
