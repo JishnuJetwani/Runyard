@@ -28,3 +28,15 @@ when `publish=true`. See [testing](TESTING.md) for local test commands.
 The Docker build runs GoogleTests. Tests needing PostgreSQL or S3 skip when their
 endpoints are absent. The integration workflow runs those tests with PostgreSQL
 and Moto, then checks the Linux service images against fresh databases.
+
+## GPU dependencies
+
+The NVIDIA adapter dynamically loads `libnvidia-ml.so.1` only in NVIDIA agent mode.
+The pinned header and license live under `third_party/nvml`; ordinary builds,
+the coordinator, and the CLI need neither a CUDA toolkit nor an NVIDIA driver.
+The runner has no CUDA or PyTorch dependency. The example's separate Linux/amd64
+Dockerfile installs its hashed Python 3.12/CUDA dependency lock.
+
+`scripts/build-source-times.py` updates timestamps when source contents change,
+even if Docker COPY restores an older timestamp. This prevents Ninja from reusing
+outdated object files from the BuildKit cache.

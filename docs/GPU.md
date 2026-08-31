@@ -44,7 +44,7 @@ happen after the transaction commits.
 The runner preserves selected image settings for PATH, libraries, Python, and CUDA.
 It resolves commands using the child's final PATH and working directory. Platform
 paths and GPU visibility take precedence over workload values. The child does not
-inherit coordinator or runner credentials.
+inherit coordinator or runner credentials. See [workload environments](WORKLOADS.md#gpu-workloads-and-image-environments).
 
 Docker launches request only the assigned UUIDs. CPU containers set
 `NVIDIA_VISIBLE_DEVICES=void`, including when using CUDA images. After a restart,
@@ -142,3 +142,34 @@ The command checks exclusive placement, cancellation cleanup, GPU reuse, visible
 device count, metrics/logs, checksum-verified artifacts, and recovery after interrupting
 an attempt. It only cancels or interrupts runs it created and does not provision
 infrastructure. The output file records the observed runs and hardware summary.
+
+## Upgrade and rollback
+
+1. Apply migration `006` using `runyard-server migrate` with the coordinator's
+   existing database configuration. Normal server startup does not migrate.
+2. Deploy the coordinator, agents, runner images, and CLI together. Publish new
+   workload image digests containing the updated runner.
+3. Exercise the ordinary CPU fixture workflow before enabling NVIDIA mode.
+4. Enable the Docker profile or Kubernetes node/runtime configuration above.
+5. Confirm fresh `runyard capacity` output and inspect the worker/node details.
+6. Submit the one-GPU training specification, then a small parameter sweep.
+
+Before returning to CPU-only binaries, stop GPU submissions and drain GPU workers
+or finish/cancel their runs. Wait until every GPU attempt reports cleanup `DONE`
+and no unreleased allocations remain. Keep migration 006 and historical device
+allocations; do not erase them as part of a binary rollback.
+
+## Diagnosing queued work
+
+For Docker, check worker heartbeats, drain state, inventory age, allowlists, and
+CPU/memory headroom together. A stopped or missing NVML library makes GPU discovery
+unavailable while CPU work continues. A UUID advertised by two workers is rejected;
+use stable worker identities and disjoint allowlists. Pending cleanup can reserve
+a device after its run is terminal. Restore the worker's runtime connection so it
+can confirm cleanup; a failed inventory refresh is not evidence that a device is free.
+
+For Kubernetes, inspect per-node availability, readiness, cordoning, the exclusive
+label, RuntimeClass, and device-plugin Pods. Two GPUs free on separate nodes cannot
+satisfy one two-GPU request. Capacity includes other namespaces' Pod reservations;
+RBAC or API failures retain the previous observation and mark availability unknown.
+GPU queueing and stale inventory are also visible in the monitoring dashboard.

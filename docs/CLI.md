@@ -15,16 +15,25 @@ runyard metrics RUN_ID --format csv > metrics.csv
 runyard artifacts list RUN_ID
 runyard artifacts download ARTIFACT_ID --output result.json
 runyard workers list
+runyard capacity
+runyard capacity --json --limit 20
 runyard workers drain WORKER_ID
 runyard workers drain WORKER_ID --resume
 runyard cancel RUN_ID
 runyard rerun RUN_ID
 ```
 
-`--json` selects machine-readable responses. Metrics in JSON format and logs with
-`--json` emit one JSON object per line for bounded-memory exports. Add `--attempt`
-to inspect historical attempt output. Following a run switches to each new attempt;
-following an explicit attempt stops when it is replaced or the run becomes terminal.
-Downloads verify SHA-256 and publish the destination atomically; existing files
-are never overwritten. Submit, sweep, and rerun display the idempotency key on
-stderr; `--request-id` can reuse that key after an interrupted invocation.
+Use `--json` for machine-readable output. Metrics and logs in JSON format print
+one object per line. Add `--attempt` to inspect an earlier attempt. Following a
+run switches to each new attempt; following a specific attempt stops when it is
+replaced or the run finishes.
+
+Downloads check SHA-256 before publishing the file and never overwrite an existing
+destination. Submit, sweep, and rerun print their request key to stderr. Reuse it
+with `--request-id` if the command is interrupted.
+
+Capacity totals cover the full deployment. Use `--limit` and `--after` to page
+through workers or nodes. Run inspection shows GPU requests; `--attempts` adds
+Docker device allocations and release times, or the Kubernetes node. Worker
+details show devices, reservations, availability, and inventory age.
+See [GPU operations](GPU.md).
