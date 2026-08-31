@@ -7,6 +7,10 @@ Sweeps use the same resources as their base specification.
 Placement uses GPU count, not model or memory size. GPU sharing, MIG, MPS, and
 distributed training are not supported.
 
+For setup, see [Docker workers](#nvidia-docker-worker) or
+[Kubernetes nodes](#nvidia-kubernetes-nodes). The
+[training example](../examples/gpu-training/README.md) provides a workload.
+
 ## Allocation and recovery
 
 PostgreSQL stores inventory and allocation history. Apply migration 006 before
@@ -73,3 +77,68 @@ availability is JSON `null`.
 Docker pending demand counts queued and retry-wait runs. Kubernetes pending demand
 counts GPU requests from unscheduled Pods. Run and attempt views show requested
 counts, Docker device allocation history, and Kubernetes node placement.
+
+## NVIDIA Docker worker
+
+Install the host driver and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+Set `RUNYARD_GPU_MODE=nvidia` on the agent to enable discovery and GPU launches.
+The supplied Compose profile sets this for you. Use `RUNYARD_GPU_UUIDS` to limit
+the advertised devices.
+Configure the Docker runtime with `nvidia-ctk runtime configure --runtime=docker`
+and restart Docker during the host's maintenance window. Choose the UUIDs dedicated
+to Runyard and configure their worker's CPU/memory budget. Each physical UUID must
+belong to one logical worker; allowlists on a shared daemon must be disjoint.
+
+```sh
+export RUNYARD_GPU_UUIDS=GPU-your-device-uuid
+scripts/dev-setup.sh
+scripts/build-images.sh
+docker compose -f compose.yaml -f deploy/gpu.compose.yaml --profile gpu \
+  up -d postgres migrate server registry agent-gpu
+runyard capacity
+```
+
+The NVIDIA runtime gives the agent discovery access. Keep advertised devices
+dedicated to Runyard containers. The Compose profile uses local development
+networking; configure TLS for remote access.
+
+## NVIDIA Kubernetes nodes
+
+Configure the NVIDIA Container Toolkit for containerd and restart that node's
+container runtime during maintenance. Its runtime handler must be named `nvidia`.
+Label the GPU node `runyard.io/gpu-mode=exclusive`. Use one device-plugin installation
+per node, with whole-device allocation, MIG disabled, and no sharing configuration.
+The supplied installation pins NVIDIA device plugin v0.17.1 by image digest.
+
+```sh
+kubectl --context "$GPU_CONTEXT" label node "$GPU_NODE" runyard.io/gpu-mode=exclusive
+kubectl --context "$GPU_CONTEXT" apply -k deploy/kubernetes/nvidia
+kubectl --context "$GPU_CONTEXT" apply -k deploy/kubernetes/overlays/gpu
+```
+
+The GPU overlay uses the local database and artifact setup. It leaves server
+replicas at zero until configuration and migrations are ready. Follow the setup in
+[KUBERNETES.md](KUBERNETES.md): create secrets, load or publish the server image,
+run migrations, then scale the coordinator to one.
+For an existing installation, set `RUNYARD_KUBERNETES_GPU_RUNTIME_CLASS=nvidia` in
+its coordinator configuration instead of installing another application stack.
+Capacity access is read-only. Workload Pods receive no Kubernetes API token.
+
+## Hardware acceptance
+
+Use an otherwise idle deployment exposing exactly one GPU. Build and publish the
+[training image](../examples/gpu-training/README.md), then configure the normal CLI
+URL, credentials, and CA. Run from the Docker host or a machine with access to the
+explicit Kubernetes context:
+
+```sh
+scripts/gpu-acceptance.py --backend docker --cli build/dev/src/runyard \
+  --image "$GPU_TRAINING_DIGEST"
+scripts/gpu-acceptance.py --backend kubernetes --kube-context "$GPU_CONTEXT" \
+  --image "$GPU_TRAINING_DIGEST" --output .local/gpu-kubernetes.json
+```
+
+The command checks exclusive placement, cancellation cleanup, GPU reuse, visible
+device count, metrics/logs, checksum-verified artifacts, and recovery after interrupting
+an attempt. It only cancels or interrupts runs it created and does not provision
+infrastructure. The output file records the observed runs and hardware summary.
