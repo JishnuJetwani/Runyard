@@ -18,13 +18,11 @@ const record = { started_at: new Date().toISOString(), base_url: baseURL, runs: 
 
 async function importSpec(spec) {
   await page.goto('/new');
-  await page
-    .getByLabel('Import specification')
-    .setInputFiles({
-      name: 'fixture.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(spec)),
-    });
+  await page.getByLabel('Import specification').setInputFiles({
+    name: 'fixture.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(spec)),
+  });
 }
 async function successful() {
   await expect(page.locator('.run-summary')).toContainText('succeeded', { timeout: 90000 });
@@ -57,6 +55,7 @@ try {
 
   await page.getByRole('button', { name: 'Rerun', exact: true }).click();
   await page.getByRole('button', { name: 'Create rerun', exact: true }).click();
+  await expect(page).not.toHaveURL(new RegExp(`/runs/${original}$`));
   const rerun = await successful();
   if (rerun === original) throw new Error('Rerun did not create a new run');
   await expect(page.locator('.lineage')).toContainText('Rerun of');

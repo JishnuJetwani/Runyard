@@ -77,3 +77,45 @@ Cancelled runs can still show pending cleanup until the process is confirmed sto
 Shared UI components live in `src/components`. TanStack Query caches server data,
 while form drafts stay in component state. Charts load on demand. Fonts are
 self-hosted, and npm dependencies are locked.
+
+## Packaged deployment
+
+From the repository root, after starting the backend:
+
+```sh
+docker compose -f compose.yaml -f deploy/ui.compose.yaml up -d --build ui
+```
+
+The image builds with Node and serves static files through Nginx at
+`http://127.0.0.1:3000`. Nginx forwards `/v1` and the browser's Authorization header
+to the coordinator. Page routes use the SPA fallback; API routes do not.
+Enter the root `.env` owner key in **Connection settings** when prompted.
+To remove the stored key, clear the field and reconnect, or close the tab.
+
+This Compose profile binds only to loopback. Keep a remote console behind a
+private tunnel/port-forward or an HTTPS reverse proxy. The static image contains
+no secrets. Its API upstream is `server:8080`; change the Nginx configuration
+if your private service has another name.
+
+## Verification
+
+`npm test` runs Playwright workflows with controlled REST responses.
+`npm run build` checks TypeScript and builds the app. `npm run format:check` checks
+formatting. CI uses Node 24.14 and Chromium. Install the browser locally with
+`npx playwright install chromium` when testing locally.
+
+The opt-in live check requires a published fixture image and the JSON generated
+by the main quickstart. It creates five small experiment runs (including rerun
+and sweep members) and checks submission, charts, logs, downloads, comparison,
+cancellation, cleanup, and capacity against the actual coordinator:
+
+```sh
+cd ui
+RUNYARD_UI_URL=http://127.0.0.1:3000 npm run test:live
+```
+
+The script reads the owner key server-side from the root `.env` or process
+environment and supplies it to its isolated browser tab. Use
+`RUNYARD_UI_FIXTURE` to choose another fixture JSON path relative to `ui`.
+The record is written to `.local/ui-acceptance.json`; the runs remain inspectable
+in the backend.
