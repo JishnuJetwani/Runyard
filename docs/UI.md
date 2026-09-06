@@ -46,3 +46,34 @@ requests. Do not use `VITE_` variables for credentials.
 npm run build
 npm test
 ```
+
+## Workflows
+
+- **Experiments:** filter by status, search loaded runs, and select up to four to
+  compare. Counts and sorting cover loaded rows only. The server paginates by ID,
+  so later pages may include newer runs.
+- **New experiment:** enter or import a specification, choose resources, and
+  submit a run or sweep. Retrying an unchanged submission reuses its request key.
+- **Run details:** inspect any attempt's output, export configuration, cancel a
+  run, rerun it, or use it as a template.
+- **Compare:** view current-attempt metrics and parameter differences, with a
+  table of plotted values.
+- **Capacity:** inspect Docker workers or Kubernetes nodes, check GPU inventory,
+  and drain or resume Docker workers. Stale availability is shown as unknown.
+
+Log polling uses sequence cursors and removes duplicates. The view holds up to
+2,000 chunks or two million characters, with each chunk capped at 200,000 characters.
+Metrics keep the latest 10,000 samples per attempt. Truncation is marked, and exports
+contain only the loaded data. Full published log archives are available as artifacts.
+Changing attempts resets the cursor. Polling stops after a finished attempt's
+saved output has been read.
+
+Cancelled runs can still show pending cleanup until the process is confirmed stopped.
+
+## Code organization
+
+`src/lib` contains the API client, formatting, and telemetry polling.
+`src/features` contains pages; `features/run` contains the run-detail tabs.
+Shared UI components live in `src/components`. TanStack Query caches server data,
+while form drafts stay in component state. Charts load on demand. Fonts are
+self-hosted, and npm dependencies are locked.

@@ -7,9 +7,21 @@ import App from './App';
 import { ApiError } from './lib/api';
 import './styles.css';
 
-const queryClient = new QueryClient({ defaultOptions: { queries: {
-  retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 1,
-  staleTime: 2000,
-  refetchOnWindowFocus: true,
-} } });
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><QueryClientProvider client={queryClient}><BrowserRouter><App /></BrowserRouter></QueryClientProvider></React.StrictMode>);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 1,
+      staleTime: 2000,
+      refetchOnWindowFocus: true,
+    },
+  },
+});
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </QueryClientProvider>
+  </React.StrictMode>,
+);
