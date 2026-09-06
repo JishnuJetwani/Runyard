@@ -2,7 +2,8 @@
 
 Runyard runs containerized experiments on Docker workers or Kubernetes Jobs.
 It keeps each run's configuration, image digest, attempt history, and output.
-The backend is written in C++20 for one trusted owner, with a C++ CLI.
+The backend is written in C++20 for one trusted owner, with a React/TypeScript
+dashboard and a C++ CLI.
 
 The backend handles scheduling, leases, retries, cancellation, and parameter
 sweeps. It includes NVIDIA GPU allocation, filesystem/S3 storage, monitoring,
@@ -11,6 +12,7 @@ and AWS infrastructure definitions.
 ```mermaid
 flowchart LR
   CLI[C++ CLI] -->|REST| Server[Coordinator]
+  UI[React dashboard] -->|REST| Server
   Agent[Docker agent] -->|gRPC| Server
   Agent -->|Engine API| Container[Experiment container]
   Server -->|Kubernetes API| Job[Experiment Job]
@@ -27,6 +29,7 @@ leases, and results for both.
 | Area | Technologies |
 |---|---|
 | Services | C++20, Drogon, gRPC/Protobuf, CLI11 |
+| Dashboard | React, TypeScript, Vite, TanStack Query, Recharts, Playwright |
 | Persistence and integration | PostgreSQL/libpqxx, libcurl, AWS SDK for C++ |
 | Execution | Docker Engine API, Kubernetes Jobs, NVML GPU discovery, shared Linux process supervisor |
 | Operations | spdlog, prometheus-cpp, Prometheus, Grafana |
@@ -68,6 +71,30 @@ The three local workers share one Docker engine and each advertise 1 CPU and
 1 GiB of memory. HTTP uses localhost:8080 and gRPC uses localhost:9090.
 PostgreSQL stays inside the Compose network. A separate migration container runs
 before the server starts.
+
+## Dashboard
+
+With the local coordinator running:
+
+```bash
+cd ui
+npm ci
+npm run dev
+```
+
+Open `http://127.0.0.1:5180` to submit runs and sweeps, read logs, compare metrics,
+download artifacts, and check capacity. The development proxy reads the owner key
+from `.env`; the key stays out of browser assets. Requires Node.js 24.14+.
+
+A packaged Nginx image is also available, from the repository root:
+
+```bash
+docker compose -f compose.yaml -f deploy/ui.compose.yaml up -d --build ui
+```
+
+Open `http://127.0.0.1:3000` and enter the owner API key in **Connection settings**.
+See [dashboard operations and architecture](docs/UI.md) for authentication,
+deployment, bounded telemetry, and verification commands.
 
 ## Experiment contract
 
