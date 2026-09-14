@@ -1,0 +1,4057 @@
+{
+  "timestamp_utc": "2026-09-19T05:47:13.703154+00:00",
+  "revision": "3da9336427698516dd9b6615c8bd51b56c49b770",
+  "worker_count": 12,
+  "gpu_hardware_used": false,
+  "runtime_processes_launched": 0,
+  "mode": "synthetic GPU inventories and runner RPC clients against real coordinator/PostgreSQL",
+  "duplicate_device_advertisement": "FAILED_PRECONDITION",
+  "waves": [
+    {
+      "sweep_id": "84562ef2811c4c3d64748e458ad95b2f",
+      "attempts": {
+        "02eaaafbad0ca522e1a347c61989752c": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.78228+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:13.810552+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.783437+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:13.950094+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "954b55fd07a4806245a436425ed9075d",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "02eaaafbad0ca522e1a347c61989752c",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.800903+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "e2ddecaaedd89f1d8144528197d918ec": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.783678+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.845255+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.785601+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:13.974236+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "a65bc8849d5a8c788d38c1c2f909de75",
+            "node_name": "",
+            "reason": "",
+            "run_id": "e2ddecaaedd89f1d8144528197d918ec",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.84013+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "55743ef551f7efc45450fc8010538639": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.784319+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.869157+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.785581+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:13.987015+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "85237b789951b1bea4a09794730bec96",
+            "node_name": "",
+            "reason": "",
+            "run_id": "55743ef551f7efc45450fc8010538639",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.862951+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "a183cfe4f6cdd436eb651e2aa25709ce": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.784553+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.90429+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.786022+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:14.004778+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "076f60a8dcfdf2d1f88ef483ef6f8ce8",
+            "node_name": "",
+            "reason": "",
+            "run_id": "a183cfe4f6cdd436eb651e2aa25709ce",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.89913+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ],
+        "7aa01a617c9a69b41fae22bb653a9dc2": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.784772+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.893189+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.786384+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:13.997569+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "652dde317b8cab6def4feb253486b040",
+            "node_name": "",
+            "reason": "",
+            "run_id": "7aa01a617c9a69b41fae22bb653a9dc2",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.887928+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "1453c9f089a41b1c8aab9b72f324aee1": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.785026+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.857144+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.786225+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:13.980356+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "2101b533a78e1e1422d3afb643e94413",
+            "node_name": "",
+            "reason": "",
+            "run_id": "1453c9f089a41b1c8aab9b72f324aee1",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.851022+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "dcb4584038effa3738cf01cbb2e3989b": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.78538+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.822949+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.786518+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:13.962402+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "596b34f1991669b23fc9f63a23a188f0",
+            "node_name": "",
+            "reason": "",
+            "run_id": "dcb4584038effa3738cf01cbb2e3989b",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.818993+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "def174382c206f9ba143ab0f5a19d92e": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.785586+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.927112+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.787005+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:14.015032+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "32ad2ae4a067929604a54c04befcbdbf",
+            "node_name": "",
+            "reason": "",
+            "run_id": "def174382c206f9ba143ab0f5a19d92e",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.922256+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "4bf656e5d7867805fbc604f85a4128b3": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.787112+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.882194+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.788164+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:13.99229+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "54734a78a0dacc49b41e14a434517965",
+            "node_name": "",
+            "reason": "",
+            "run_id": "4bf656e5d7867805fbc604f85a4128b3",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.875872+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ],
+        "16ca9e2e9836d5ed7ec5821b0ab73c4c": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.788509+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.939093+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.789143+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:14.020262+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "e7aa34568eca3d44154109f8e6b11524",
+            "node_name": "",
+            "reason": "",
+            "run_id": "16ca9e2e9836d5ed7ec5821b0ab73c4c",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.933084+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "f688b56ab877ac7be5fca0e7015f0e6f": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.78876+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.834169+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.789308+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:13.970451+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "1fa081746882b11f810ad154fd5a74c9",
+            "node_name": "",
+            "reason": "",
+            "run_id": "f688b56ab877ac7be5fca0e7015f0e6f",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.827783+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "279a32283e5bc2964748cd3854548fa4": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:13.789191+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:13.916236+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:13.789783+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:14.011023+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "35ba5e573271926c8fad8d3a1b0fd454",
+            "node_name": "",
+            "reason": "",
+            "run_id": "279a32283e5bc2964748cd3854548fa4",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:13.910059+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.006419459008611739,
+        0.009438666980713606,
+        0.011323457991238683,
+        0.008367458009161055,
+        0.008827124955132604,
+        0.008011500001884997,
+        0.009694250009488314,
+        0.008481416036374867,
+        0.008333208970725536,
+        0.010771540983114392,
+        0.008524791046511382,
+        0.010094000026583672
+      ]
+    },
+    {
+      "sweep_id": "c86296be1a2ef5233372bf4b31e9eab0",
+      "attempts": {
+        "af3a8350c7cecd5836d6b8b1010d32c0": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.092958+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:14.117261+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.093696+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:14.245906+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "17a582918756b0fc5d3076544f0c0d58",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "af3a8350c7cecd5836d6b8b1010d32c0",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.109053+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "0802b83fc91b6082095caddd8708f981": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.093128+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.150095+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.093994+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:14.258917+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "3fbd867985d919ced13078ae747a3fe6",
+            "node_name": "",
+            "reason": "",
+            "run_id": "0802b83fc91b6082095caddd8708f981",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.144725+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "a0e36ffa841339bd5b191ee50c6d3ce5": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.093891+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.172046+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.095129+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:14.266847+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "94c5cd90012432fa4d8b7e3b272d25c1",
+            "node_name": "",
+            "reason": "",
+            "run_id": "a0e36ffa841339bd5b191ee50c6d3ce5",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.166904+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "2e634cac0bcd9f0c9e9c64904a872c72": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.093796+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.128992+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.094581+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:14.250037+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "841c1b52bf0b8a462c1ecb68315d9819",
+            "node_name": "",
+            "reason": "",
+            "run_id": "2e634cac0bcd9f0c9e9c64904a872c72",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.124825+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "77d99f72d86e73b74b4eacdf66ba378f": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.0942+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.19088+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.095274+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:14.273919+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "5eebe8204de91618a5687c098b728d52",
+            "node_name": "",
+            "reason": "",
+            "run_id": "77d99f72d86e73b74b4eacdf66ba378f",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.186731+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "1398eb820a10ccacfc85a272a7373a9c": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.094081+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.161058+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.09483+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:14.26305+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "bba9e6c2ac95c6b3fa117c54ffa13419",
+            "node_name": "",
+            "reason": "",
+            "run_id": "1398eb820a10ccacfc85a272a7373a9c",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.15602+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "de71eb209501efe680064db3ae201416": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.09418+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.18222+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.09474+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:14.270051+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "7a4809b8b0bfe544608176c2ec64e786",
+            "node_name": "",
+            "reason": "",
+            "run_id": "de71eb209501efe680064db3ae201416",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.176733+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ],
+        "901c05b11b5f9612fd13e25edc65ab6e": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.094442+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.215069+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.09536+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:14.283015+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "f627021cdd257d68715d4cb38bc41aaa",
+            "node_name": "",
+            "reason": "",
+            "run_id": "901c05b11b5f9612fd13e25edc65ab6e",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.208998+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "487c1dc48906216cf8fead62d2e1204b": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.096109+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.237114+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.096683+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:14.290897+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "f7afde8d104264d2025076a9b73e3325",
+            "node_name": "",
+            "reason": "",
+            "run_id": "487c1dc48906216cf8fead62d2e1204b",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.230963+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "f257962c9d1bb2df99cc101ea871dfd3": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.096847+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.203215+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.097251+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:14.279185+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "c6a806320b69d1fa7bc2309ee310176b",
+            "node_name": "",
+            "reason": "",
+            "run_id": "f257962c9d1bb2df99cc101ea871dfd3",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.196943+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ],
+        "406b94f55292b7005a998bb404b5eb2b": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.097136+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.139901+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.097542+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:14.254107+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "d493d3de52035b29ecf483eb252d8af4",
+            "node_name": "",
+            "reason": "",
+            "run_id": "406b94f55292b7005a998bb404b5eb2b",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.134982+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "7edcacbc852dae1b59afd90c2c56d286": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.097291+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.224892+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.097718+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:14.286982+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "532b49935590fb2edc29be07b4140bbb",
+            "node_name": "",
+            "reason": "",
+            "run_id": "7edcacbc852dae1b59afd90c2c56d286",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.221024+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.004532833001576364,
+        0.005810457980260253,
+        0.007462874986231327,
+        0.004598208994138986,
+        0.005613874993287027,
+        0.005957624991424382,
+        0.0050247920444235206,
+        0.006125666957814246,
+        0.007032375026028603,
+        0.005603832949418575,
+        0.007389082980807871,
+        0.006475834001321346
+      ]
+    },
+    {
+      "sweep_id": "a5658adc86eebaf92c8c05116681941a",
+      "attempts": {
+        "c69dd02e5d39b17ea6b2f480509a0d93": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.347633+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:14.372408+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.348188+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:14.51104+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "0edeeaffca08e903df3f4b7b53ad0ade",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "c69dd02e5d39b17ea6b2f480509a0d93",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.363056+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "805197dfd5af394a414100f4df8a7be3": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.34787+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.389176+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.348689+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:14.515062+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "5b1fd7134e74924f0d024e1a58f0501f",
+            "node_name": "",
+            "reason": "",
+            "run_id": "805197dfd5af394a414100f4df8a7be3",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.382956+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "39aaf26956588755fa707c7d05a15021": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.348288+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.457156+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.348735+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:14.538987+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "3c8a51e6ad080a0519a97ebdfe305399",
+            "node_name": "",
+            "reason": "",
+            "run_id": "39aaf26956588755fa707c7d05a15021",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.451996+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "9d9761f9829983759af5b056c36e5a53": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.34854+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.409913+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.349008+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:14.523015+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "04bc82faab63da9a389dc7bf2ae1d183",
+            "node_name": "",
+            "reason": "",
+            "run_id": "9d9761f9829983759af5b056c36e5a53",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.405721+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "97371036fc09ec3a3d3e56fc30b7d36f": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.348835+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.422073+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.349861+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:14.527089+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "996c39b967cae25138ce02f9dd7ec400",
+            "node_name": "",
+            "reason": "",
+            "run_id": "97371036fc09ec3a3d3e56fc30b7d36f",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.41598+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "b612995788946342d6ddc470bd1f380a": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.348787+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.434225+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.349198+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:14.530918+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "396e62b1763329fbdeb2388c0f81f46a",
+            "node_name": "",
+            "reason": "",
+            "run_id": "b612995788946342d6ddc470bd1f380a",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.428039+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "82c42e6b4575bfbe34f4155adc6a7015": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.348969+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.401061+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.349831+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:14.519057+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "fc2e52a485d99799bd2aea01410d37e7",
+            "node_name": "",
+            "reason": "",
+            "run_id": "82c42e6b4575bfbe34f4155adc6a7015",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.395035+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "0d9d26552ce80e4aded5c3102e29a162": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.349315+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.44615+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.350058+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:14.534989+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "37c99a7f0a4f2ccf835a013cbaf5500d",
+            "node_name": "",
+            "reason": "",
+            "run_id": "0d9d26552ce80e4aded5c3102e29a162",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.440058+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ],
+        "9c9ffb4bdc4a8c7061e12bab4208cca2": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.350192+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.466882+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.350968+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:14.542891+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "37a59a8f9fd623661655405a9bbfd422",
+            "node_name": "",
+            "reason": "",
+            "run_id": "9c9ffb4bdc4a8c7061e12bab4208cca2",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.463068+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ],
+        "a7f4b84f22455fd776bde3d6f551e4f3": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.350715+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.478148+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.351356+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:14.546843+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "5933d98340d770eec3611099ac69f5b2",
+            "node_name": "",
+            "reason": "",
+            "run_id": "a7f4b84f22455fd776bde3d6f551e4f3",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.473091+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "082ea88efa86d883afd1cb3a64ed0f55": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.350663+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.490172+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.351301+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:14.551052+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "b119803c47643129a5b12cb908fc5fd0",
+            "node_name": "",
+            "reason": "",
+            "run_id": "082ea88efa86d883afd1cb3a64ed0f55",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.484043+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "93a21663e5358195739b2092612b40e9": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.351745+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.502156+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.352067+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:14.555068+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "04cf140ab770b938f5f77e0d9608c12c",
+            "node_name": "",
+            "reason": "",
+            "run_id": "93a21663e5358195739b2092612b40e9",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.495978+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.004200583032798022,
+        0.004748458042740822,
+        0.00562462501693517,
+        0.004860791959799826,
+        0.005770791962277144,
+        0.005180416977964342,
+        0.005885791964828968,
+        0.004698665987234563,
+        0.0061742920079268515,
+        0.006556082982569933,
+        0.0064758750377222896,
+        0.006985874962992966
+      ]
+    },
+    {
+      "sweep_id": "5e4fe5733bc461276fae4b349f68fd59",
+      "attempts": {
+        "ed937bc3b6520e040cf7f2d0f3d90cf5": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.624206+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.690206+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.62481+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:14.831008+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "6dce11906c9f97b79801bbefd7b2a651",
+            "node_name": "",
+            "reason": "",
+            "run_id": "ed937bc3b6520e040cf7f2d0f3d90cf5",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.671184+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "5b83bcb73dfff9e643986254aba51755": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.624408+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:14.650173+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.625295+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:14.82694+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "2523b7f96e2587af139969a4427ed9c0",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "5b83bcb73dfff9e643986254aba51755",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.640059+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "9e0783bb1bcd514f7611c29b6bfc3fe0": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.624327+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.723139+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.625289+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:14.839002+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "1b1fbf6abc3b5d3fc4f9428d0ec247bf",
+            "node_name": "",
+            "reason": "",
+            "run_id": "9e0783bb1bcd514f7611c29b6bfc3fe0",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.717934+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "b85d653a51b522e9393e61d74c2c4529": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.624558+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.746243+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.625482+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:14.846849+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "e3c3c4e2aeac61609d8b44ee9a4c4f7a",
+            "node_name": "",
+            "reason": "",
+            "run_id": "b85d653a51b522e9393e61d74c2c4529",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.739987+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "d54cac2b6f14fab7b7e5734c24d6d94c": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.625066+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.793995+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.626045+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:14.864056+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "3d353db4e0895e5836a916b3a15c3799",
+            "node_name": "",
+            "reason": "",
+            "run_id": "d54cac2b6f14fab7b7e5734c24d6d94c",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.787961+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "e38a5ab8bcb9032cb8d43efa3fe5550a": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.625093+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.77011+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.626038+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:14.856228+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "1f57280b1b5d42c915afc8e23d8041f3",
+            "node_name": "",
+            "reason": "",
+            "run_id": "e38a5ab8bcb9032cb8d43efa3fe5550a",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.764038+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "9d14253094341858fe171e0ba26c9472": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.62519+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.734002+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.625994+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:14.842876+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "8842565c9bd3ebcc48ba6702d07136f3",
+            "node_name": "",
+            "reason": "",
+            "run_id": "9d14253094341858fe171e0ba26c9472",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.72906+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "eca76788c6cd7a464a41b51a78146816": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.625274+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.818208+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.626039+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:14.872037+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "eaf3749eb7bb77aba5da2baa9924f6cc",
+            "node_name": "",
+            "reason": "",
+            "run_id": "eca76788c6cd7a464a41b51a78146816",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.811773+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "cf36dda2b7fadc4c030938fa782328a3": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.627708+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.782213+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.628212+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:14.860234+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "b3668f3085d10dd87bd945d81a5562ff",
+            "node_name": "",
+            "reason": "",
+            "run_id": "cf36dda2b7fadc4c030938fa782328a3",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.775955+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ],
+        "084f3118469171afc7bb0a84b51ca2ea": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.627718+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.806765+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.628199+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:14.868253+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "68b23ed478486f89d7e2face64b40b8f",
+            "node_name": "",
+            "reason": "",
+            "run_id": "084f3118469171afc7bb0a84b51ca2ea",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.799984+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "6af16e21fd68909a35f19b780437504b": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.627992+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.710099+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.628446+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:14.835041+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "2d3616c99954a74f99fe6675e3bcd135",
+            "node_name": "",
+            "reason": "",
+            "run_id": "6af16e21fd68909a35f19b780437504b",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.703384+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "0dbc9233c06e9a14b5845b63a500423b": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.628145+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.758131+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.628579+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:14.850933+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "7634e91d5aa22d4304740db875c9f490",
+            "node_name": "",
+            "reason": "",
+            "run_id": "0dbc9233c06e9a14b5845b63a500423b",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.751952+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.004954833013471216,
+        0.004761959018651396,
+        0.007459124957676977,
+        0.004789958999026567,
+        0.005538124998565763,
+        0.005139250017236918,
+        0.0074378750286996365,
+        0.005216083023697138,
+        0.0071362080052495,
+        0.005412917002104223,
+        0.0071472079725936055,
+        0.0053421250195242465
+      ]
+    },
+    {
+      "sweep_id": "811e68fb90335e968867fe6d0ec8b693",
+      "attempts": {
+        "6c027b480a7681f1f8320e5629dfcd26": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.933006+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:14.961029+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.933926+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:15.101002+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "4a3b8fba5415ba6dda16cdc0fdf29048",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "6c027b480a7681f1f8320e5629dfcd26",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.948181+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "2cd43a9aeb83b575f127363de51604b6": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.933158+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.97701+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.933798+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:15.105032+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "3967804a287599e6283f14492b1fa971",
+            "node_name": "",
+            "reason": "",
+            "run_id": "2cd43a9aeb83b575f127363de51604b6",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.971028+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "0854e15ca754182fed4b5180b5f3635e": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.933148+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.020874+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.933683+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:15.120981+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "c3e68e1e788a75608fa2fcfaf68587f7",
+            "node_name": "",
+            "reason": "",
+            "run_id": "0854e15ca754182fed4b5180b5f3635e",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.017111+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "61f0d357c523c9121f651b01834528c1": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.933515+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.000155+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.934447+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:15.113021+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "913beb962274689b4d04134bc85f81ff",
+            "node_name": "",
+            "reason": "",
+            "run_id": "61f0d357c523c9121f651b01834528c1",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.993982+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "16e7d611b61480a4d48901db729a72b3": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.933514+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.044231+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.934171+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:15.128963+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "d95e0b1150640a8524ff50f19b455de5",
+            "node_name": "",
+            "reason": "",
+            "run_id": "16e7d611b61480a4d48901db729a72b3",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.038018+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "a6ecbbdc54f828abd3022aab4c38957b": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.933991+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.067018+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.934782+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:15.136929+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "3107340082b6a1cb8bd6dec4df0ae701",
+            "node_name": "",
+            "reason": "",
+            "run_id": "a6ecbbdc54f828abd3022aab4c38957b",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.062122+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "6ed6f457b81745bc5b59df9b5de698b0": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.934631+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.091093+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.935725+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:15.144004+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "9a2e9f9f44a279ce97939f075c711575",
+            "node_name": "",
+            "reason": "",
+            "run_id": "6ed6f457b81745bc5b59df9b5de698b0",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.085042+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "f7384ce8a1e84c6cf1fc2b699d436417": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.935045+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.079173+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.936227+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:15.140043+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "f38b75f559f1ed2ff5f54e6b13da8b27",
+            "node_name": "",
+            "reason": "",
+            "run_id": "f7384ce8a1e84c6cf1fc2b699d436417",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.073904+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "23cede9c11e56c421829a1e5d1b5ab12": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.935805+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.011379+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.936347+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:15.117053+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "845a6e0653018aaf52043ccfb70583ec",
+            "node_name": "",
+            "reason": "",
+            "run_id": "23cede9c11e56c421829a1e5d1b5ab12",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.005975+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "ffc2b40558ba8f6c8c9d7667cfcd8bb5": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.936324+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:14.988129+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.936932+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:15.108898+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "560f038644e5838be3b7b02839d18b78",
+            "node_name": "",
+            "reason": "",
+            "run_id": "ffc2b40558ba8f6c8c9d7667cfcd8bb5",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:14.982889+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "7a38a106689f8b745a9381432b623364": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.936776+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.032182+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.937186+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:15.125023+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "d9d368b207edb6377ca88651e6d369e7",
+            "node_name": "",
+            "reason": "",
+            "run_id": "7a38a106689f8b745a9381432b623364",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.026986+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ],
+        "b0770838f39e00b50466e154f06ac2fc": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:14.937123+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.056116+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:14.937434+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:15.13306+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "5e2b5f117156c5193967a04f33635794",
+            "node_name": "",
+            "reason": "",
+            "run_id": "b0770838f39e00b50466e154f06ac2fc",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.04981+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.004695750016253442,
+        0.004736083035822958,
+        0.006983791012316942,
+        0.005312208959367126,
+        0.0066220409935340285,
+        0.004280459019355476,
+        0.007038875017315149,
+        0.0050988749717362225,
+        0.007198791019618511,
+        0.005137166997883469,
+        0.006240624992642552,
+        0.00586012500571087
+      ]
+    },
+    {
+      "sweep_id": "9dcebe815acdedeab444b9c567f54afd",
+      "attempts": {
+        "bff2ae8160b365beafbe4504c41a5d31": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.20057+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:15.225971+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.201239+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:15.357076+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "115652d95f11e2f8cd27a3c91568cbb2",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "bff2ae8160b365beafbe4504c41a5d31",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.216008+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "71adb0eef66bb3c2b3df9f91c87e2cc5": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.200598+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.307073+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.201318+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:15.384047+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "4bd153e6b0485a37502b4591f99f20ec",
+            "node_name": "",
+            "reason": "",
+            "run_id": "71adb0eef66bb3c2b3df9f91c87e2cc5",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.300957+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "77c11d409bbf5580c92efc163c6d059b": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.200914+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.271847+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.201771+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:15.372991+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "93ba51c99ffeb8bb77c486a8db425179",
+            "node_name": "",
+            "reason": "",
+            "run_id": "77c11d409bbf5580c92efc163c6d059b",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.267984+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "17bfd32cc17ea34865ce491e388c703e": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.201137+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.318144+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.201666+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:15.389096+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "9c721e09e520b0f1b83713909220bc74",
+            "node_name": "",
+            "reason": "",
+            "run_id": "17bfd32cc17ea34865ce491e388c703e",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.313006+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ],
+        "42a15952a7b7d00046c015d9df1f3fbb": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.201513+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.28407+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.201759+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:15.37702+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "d5f98098a24cfa67c1992f82fe307074",
+            "node_name": "",
+            "reason": "",
+            "run_id": "42a15952a7b7d00046c015d9df1f3fbb",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.277963+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "1d38becf1a8d5103331a278b8506a5f8": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.201652+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.337182+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.202169+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:15.397017+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "1291121bffbf502eef6a64a98e5548a8",
+            "node_name": "",
+            "reason": "",
+            "run_id": "1d38becf1a8d5103331a278b8506a5f8",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.332754+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "61d180c98a960a63482562f3db0a62be": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.202367+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.240088+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.202748+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:15.360936+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "680ba95a0beabc5c53c34230e83a1b1e",
+            "node_name": "",
+            "reason": "",
+            "run_id": "61d180c98a960a63482562f3db0a62be",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.233925+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "14ef696136900c620477245373527d80": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.203605+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.252086+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.204087+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:15.364888+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "1cea5023cbac73ccf7f8c21f63164228",
+            "node_name": "",
+            "reason": "",
+            "run_id": "14ef696136900c620477245373527d80",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.246045+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "2200cfc5da31fb7d8e4c92b8e5005624": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.203822+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.327869+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.204309+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:15.392938+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "6f8291070e49c46c53351d10b627ae67",
+            "node_name": "",
+            "reason": "",
+            "run_id": "2200cfc5da31fb7d8e4c92b8e5005624",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.323987+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "cb17b19b0f8022958604d4859e138397": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.203546+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.295195+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.204203+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:15.380946+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "6cc3f1a7e0007f00fb53f7e9a93906a8",
+            "node_name": "",
+            "reason": "",
+            "run_id": "cb17b19b0f8022958604d4859e138397",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.290026+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ],
+        "dd6792779ac3da10dba61acb8ba5c5b5": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.203684+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.348211+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.204138+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:15.401122+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "96266685adec753a8c828705889ae2a7",
+            "node_name": "",
+            "reason": "",
+            "run_id": "dd6792779ac3da10dba61acb8ba5c5b5",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.342975+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "052c1bacb716b0030121d7584e66c54c": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.203741+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.261888+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.20428+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:15.369034+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "fe9e032dae2d813517902921d53397dc",
+            "node_name": "",
+            "reason": "",
+            "run_id": "052c1bacb716b0030121d7584e66c54c",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.258054+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.0047717500128783286,
+        0.005371584033127874,
+        0.0063620839500799775,
+        0.00626216601813212,
+        0.004909084003884345,
+        0.004754207970108837,
+        0.006209791987203062,
+        0.0046583329676650465,
+        0.00473991601029411,
+        0.0062423329800367355,
+        0.0047694999957457185,
+        0.006323457986582071
+      ]
+    },
+    {
+      "sweep_id": "e96375d20e1a8940e40fd122a2a88310",
+      "attempts": {
+        "d98a2343398e5aee3240e6bda4a9f7d5": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.459966+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.545136+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.460545+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:15.644965+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "e429c9bc9def7f13de5550fbb77de01e",
+            "node_name": "",
+            "reason": "",
+            "run_id": "d98a2343398e5aee3240e6bda4a9f7d5",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.539048+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "38f9167a28529e154c2cf36b5868d576": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.46015+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.522187+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.461271+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:15.638082+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "9a4ca539ec461f7f2990ba7792df1045",
+            "node_name": "",
+            "reason": "",
+            "run_id": "38f9167a28529e154c2cf36b5868d576",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.516952+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "020a9bbb0a64f9bae8f86b91baed810a": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.460204+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:15.483716+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.461023+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:15.625944+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "9b07bbb215903f0fe7dda2f8e02f04c7",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "020a9bbb0a64f9bae8f86b91baed810a",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.476063+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "7f14c8585b256cfb0b3f31a036faef55": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.460375+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.500055+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.461226+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:15.629995+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "efe3ed916f61d608286dd9589c549970",
+            "node_name": "",
+            "reason": "",
+            "run_id": "7f14c8585b256cfb0b3f31a036faef55",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.494027+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "cc3f71a9bc1d7a3204fa0af4fa51792d": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.46068+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.569059+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.461143+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:15.652924+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "4b55a764828ca9b05595c701a0783719",
+            "node_name": "",
+            "reason": "",
+            "run_id": "cc3f71a9bc1d7a3204fa0af4fa51792d",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.563005+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "1a84e0c0ad62b12f2aef9b6aa1029332": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.461149+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.593119+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.461686+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:15.66109+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "4b2fef5f4a2d6e50dd9d4337279c41e7",
+            "node_name": "",
+            "reason": "",
+            "run_id": "1a84e0c0ad62b12f2aef9b6aa1029332",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.586013+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "b4d3cf93a13e72776f4cbafa0e66e077": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.461125+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.617038+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.462221+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:15.668935+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "20cbe8c1cfde9ca0a56afc2b21a3cd25",
+            "node_name": "",
+            "reason": "",
+            "run_id": "b4d3cf93a13e72776f4cbafa0e66e077",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.610094+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "a5032f1f3086c97bb545c75a46b71481": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.462716+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.604204+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.463253+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:15.66512+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "358c9b70f36f6f04b5e2060922afe163",
+            "node_name": "",
+            "reason": "",
+            "run_id": "a5032f1f3086c97bb545c75a46b71481",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.599032+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "66278fef4736648e1000ab7f196da952": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.463137+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.533181+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.463963+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:15.641894+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "8610ef63919d183782cb38a9958dac22",
+            "node_name": "",
+            "reason": "",
+            "run_id": "66278fef4736648e1000ab7f196da952",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.528059+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "bd1c0439ff3bcafacb0449488f48f66e": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.463284+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.510949+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.463921+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:15.633912+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "283ea63a0da0eea26958c346aa900b5f",
+            "node_name": "",
+            "reason": "",
+            "run_id": "bd1c0439ff3bcafacb0449488f48f66e",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.504768+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "6f508b65b17b9d505e5bb896def998d4": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.463643+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.580166+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.464278+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:15.657246+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "95a4eea24ef8f3385db5cdd1f9dda7d5",
+            "node_name": "",
+            "reason": "",
+            "run_id": "6f508b65b17b9d505e5bb896def998d4",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.575053+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ],
+        "47c47ee7f4358b83c9d5c15d0efc8d83": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.463906+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.557043+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.464379+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:15.648904+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "47fca06e389ecded11fb660f43b456df",
+            "node_name": "",
+            "reason": "",
+            "run_id": "47c47ee7f4358b83c9d5c15d0efc8d83",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.551048+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.004444582969881594,
+        0.00489337497856468,
+        0.006764749996364117,
+        0.0048698330065235496,
+        0.006824125011917204,
+        0.0037817080155946314,
+        0.007116957975085825,
+        0.004518374975305051,
+        0.007037292001768947,
+        0.004845667048357427,
+        0.006268583005294204,
+        0.005523417028598487
+      ]
+    },
+    {
+      "sweep_id": "2ed85dc65d54364a1655ca657a9b6bdf",
+      "attempts": {
+        "e96a75ca8fd346838ab58b94742d9ff4": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.745817+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.836208+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.746583+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:15.93916+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "8ae96713d8050f317d19004068bb67e4",
+            "node_name": "",
+            "reason": "",
+            "run_id": "e96a75ca8fd346838ab58b94742d9ff4",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.830041+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "b7a8e931bf14b75974a118cb124884a7": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.745803+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.789185+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.746438+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:15.923096+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "ed908cdf26185e0d92786dd233141159",
+            "node_name": "",
+            "reason": "",
+            "run_id": "b7a8e931bf14b75974a118cb124884a7",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.784106+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "26b19a88e10fd0385794fa2b229577c1": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.746172+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.861345+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.746931+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:15.950011+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "53d131227dfd5ea8fcb5537b8623a6a1",
+            "node_name": "",
+            "reason": "",
+            "run_id": "26b19a88e10fd0385794fa2b229577c1",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.854062+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "19c038750c8a8c65b57ba5ebc10ba4c1": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.746194+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.884228+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.746893+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:15.960217+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "406b3ed0f527da749b3e8c074d82a7dc",
+            "node_name": "",
+            "reason": "",
+            "run_id": "19c038750c8a8c65b57ba5ebc10ba4c1",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.879073+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "132407715b6d21e8cf070361d3c9c04f": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.746348+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.824204+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.74742+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:15.935111+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "95c5cd64d5de1e64f376491f8588bee6",
+            "node_name": "",
+            "reason": "",
+            "run_id": "132407715b6d21e8cf070361d3c9c04f",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.819016+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "4f882f4fe72edfe3554bc1aa860ab563": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.746744+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.908263+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.747572+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:15.968033+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "dcfe8f0000497526e82cfa178e96aeab",
+            "node_name": "",
+            "reason": "",
+            "run_id": "4f882f4fe72edfe3554bc1aa860ab563",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.900909+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "d6e99b7ba55065d042e6129dfcd29129": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.747048+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.873227+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.74773+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:15.956308+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "a2848d6a460308102196e9f6d61d29d0",
+            "node_name": "",
+            "reason": "",
+            "run_id": "d6e99b7ba55065d042e6129dfcd29129",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.868053+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ],
+        "9f9f0f6c401dc10cc308d0372b4b1dee": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.747007+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.800987+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.747505+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:15.927068+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "191f038a2388a3f85370e71037294b35",
+            "node_name": "",
+            "reason": "",
+            "run_id": "9f9f0f6c401dc10cc308d0372b4b1dee",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.795006+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "3764d0f04fbf3b04911c0c2be74b92e1": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.748636+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:15.773313+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.749397+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:15.919055+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "cd28f141d1e03b001a9594407c92e9a3",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "3764d0f04fbf3b04911c0c2be74b92e1",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.76303+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "09a502d8fcdbbb7697453a865de77c6c": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.749225+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.896122+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.750136+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:15.963973+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "24938ccf200c22cb27810ca6d8a87e78",
+            "node_name": "",
+            "reason": "",
+            "run_id": "09a502d8fcdbbb7697453a865de77c6c",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.890009+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "7d097f9ce85cb0eac5986af68b460600": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.749193+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.813135+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.749815+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:15.931242+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "84993c8a1d5b9615fe421920c3311a8e",
+            "node_name": "",
+            "reason": "",
+            "run_id": "7d097f9ce85cb0eac5986af68b460600",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.807038+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "6cefa250ca6a1ad4c01443dc00c9c0bb": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:15.750913+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:15.848126+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:15.751238+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:15.945293+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "922d5968e1669d53c64c14d0eaf7f30e",
+            "node_name": "",
+            "reason": "",
+            "run_id": "6cefa250ca6a1ad4c01443dc00c9c0bb",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:15.841934+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.007981958042364568,
+        0.004692792019341141,
+        0.005882416968233883,
+        0.008118333003949374,
+        0.006137790973298252,
+        0.005036666989326477,
+        0.008934208017308265,
+        0.005742792040109634,
+        0.006324291985947639,
+        0.005563208018429577,
+        0.008135832962580025,
+        0.006328749994281679
+      ]
+    },
+    {
+      "sweep_id": "e6ec31d71f19be86107b52c6206ddbc3",
+      "attempts": {
+        "bef244bdfeb66db85f712912d80c9977": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.025642+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:16.050961+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.026177+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:16.194037+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "a7f4e2eb3bbf6de071c0b7e6124ab5fc",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "bef244bdfeb66db85f712912d80c9977",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.042017+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "24312a170f7799dc1d0d87becc5766b7": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.02599+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.090242+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.026643+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:16.206004+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "a111253f34986d0362fbb7d20497281d",
+            "node_name": "",
+            "reason": "",
+            "run_id": "24312a170f7799dc1d0d87becc5766b7",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.08524+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "864e173f71f18b1fb382ee3634390b98": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.026162+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.099179+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.026733+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:16.2099+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "73eb17002221bbe6c861c3681ae351cd",
+            "node_name": "",
+            "reason": "",
+            "run_id": "864e173f71f18b1fb382ee3634390b98",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.094757+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "0267c698b9f10c6b8d1912fc6b60e006": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.026389+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.128057+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.027031+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:16.219056+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "823e5ea6d836f3dfd6c424de87cc3d05",
+            "node_name": "",
+            "reason": "",
+            "run_id": "0267c698b9f10c6b8d1912fc6b60e006",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.122978+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ],
+        "c056c6da9b354a206870e24fed844b6d": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.026665+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.151882+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.027337+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:16.227043+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "9d0a9114a93b470547c142fd0b50dd63",
+            "node_name": "",
+            "reason": "",
+            "run_id": "c056c6da9b354a206870e24fed844b6d",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.147024+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ],
+        "16cd3cb047528290c8ec3f4e58a29d9c": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.026944+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.079125+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.02775+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:16.201995+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "31b676327d63df7defe5e94c04b8ee4f",
+            "node_name": "",
+            "reason": "",
+            "run_id": "16cd3cb047528290c8ec3f4e58a29d9c",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.073006+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "1e7707a35a74fa33f88aacc633a3354c": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.027128+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.174059+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.027734+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:16.234974+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "a1cfa885a951fc2fa9ec40299e66f76a",
+            "node_name": "",
+            "reason": "",
+            "run_id": "1e7707a35a74fa33f88aacc633a3354c",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.16903+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "88e2d8613b75d434ef83d02f2b8c2d21": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.027449+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.114247+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.028184+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:16.213888+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "b0b37fafd6693d51169fa2995ce9f810",
+            "node_name": "",
+            "reason": "",
+            "run_id": "88e2d8613b75d434ef83d02f2b8c2d21",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.10487+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "0236e6f72e848cbc928c51e5a3815913": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.028527+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.067096+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.029039+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:16.198006+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "66864d634d1bdf3775d838b46e60ba6b",
+            "node_name": "",
+            "reason": "",
+            "run_id": "0236e6f72e848cbc928c51e5a3815913",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.061036+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "8d0b22b4fb4a342bbf411a4c26eb501b": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.028981+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.163126+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.029385+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:16.230832+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "090a69fac1be17a3f45e88e9d9e00f06",
+            "node_name": "",
+            "reason": "",
+            "run_id": "8d0b22b4fb4a342bbf411a4c26eb501b",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.158036+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "bada75e2a9cb117a55b10af4f100eeb4": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.029185+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.186025+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.029645+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:16.239102+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "d87c44aada870d766c9efd365f24f54a",
+            "node_name": "",
+            "reason": "",
+            "run_id": "bada75e2a9cb117a55b10af4f100eeb4",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.179999+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "f47aeb646ea24e2aa25ed1a70124638a": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.029554+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.141001+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.029891+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:16.223005+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "850e9188993b212f994363ccaa6b3970",
+            "node_name": "",
+            "reason": "",
+            "run_id": "f47aeb646ea24e2aa25ed1a70124638a",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.135016+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.0037700420361943543,
+        0.006167749990709126,
+        0.00511525000911206,
+        0.004165249993093312,
+        0.0039406660362146795,
+        0.005583749967627227,
+        0.00401724997209385,
+        0.006563999981153756,
+        0.004493875021580607,
+        0.006206624966580421,
+        0.00489637500140816,
+        0.0062608340522274375
+      ]
+    },
+    {
+      "sweep_id": "662dc9596114a1309bff173f6ece46fb",
+      "attempts": {
+        "ec37eaa1f20b4ab7a566bea0e445cc79": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.292312+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.386205+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.29293+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-a75ad1a7-3c6b-46c0-beda-1910e1b57310"
+                },
+                "released_at": "2026-09-19 05:47:16.471913+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "c1c64a2911d6ad8a4d18c5f646ae1e26",
+            "node_name": "",
+            "reason": "",
+            "run_id": "ec37eaa1f20b4ab7a566bea0e445cc79",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.380969+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-6"
+          }
+        ],
+        "f34fdd7841bd79ca3c37ab772a3fe8a5": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.293005+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.397146+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.293729+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-e7cbb9e3-195b-4902-93e4-7432d24801b1"
+                },
+                "released_at": "2026-09-19 05:47:16.476006+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "f8d29dc7413c769b01d472366bb7838b",
+            "node_name": "",
+            "reason": "",
+            "run_id": "f34fdd7841bd79ca3c37ab772a3fe8a5",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.392043+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-7"
+          }
+        ],
+        "1ff1fac0843644f67eb64788763c0114": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.293346+00",
+            "exit_code": null,
+            "finished_at": "2026-09-19 05:47:16.317151+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.293972+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-20351724-ff33-48b3-a43f-be42e6e63ee0"
+                },
+                "released_at": "2026-09-19 05:47:16.448964+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "f26bec6d64684e083ff41f622339465d",
+            "node_name": "",
+            "reason": "USER_CANCELLED",
+            "run_id": "1ff1fac0843644f67eb64788763c0114",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.307937+00",
+            "status": "CANCELLED",
+            "worker_id": "synthetic-gpu-0"
+          }
+        ],
+        "1978eb6a7cf3355aacba5ac81e2dfa60": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.293149+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.353064+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.293803+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-48c87435-ea3e-4bc3-9b82-c1cd56b4dfc1"
+                },
+                "released_at": "2026-09-19 05:47:16.459893+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "2551aa797954901defc7fa5249d52ff1",
+            "node_name": "",
+            "reason": "",
+            "run_id": "1978eb6a7cf3355aacba5ac81e2dfa60",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.348078+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-3"
+          }
+        ],
+        "761c5d5722355f11f541539e696ca6aa": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.293792+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.418902+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.294534+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-b59b2f46-8bf1-4b98-b64d-4992c3469e70"
+                },
+                "released_at": "2026-09-19 05:47:16.484015+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "ad4fc3332d7afad7eaba37b72770fec1",
+            "node_name": "",
+            "reason": "",
+            "run_id": "761c5d5722355f11f541539e696ca6aa",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.415011+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-9"
+          }
+        ],
+        "56ff5ef32bec84286581ae9a25e738d5": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.293758+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.363063+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.294743+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-4f5d8d1d-ff2b-4276-b87c-d7d05b471b0b"
+                },
+                "released_at": "2026-09-19 05:47:16.463978+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "651bf437ccd975a2aa8f5eb15f868fbb",
+            "node_name": "",
+            "reason": "",
+            "run_id": "56ff5ef32bec84286581ae9a25e738d5",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.357865+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-4"
+          }
+        ],
+        "cd1436cb4578bf8647290fece77e50ff": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.294052+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.439938+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.294578+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-18c818c7-d6f4-4415-b22d-6d68c765002a"
+                },
+                "released_at": "2026-09-19 05:47:16.492099+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "93418ffbb03b49ba82878b9253256911",
+            "node_name": "",
+            "reason": "",
+            "run_id": "cd1436cb4578bf8647290fece77e50ff",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.435984+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-11"
+          }
+        ],
+        "a373c44cbd2cc59708498efc0558d639": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.29407+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.342132+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.294537+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-9f694863-1d6b-4a7f-bb87-e0affb6d571f"
+                },
+                "released_at": "2026-09-19 05:47:16.45604+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "d730877e62ecff28ce5ee495f4c288b4",
+            "node_name": "",
+            "reason": "",
+            "run_id": "a373c44cbd2cc59708498efc0558d639",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.337029+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-2"
+          }
+        ],
+        "00745519bd8adbffd93be2c1b270a4ca": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.295171+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.331101+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.295767+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bb6676cd-4a83-4eda-8d09-3be22f5bb457"
+                },
+                "released_at": "2026-09-19 05:47:16.452086+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "7dccae7e477878a002270c0c788c72ac",
+            "node_name": "",
+            "reason": "",
+            "run_id": "00745519bd8adbffd93be2c1b270a4ca",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.326029+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-1"
+          }
+        ],
+        "ae77355a9207788c66a532880e05706a": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.296148+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.375071+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.296486+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-bd39bfe8-f48c-437c-859f-c003a6421e51"
+                },
+                "released_at": "2026-09-19 05:47:16.468038+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "924ce4d9cdd744d662c273fc1ce826d0",
+            "node_name": "",
+            "reason": "",
+            "run_id": "ae77355a9207788c66a532880e05706a",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.369014+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-5"
+          }
+        ],
+        "39732340986b73a493384817b438b055": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.296294+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.430179+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.296656+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-8e95d241-08fd-44fe-a251-1f3211ebf687"
+                },
+                "released_at": "2026-09-19 05:47:16.488075+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "b0cc80b19aba6a3b810ad26dff7c8c98",
+            "node_name": "",
+            "reason": "",
+            "run_id": "39732340986b73a493384817b438b055",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.425115+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-10"
+          }
+        ],
+        "3dce82e48b5977f560a9ddfedb8a69ae": [
+          {
+            "acknowledged_sequence": 0,
+            "cleanup_status": "DONE",
+            "created_at": "2026-09-19 05:47:16.29643+00",
+            "exit_code": 0,
+            "finished_at": "2026-09-19 05:47:16.409148+00",
+            "generation": 1,
+            "gpu_allocations": [
+              {
+                "allocated_at": "2026-09-19 05:47:16.296799+00",
+                "device": {
+                  "eligible": true,
+                  "memory_mib": 24576,
+                  "name": "Synthetic protocol device",
+                  "reason": "",
+                  "uuid": "GPU-77464115-b780-4a07-b4a7-4fe9cd9d8b09"
+                },
+                "released_at": "2026-09-19 05:47:16.47995+00"
+              }
+            ],
+            "gpu_count": 1,
+            "id": "8b020d185d0007aa608275d257224487",
+            "node_name": "",
+            "reason": "",
+            "run_id": "3dce82e48b5977f560a9ddfedb8a69ae",
+            "runtime_id": "synthetic-runtime",
+            "started_at": "2026-09-19 05:47:16.403+00",
+            "status": "SUCCEEDED",
+            "worker_id": "synthetic-gpu-8"
+          }
+        ]
+      },
+      "assignment_rpc_seconds": [
+        0.004523082985542715,
+        0.005975375010166317,
+        0.0048552919761277735,
+        0.004658707999624312,
+        0.0050633749924600124,
+        0.006203041004482657,
+        0.003649124992080033,
+        0.004313167009968311,
+        0.006552207982167602,
+        0.005131000012625009,
+        0.006397708028089255,
+        0.0047249579802155495
+      ]
+    }
+  ],
+  "assignment_rpc_seconds": {
+    "count": 120,
+    "p50": 0.005790624971268699,
+    "p95": 0.008832479108241387,
+    "p99": 0.010642808201373557
+  },
+  "checks": [
+    "exclusive UUID assignment across 12 concurrent workers",
+    "duplicate UUID advertisements rejected",
+    "unacknowledged assignment replay",
+    "duplicate runner claims rejected",
+    "inventory error preserves reservations",
+    "cancelled runner is fenced",
+    "terminal decisions retain reservations",
+    "cleanup releases devices for the next wave"
+  ]
+}
