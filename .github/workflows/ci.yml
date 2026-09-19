@@ -89,6 +89,7 @@ jobs:
           python3 tests/deployment_render.py
           python3 tests/benchmark_test.py
           python3 tests/build_source_times_test.py
+          python3 tests/install_test.py
           scripts/dev-setup.sh
           python3 tests/gpu_deployment_test.py
           docker compose -f compose.yaml -f deploy/monitoring.compose.yaml config --quiet

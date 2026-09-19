@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+if ! command -v python3 >/dev/null 2>&1; then
+  echo 'Runyard setup requires Python 3.9+ and Docker with Compose v2.' >&2
+  exit 1
+fi
+exec python3 "$(dirname "$0")/scripts/install.py" "$@"

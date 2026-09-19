@@ -1,8 +1,8 @@
 services:
   ui:
-    image: runyard-ui:dev
+    image: ${RUNYARD_UI_IMAGE:-runyard-ui:dev}
     build: {context: ./ui, dockerfile: Dockerfile}
-    ports: [127.0.0.1:3000:80]
+    ports: ['127.0.0.1:${RUNYARD_LOCAL_UI_PORT:-3000}:80']
     depends_on:
       server: {condition: service_started}
     networks: [runyard]

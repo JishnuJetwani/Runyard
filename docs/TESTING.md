@@ -82,6 +82,17 @@ The training tests need the environment pinned in
 `tests/gpu-training-requirements.lock`. Hardware execution uses the acceptance
 command in [GPU operations](GPU.md), with an NVIDIA worker or Kubernetes node.
 
+## Installation
+
+```sh
+python3 tests/install_test.py
+python3 tests/install_smoke.py
+```
+
+The smoke test requires cached runtime images. It creates an isolated deployment,
+checks startup, repeated setup, shutdown, and retained data, then removes its own
+containers and volumes. Dashboard checks are described in [UI development](UI.md).
+
 ## Sanitizers and CI
 
 The `asan` and `tsan` CMake presets use separate build directories. ASan/UBSan

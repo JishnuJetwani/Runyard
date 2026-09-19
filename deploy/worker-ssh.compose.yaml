@@ -1,0 +1,17 @@
+# Linux worker connected through the operator's loopback-only SSH tunnel.
+name: ${RUNYARD_WORKER_ID:?Set a stable, unique worker ID}
+services:
+  agent:
+    image: ${RUNYARD_AGENT_IMAGE:?Set the published agent image and version}
+    restart: unless-stopped
+    network_mode: host
+    volumes: [/var/run/docker.sock:/var/run/docker.sock]
+    environment:
+      RUNYARD_PROFILE: development
+      RUNYARD_COORDINATOR: 127.0.0.1:19090
+      RUNYARD_RUNNER_COORDINATOR: 127.0.0.1:19090
+      RUNYARD_DOCKER_NETWORK: host
+      RUNYARD_WORKER_ID: ${RUNYARD_WORKER_ID}
+      RUNYARD_WORKER_TOKEN: ${RUNYARD_WORKER_TOKEN:?Set the coordinator's worker registration key}
+      RUNYARD_CPU_MILLIS: ${RUNYARD_CPU_MILLIS:-1000}
+      RUNYARD_MEMORY_MIB: ${RUNYARD_MEMORY_MIB:-1024}

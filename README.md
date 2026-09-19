@@ -38,39 +38,50 @@ leases, and results for both.
 
 ## Local Docker quickstart
 
-Requires Docker Engine 25+ or Docker Desktop, Compose v2, Bash, Python 3,
-Git, and OpenSSL. Containers support Linux arm64 and amd64. The first build takes
-a while, mostly because of gRPC; later builds reuse the cache. Leave enough VM
-memory for PostgreSQL, the coordinator, and your experiments.
+Install Docker Desktop on macOS, or Docker Engine on Linux, with Compose 2.20+
+and Python 3.9+. From a checkout:
 
 ```bash
-scripts/dev-setup.sh
-scripts/build-images.sh
-docker compose up -d
-export RUNYARD_FIXTURE_IMAGE="$(scripts/publish-fixture.sh)"
-python3 scripts/fixture-spec.py "$RUNYARD_FIXTURE_IMAGE" > .local/fixture.json
-scripts/runyard-local.sh submit .local/fixture.json
+./runyard up
 ```
 
-The command prints a run ID and a request key. Substitute the returned run ID:
+Setup creates credentials, starts PostgreSQL, the coordinator, three workers,
+and the dashboard, then runs an example. It checks logs, metrics, and the output
+checksum, saving the result to `.local/install/result.json`. Repeating setup
+keeps your data and reuses the example submission.
+
+Open **http://127.0.0.1:3000**. Run `./runyard key` and paste the owner key into
+**Connection settings**. The installer prints a direct link to the example run.
+
+Setup reuses local images and builds missing ones with Docker. You do not need
+C++ or Node installed. The first build takes a while; a published release allows
+[installation from prebuilt images](docs/INSTALL.md#published-images).
+Containers support Linux arm64 and amd64.
+
+Useful commands:
 
 ```bash
-scripts/runyard-local.sh runs get RUN_ID --attempts
-scripts/runyard-local.sh logs RUN_ID --follow
-scripts/runyard-local.sh metrics RUN_ID --format csv
-scripts/runyard-local.sh artifacts list RUN_ID
-scripts/runyard-local.sh artifacts download ARTIFACT_ID --output .local/result.json
+./runyard doctor
+./runyard status
+./runyard logs server --follow
+./runyard stop
+./runyard up
+
+# Use the run ID printed by setup:
+./runyard cli runs get RUN_ID --attempts
+./runyard cli logs RUN_ID --follow
 ```
 
-`runyard-local.sh` runs the C++ CLI in a container using the owner key. The native
-CLI has the same commands. Set `RUNYARD_URL`, `RUNYARD_OWNER_TOKEN`, and
-`RUNYARD_TLS_CA` as needed. Plaintext requires `RUNYARD_PROFILE=development`.
-Use `--json` for machine-readable output. Keep the credentials in `.env` private.
+`stop` keeps history and artifacts. Interrupted experiments may retry after
+restart. `./runyard cli` runs the selected CLI image; `scripts/runyard-local.sh`
+is an alias. Setup keeps existing credentials in the private, ignored `.env`.
+Only `key` prints the owner key. The C++ client supports `--json`.
 
 The three local workers share one Docker engine and each advertise 1 CPU and
 1 GiB of memory. HTTP uses localhost:8080 and gRPC uses localhost:9090.
 PostgreSQL stays inside the Compose network. A separate migration container runs
-before the server starts.
+before the server starts. See the [install guide](docs/INSTALL.md) for
+configuration and troubleshooting, and [connecting another worker](docs/WORKERS.md).
 
 ## Dashboard
 
