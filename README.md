@@ -1,144 +1,105 @@
 # Runyard
 
-Runyard runs containerized experiments on Docker workers or Kubernetes Jobs.
-It keeps each run's configuration, image digest, attempt history, and output.
-The backend is written in C++20 for one trusted owner, with a React/TypeScript
-dashboard and a C++ CLI.
+Runyard runs containerized CPU and GPU experiments on your own machines.
+Submit a job, run it on Docker workers or Kubernetes, and keep its configuration,
+logs, metrics, and output files in one place.
 
-The backend handles scheduling, leases, retries, cancellation, and parameter
-sweeps. It includes NVIDIA GPU allocation, filesystem/S3 storage, monitoring,
-and AWS infrastructure definitions.
+The backend is written in C++20, with a React/TypeScript dashboard and a C++ CLI.
 
-```mermaid
-flowchart LR
-  CLI[C++ CLI] -->|REST| Server[Coordinator]
-  UI[React dashboard] -->|REST| Server
-  Agent[Docker agent] -->|gRPC| Server
-  Agent -->|Engine API| Container[Experiment container]
-  Server -->|Kubernetes API| Job[Experiment Job]
-  Container --> Runner[Shared C++ runner]
-  Job --> Runner
-  Runner -->|gRPC: claim, telemetry, results| Server
-  Server --> PostgreSQL
-  Server --> Storage[Filesystem or S3]
+## Features
+
+- Schedule jobs by priority and available CPU, memory, and NVIDIA GPUs.
+- Submit parameter sweeps and compare results in the dashboard.
+- Retry interrupted jobs, enforce timeouts, and cancel running experiments.
+- Keep the history and output of every attempt.
+- Store artifacts on the filesystem or in S3 and verify downloads with SHA-256.
+- Monitor worker capacity, queue demand, and failures with Prometheus and Grafana.
+
+## Quick start
+
+Requires Git, Python 3.9+, and Docker with Compose 2.20+.
+Use Docker Desktop on macOS or Docker Engine on Linux.
+
+```bash
+git clone https://github.com/JishnuJetwani/Runyard.git
+cd Runyard
+./runyard up
 ```
 
-Each deployment uses Docker or Kubernetes. PostgreSQL stores assignments,
-leases, and results for both.
+Setup starts PostgreSQL, the coordinator, three local workers, and the dashboard.
+It also runs an example and checks its logs, metrics, and output file.
+
+Open the [dashboard](http://127.0.0.1:3000). Get your API key with:
+
+```bash
+./runyard key
+```
+
+Paste the key into **Connection settings**. Setup also prints a link to the example run.
+
+The first start builds missing images in Docker and can take a while.
+Later starts reuse them. Stopping the installation keeps your credentials,
+run history, and artifacts.
+
+```bash
+./runyard status
+./runyard logs server --follow
+./runyard stop
+./runyard up
+```
+
+See the [installation guide](docs/INSTALL.md) for settings, prebuilt images,
+and troubleshooting. To add another machine, follow the
+[worker setup guide](docs/WORKERS.md).
+
+## Run an experiment
+
+Build your experiment image from the Runyard runner base. Describe its image
+digest, command, parameters, resources, and timeout in a JSON file.
+
+```bash
+./runyard cli submit experiment.json
+./runyard cli runs get RUN_ID --attempts
+./runyard cli logs RUN_ID --follow
+./runyard cli metrics RUN_ID --format csv
+./runyard cli artifacts list RUN_ID
+./runyard cli capacity
+```
+
+The runner passes parameters through a JSON file, reads metrics from JSONL,
+and collects output files as artifacts. Workloads do not need a Runyard SDK.
+See the [workload guide](docs/WORKLOADS.md) and [CLI reference](docs/CLI.md).
+
+Set `resources.gpu_count` to request whole NVIDIA GPUs. Docker workers reserve
+specific devices; Kubernetes uses the NVIDIA device plugin.
+See the [GPU setup guide](docs/GPU.md) and the
+[PyTorch example](examples/gpu-training/README.md).
+
+## Architecture
+
+The coordinator stores run state in PostgreSQL. Docker agents request work;
+in Kubernetes mode, the coordinator creates Jobs. Both use the same runner to
+start the experiment, collect logs and metrics, and upload artifacts.
+
+Leases prevent old attempts from reporting results after a retry. An accepted
+cancellation takes effect immediately, but cleanup stays pending until the process
+has stopped.
+See [failure behavior](docs/FAILURES.md) for the recovery rules.
+
+Runyard is designed for private deployments with trusted workloads and one active
+coordinator. The local setup runs three logical workers on one Docker engine.
 
 | Area | Technologies |
 |---|---|
-| Services | C++20, Drogon, gRPC/Protobuf, CLI11 |
-| Dashboard | React, TypeScript, Vite, TanStack Query, Recharts, Playwright |
-| Persistence and integration | PostgreSQL/libpqxx, libcurl, AWS SDK for C++ |
-| Execution | Docker Engine API, Kubernetes Jobs, NVML GPU discovery, shared Linux process supervisor |
-| Operations | spdlog, prometheus-cpp, Prometheus, Grafana |
-| Engineering | CMake, Ninja, vcpkg, GoogleTest, GitHub Actions |
-| Deployment | Compose, kind, Terraform, AWS definitions |
+| Backend | C++20, Drogon, gRPC/Protobuf, libpqxx, libcurl |
+| Dashboard | React, TypeScript, TanStack Query, Recharts |
+| Execution and storage | Docker, Kubernetes, NVML, PostgreSQL, S3 |
+| Operations and builds | Prometheus, Grafana, CMake, vcpkg, GitHub Actions, Terraform |
 
-## Local Docker quickstart
+## Documentation
 
-Requires Docker Engine 25+ or Docker Desktop, Compose v2, Bash, Python 3,
-Git, and OpenSSL. Containers support Linux arm64 and amd64. The first build takes
-a while, mostly because of gRPC; later builds reuse the cache. Leave enough VM
-memory for PostgreSQL, the coordinator, and your experiments.
-
-```bash
-scripts/dev-setup.sh
-scripts/build-images.sh
-docker compose up -d
-export RUNYARD_FIXTURE_IMAGE="$(scripts/publish-fixture.sh)"
-python3 scripts/fixture-spec.py "$RUNYARD_FIXTURE_IMAGE" > .local/fixture.json
-scripts/runyard-local.sh submit .local/fixture.json
-```
-
-The command prints a run ID and a request key. Substitute the returned run ID:
-
-```bash
-scripts/runyard-local.sh runs get RUN_ID --attempts
-scripts/runyard-local.sh logs RUN_ID --follow
-scripts/runyard-local.sh metrics RUN_ID --format csv
-scripts/runyard-local.sh artifacts list RUN_ID
-scripts/runyard-local.sh artifacts download ARTIFACT_ID --output .local/result.json
-```
-
-`runyard-local.sh` runs the C++ CLI in a container using the owner key. The native
-CLI has the same commands. Set `RUNYARD_URL`, `RUNYARD_OWNER_TOKEN`, and
-`RUNYARD_TLS_CA` as needed. Plaintext requires `RUNYARD_PROFILE=development`.
-Use `--json` for machine-readable output. Keep the credentials in `.env` private.
-
-The three local workers share one Docker engine and each advertise 1 CPU and
-1 GiB of memory. HTTP uses localhost:8080 and gRPC uses localhost:9090.
-PostgreSQL stays inside the Compose network. A separate migration container runs
-before the server starts.
-
-## Dashboard
-
-With the local coordinator running:
-
-```bash
-cd ui
-npm ci
-npm run dev
-```
-
-Open `http://127.0.0.1:5180` to submit runs and sweeps, read logs, compare metrics,
-download artifacts, and check capacity. The development proxy reads the owner key
-from `.env`; the key stays out of browser assets. Requires Node.js 24.14+.
-
-A packaged Nginx image is also available, from the repository root:
-
-```bash
-docker compose -f compose.yaml -f deploy/ui.compose.yaml up -d --build ui
-```
-
-Open `http://127.0.0.1:3000` and enter the owner API key in **Connection settings**.
-See [dashboard operations and architecture](docs/UI.md) for authentication,
-deployment, bounded telemetry, and verification commands.
-
-## Experiment contract
-
-Build from `runyard-runner-base:dev`, include your program and dependencies,
-and push the image. Submit its digest with a command argument array, parameters,
-resource limits, timeout, priority, and retry policy.
-
-The experiment reads `RUNYARD_PARAMETERS_PATH`, appends metrics such as
-`{"name":"loss","step":0,"value":0.25}` to `RUNYARD_METRICS_PATH`, and writes
-files under `RUNYARD_OUTPUT_DIR`. No Runyard SDK is needed.
-See [workload packaging](docs/WORKLOADS.md) and the [fixture](examples/fixture.cpp).
-
-Infrastructure failures retry by default. Application failures and timeouts
-require opt-in. Work can run more than once, but ownership and lease checks reject
-stale results. Accepted cancellation is immediate; cleanup is tracked separately.
-See [failure behavior](docs/FAILURES.md).
-
-## Other workflows
-
-- [CLI commands](docs/CLI.md) and [OpenAPI contract](api/openapi.yaml).
-- [GPU execution and capacity](docs/GPU.md), with a [PyTorch training example](examples/gpu-training/README.md).
-- [Local Kubernetes](docs/KUBERNETES.md), using `scripts/kind-setup.sh` after image builds.
-- [Operations and troubleshooting](docs/OPERATIONS.md).
-- [Prometheus/Grafana](docs/OBSERVABILITY.md) and [storage](docs/STORAGE.md).
-- [AWS preparation](docs/AWS.md), with private EKS, RDS, S3, ECR, and scoped IAM.
-- [Architecture](docs/ARCHITECTURE.md), [tests](docs/TESTING.md), and [benchmarks](benchmarks/README.md).
-
-## Source development
-
-Use CMake 3.25+, Ninja, a C++20 compiler, pkg-config, Autoconf/Automake,
-Libtool, Bison, Flex, and the committed vcpkg baseline:
-
-```bash
-scripts/bootstrap-vcpkg.sh
-export VCPKG_ROOT="$PWD/.deps/vcpkg"
-cmake --preset vcpkg
-cmake --build --preset vcpkg -j 3
-ctest --preset vcpkg
-```
-
-Build only the CLI with `cmake --build --preset vcpkg --target runyard`.
-On macOS, run the backend in Linux containers. Native backend builds support
-local tests. The build includes warnings, formatting, static analysis, and
-sanitizer configurations.
-
-Domain logic, application services, SQL, transports, execution, storage, and
-CLI code live in separate modules. Generated Protobuf files stay in the build tree.
+- [Architecture](docs/ARCHITECTURE.md) and [source builds](docs/BUILD.md)
+- [Dashboard development](docs/UI.md) and [REST API](api/openapi.yaml)
+- [Kubernetes setup](docs/KUBERNETES.md) and [AWS infrastructure](docs/AWS.md)
+- [Operations](docs/OPERATIONS.md) and [monitoring](docs/OBSERVABILITY.md)
+- [Tests](docs/TESTING.md) and [benchmarks](benchmarks/README.md)

@@ -1,4 +1,4 @@
-name: runyard
+name: ${RUNYARD_PROJECT_NAME:-runyard}
 x-server-env: &server-env
   RUNYARD_PROFILE: development
   RUNYARD_DATABASE_URL: host=postgres user=runyard password=runyard-local-only dbname=runyard connect_timeout=3
@@ -8,7 +8,7 @@ x-server-env: &server-env
   RUNYARD_BIND: 0.0.0.0
   RUNYARD_ARTIFACT_ROOT: /work/artifacts
 x-agent: &agent
-  image: runyard-agent:dev
+  image: ${RUNYARD_AGENT_IMAGE:-runyard-agent:dev}
   build: {context: ., dockerfile: deploy/docker/Dockerfile, target: agent}
   depends_on:
     server: {condition: service_started}
@@ -20,6 +20,7 @@ x-agent-env: &agent-env
   RUNYARD_WORKER_TOKEN: ${RUNYARD_WORKER_TOKEN}
   RUNYARD_CPU_MILLIS: 1000
   RUNYARD_MEMORY_MIB: 1024
+  RUNYARD_DOCKER_NETWORK: ${RUNYARD_PROJECT_NAME:-runyard}
 services:
   postgres:
     image: postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1b55cf0c01d1a7eb701be2227a03e0641
@@ -28,7 +29,7 @@ services:
     healthcheck: {test: [CMD-SHELL, pg_isready -h 127.0.0.1 -U runyard], interval: 2s, timeout: 3s, retries: 30}
     networks: [runyard]
   migrate:
-    image: runyard-server:dev
+    image: ${RUNYARD_SERVER_IMAGE:-runyard-server:dev}
     build: {context: ., dockerfile: deploy/docker/Dockerfile, target: server}
     command: [migrate, --directory, /opt/runyard/migrations]
     environment: *server-env
@@ -36,30 +37,30 @@ services:
       postgres: {condition: service_healthy}
     networks: [runyard]
   server:
-    image: runyard-server:dev
+    image: ${RUNYARD_SERVER_IMAGE:-runyard-server:dev}
     build: {context: ., dockerfile: deploy/docker/Dockerfile, target: server}
     environment: *server-env
     depends_on:
       migrate: {condition: service_completed_successfully}
-    ports: [127.0.0.1:8080:8080, 127.0.0.1:9090:9090]
+    ports: ['127.0.0.1:${RUNYARD_LOCAL_HTTP_PORT:-8080}:8080', '127.0.0.1:${RUNYARD_LOCAL_GRPC_PORT:-9090}:9090']
     volumes: [artifacts:/work/artifacts]
     networks: [runyard]
   agent-1:
     <<: *agent
-    environment: {<<: *agent-env, RUNYARD_WORKER_ID: local-1}
+    environment: {<<: *agent-env, RUNYARD_WORKER_ID: '${RUNYARD_WORKER_PREFIX:-local}-1'}
   agent-2:
     <<: *agent
-    environment: {<<: *agent-env, RUNYARD_WORKER_ID: local-2}
+    environment: {<<: *agent-env, RUNYARD_WORKER_ID: '${RUNYARD_WORKER_PREFIX:-local}-2'}
   agent-3:
     <<: *agent
-    environment: {<<: *agent-env, RUNYARD_WORKER_ID: local-3}
+    environment: {<<: *agent-env, RUNYARD_WORKER_ID: '${RUNYARD_WORKER_PREFIX:-local}-3'}
   registry:
     image: registry:2.8.3@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
-    ports: [127.0.0.1:5001:5000]
+    ports: ['127.0.0.1:${RUNYARD_LOCAL_REGISTRY_PORT:-5001}:5000']
     volumes: [registry:/var/lib/registry]
     networks: [runyard]
 networks:
-  runyard: {name: runyard}
+  runyard: {name: '${RUNYARD_PROJECT_NAME:-runyard}'}
 volumes:
   postgres:
   artifacts:

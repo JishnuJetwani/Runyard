@@ -94,8 +94,9 @@ To remove the stored key, clear the field and reconnect, or close the tab.
 
 This Compose profile binds only to loopback. Keep a remote console behind a
 private tunnel/port-forward or an HTTPS reverse proxy. The static image contains
-no secrets. Its API upstream is `server:8080`; change the Nginx configuration
-if your private service has another name.
+no secrets. Its API upstream is `server:8080`; adapt the Nginx configuration to a
+different private service name when installing it outside Compose. The
+[local installer](INSTALL.md) starts this packaged dashboard automatically.
 
 ## Verification
 
