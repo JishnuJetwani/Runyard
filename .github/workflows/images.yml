@@ -91,6 +91,16 @@ jobs:
           tags: ${{ env.IMAGE_ROOT }}/cli:${{ inputs.version }}-${{ matrix.arch }}
           cache-from: type=gha,scope=runyard-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=runyard-${{ matrix.arch }}
+      - name: Build dashboard
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ./ui
+          file: ui/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          push: ${{ inputs.publish }}
+          tags: ${{ env.IMAGE_ROOT }}/ui:${{ inputs.version }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=runyard-ui-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=runyard-ui-${{ matrix.arch }}
   manifests:
     if: inputs.publish
     needs: images
@@ -105,6 +115,6 @@ jobs:
       - env: {RELEASE_VERSION: '${{ inputs.version }}'}
         run: |
           root="ghcr.io/${GITHUB_REPOSITORY,,}"
-          for target in server agent runner-base fixture cli; do
+          for target in server agent runner-base fixture cli ui; do
             docker buildx imagetools create -t "$root/$target:$RELEASE_VERSION" "$root/$target:$RELEASE_VERSION-amd64" "$root/$target:$RELEASE_VERSION-arm64"
           done
