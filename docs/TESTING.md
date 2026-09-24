@@ -64,7 +64,7 @@ scripts/acceptance.sh kubernetes
 
 The acceptance script builds images unless `--skip-build` is supplied. Existing
 application data requires `--reuse`; it is not erased. Results are written to
-`.local/` and `benchmarks/results/`. See the [benchmark guide](../benchmarks/README.md)
+the ignored `.local/` directory. See the [benchmark guide](../benchmarks/README.md)
 for timing definitions and reproduction commands.
 
 ## GPU contracts

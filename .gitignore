@@ -1,6 +1,9 @@
 /build/
 /.deps/
 /.local/
+/benchmarks/results/
+/benchmarks/RESULTS.md
+/benchmarks/WORKER_SCALE.md
 /.env
 /.secrets/
 /vcpkg_installed/

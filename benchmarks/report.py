@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render benchmark summaries from the checked-in measurements."""
+"""Render benchmark summaries from local measurements."""
 import argparse
 import json
 import os
@@ -12,8 +12,8 @@ def number(value):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--results', default='benchmarks/results')
-    parser.add_argument('--output', default='benchmarks/RESULTS.md')
+    parser.add_argument('--results', default='.local/benchmarks/results')
+    parser.add_argument('--output', default='.local/benchmarks/RESULTS.md')
     args = parser.parse_args()
     output = pathlib.Path(args.output)
     measurements = [(path, json.loads(path.read_text())) for path in sorted(pathlib.Path(args.results).glob('*-local.json'))]
@@ -43,8 +43,10 @@ def main():
                   'Interruption-to-replacement claim (seconds): ' + ', '.join(number(v) for v in result.get('recovery_seconds', [])) + '.', '',
                   f"[Raw observations and exact settings]({raw}).", '']
         lines.extend('- ' + limitation for limitation in result['limitations'])
+    guide = os.path.relpath(pathlib.Path(__file__).with_name('README.md'), output.parent)
     lines += ['', 'Regenerate with `python3 benchmarks/report.py`. Definitions and workload instructions',
-              'are in [README.md](README.md).', '']
+              f'are in [README.md]({guide}).', '']
+    output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text('\n'.join(lines))
     print(f'Wrote {output} from {len(measurements)} recorded measurements')
 

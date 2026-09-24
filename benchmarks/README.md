@@ -6,7 +6,7 @@ an otherwise idle Runyard queue. Export the development API URL and owner token.
 ```
 python3 benchmarks/run.py --backend docker --image "$RUNYARD_FIXTURE_IMAGE" \
   --count 100 --recovery-evidence .local/acceptance-docker.json \
-  --output benchmarks/results/docker-local.json
+  --output .local/benchmarks/results/docker-local.json
 ```
 
 The script records timestamps, the workload specification and image digest, Git
@@ -28,9 +28,10 @@ Logical Docker workers share one engine, VM, disk, and physical host. A kind
 cluster on that VM also shares those resources. Results describe the recorded
 fixture workload and include scheduling and launch overhead.
 
-Run `python3 benchmarks/report.py` to generate the Markdown comparison.
-Recovery measurements come from a separate fault-injection run and do not affect
-the steady-workload throughput measurement.
+Run `python3 benchmarks/report.py` to generate `.local/benchmarks/RESULTS.md`.
+Raw measurements and reports stay in the ignored `.local/` directory. Recovery
+measurements come from the separate fault-injection run and do not affect the
+steady-workload throughput measurement.
 
 ## Worker scale and recovery checks
 
@@ -42,7 +43,7 @@ with the root quickstart first. It does not restart or clear the normal deployme
 ```bash
 python3 benchmarks/worker_scale.py --image "$RUNYARD_FIXTURE_IMAGE" \
   --workers 12 --count 120 --rounds 3 --fault-batches 2 \
-  --output benchmarks/results/worker-scale/docker-12-workers.json
+  --output .local/benchmarks/results/worker-scale/docker-12-workers.json
 ```
 
 Ports 18081 and 19091 must be free (override with `--http-port`/`--grpc-port`).
@@ -67,7 +68,7 @@ virtual environment and free ports 18082/19092:
 ```bash
 .local/venv/bin/python benchmarks/gpu_allocation.py \
   --workers 12 --waves 10 \
-  --output benchmarks/results/worker-scale/gpu-12-workers.json
+  --output .local/benchmarks/results/worker-scale/gpu-12-workers.json
 ```
 
 This uses synthetic worker/device inventories and runner RPC clients against an
@@ -75,5 +76,5 @@ isolated coordinator and PostgreSQL. It verifies exclusive allocation,
 assignment replay, duplicate claim rejection, cancellation fencing, and reuse
 only after cleanup. This is a protocol-level allocation benchmark.
 The recorded `Poll` RPC duration measures assignment only; it is separate from
-the Docker assignment-to-runner dispatch measurement. See the
-[worker benchmark report](WORKER_SCALE.md) for observed results and scope.
+the Docker assignment-to-runner dispatch measurement. Each invocation writes its
+measurements and execution histories to the specified output file.

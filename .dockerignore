@@ -1,6 +1,9 @@
 .git
 build
 .local
+benchmarks/results
+benchmarks/RESULTS.md
+benchmarks/WORKER_SCALE.md
 .deps
 .secrets
 .env

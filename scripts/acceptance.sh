@@ -72,5 +72,5 @@ python3 tests/execution_contract.py --backend "$backend" --image "$image" \
   --output ".local/acceptance-$backend.json"
 python3 benchmarks/run.py --backend "$backend" --image "$image" \
   --recovery-evidence ".local/acceptance-$backend.json" \
-  --output "benchmarks/results/$backend-local.json"
+  --output ".local/benchmarks/results/$backend-local.json"
 echo "Acceptance and benchmark passed ($backend). Services and evidence remain available."
